@@ -185,8 +185,9 @@ struct Input {
         if (open && down(0x1B) && !was(0x1B) && !io.WantTextInput && !taking) open = false;   // Esc
         s->menu_open = open ? 1 : 0;
         // Wine's CURSOR_SHOWING flag does not establish that a compositor displays the pointer.
-        // Draw it with the overlay on every presented frame; window_proc hides the native client cursor.
-        io.MouseDrawCursor = open;
+        // Use the native client cursor (window_proc selects the system arrow while the menu is open).
+        // Do not draw ImGui's software cursor as a second pointer.
+        io.MouseDrawCursor = false;
         if (open) {
             const float sx = s->client_w ? float(width) / float(s->client_w) : 1.f;
             const float sy = s->client_h ? float(height) / float(s->client_h) : 1.f;

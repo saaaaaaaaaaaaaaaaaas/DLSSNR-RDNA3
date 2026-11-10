@@ -49,6 +49,12 @@ nr::control::Shared* shared() {
 // ---- Wayland: the game window's input for the menu ----
 HWND g_window = nullptr;
 WNDPROC g_previous = nullptr;
+// NR Control cursor visibility state.
+// All ShowCursor operations must run on the game window thread.
+constexpr UINT kNrRestoreCursorCount = WM_APP + 0x3D1;
+
+int g_nr_cursor_count_before_menu = 0;
+bool g_nr_cursor_count_saved = false;
 
 // While the menu is open the game gets none of the keyboard and mouse, as under ReShade's overlay: its window messages
 // are dropped (window_proc), and what it would read directly is held still - the cursor position where it was when
@@ -167,8 +173,12 @@ void menu_changed(bool open) {
         g_real_getpos(&g_frozen);
         g_menu_open.store(true);
         g_real_clip(nullptr);
+        // Apply the native cursor immediately; WM_SETCURSOR may not be generated on menu open.
+        if (g_window) PostMessageW(g_window, WM_SETCURSOR, reinterpret_cast<WPARAM>(g_window), MAKELPARAM(HTCLIENT, WM_MOUSEMOVE));
     } else {
         g_menu_open.store(false);
+        if (g_window)
+            PostMessageW(g_window, kNrRestoreCursorCount, 0, 0);
         std::lock_guard<std::mutex> lock(g_clip_mutex);
         g_real_clip(g_game_clipped ? &g_game_clip : nullptr);
         g_real_setpos(g_frozen.x, g_frozen.y);   // the cursor back where the game left it
@@ -176,7 +186,54 @@ void menu_changed(bool open) {
     }
 }
 
+void ensure_menu_cursor_visible() {
+    // ShowCursor returns the updated count.
+    // Subtract one to recover the previous count.
+    int count = ShowCursor(TRUE);
+    const int previous = count - 1;
+
+    // Remember the original state only once per menu opening.
+    if (!g_nr_cursor_count_saved) {
+        g_nr_cursor_count_before_menu = previous;
+        g_nr_cursor_count_saved = true;
+    }
+
+    if (previous >= 0) {
+        // The cursor was already visible. Undo our probe.
+        ShowCursor(FALSE);
+        return;
+    }
+
+    // Keep incrementing until the cursor becomes visible.
+    while (count < 0) {
+        count = ShowCursor(TRUE);
+    }
+}
+
+void restore_menu_cursor_count() {
+    if (!g_nr_cursor_count_saved)
+        return;
+
+    const int target = g_nr_cursor_count_before_menu;
+
+    // Probe the current count.
+    int count = ShowCursor(TRUE);
+
+    // Restore the exact original value.
+    while (count > target)
+        count = ShowCursor(FALSE);
+
+    while (count < target)
+        count = ShowCursor(TRUE);
+
+    g_nr_cursor_count_saved = false;
+}
+
 LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
+    if (msg == kNrRestoreCursorCount) {
+        restore_menu_cursor_count();
+        return 0;
+    }
     nr::control::Shared* s = g_shared;
     if (s && s->wayland) {
         if (msg == WM_MOUSEWHEEL) s->wheel += GET_WHEEL_DELTA_WPARAM(wp);
@@ -186,7 +243,9 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
         }
         if (s->menu_open) {
             if (msg == WM_SETCURSOR && LOWORD(lp) == HTCLIENT) {
-                SetCursor(nullptr);   // ImGui draws the pointer with the menu, including generated frames
+                ensure_menu_cursor_visible();
+
+                SetCursor(LoadCursorW(nullptr, MAKEINTRESOURCEW(32512)));
                 return TRUE;
             }
             // The menu has the keyboard and mouse: the game's window gets none of it.

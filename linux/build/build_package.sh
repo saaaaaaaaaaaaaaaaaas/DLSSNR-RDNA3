@@ -331,6 +331,17 @@ if [[ "$arch" == x86_64 ]]; then
     cp -- "$opti_license" "$pkg/optiscaler/OptiScaler_LICENSE.txt"
     # stamped with the package's version (its log line and NR Control's title), not the bare commit
     NR_STAMP=$(bash linux/build/version.sh) bash linux/build/build_asi.sh artifacts/optiscaler/asi > /dev/null
+    # DittoSR shaders and third-party license notices.
+    ditto_shaders=artifacts/optiscaler/asi/shaders/renodx
+
+    for pass in prepare convert motion upscale sharpen; do
+        cp -- "$ditto_shaders/renodx_ditto_$pass.spv" \
+            "$pkg/dlssnr-amd/shaders/renodx/"
+    done
+
+    cp -- "$ditto_shaders/DittoSR-LICENSE.txt" \
+        "$ditto_shaders/Snapdragon-GSR-LICENSE.txt" \
+        "$pkg/dlssnr-amd/shaders/renodx/"
     cp -- artifacts/optiscaler/asi/dlssnr-amd.asi artifacts/optiscaler/asi/nr_present_probe.exe "$pkg/optiscaler/asi/"
     # the notices of what dlssnr-amd.asi has compiled in: NR Control's font (Inter, SIL OFL 1.1) and Dear ImGui (MIT)
     cp -- "${NR_MENU_FONT_LICENSE:-toolchain/fonts/inter-4.1/LICENSE.txt}" "$pkg/optiscaler/asi/Inter-LICENSE.txt"
