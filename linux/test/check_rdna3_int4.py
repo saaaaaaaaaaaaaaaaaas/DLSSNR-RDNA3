@@ -38,11 +38,11 @@ def build(model):
     BUILD.mkdir(parents=True, exist_ok=True)
     if not (ROOT / "build" / "linux" / "rdna3" / "network").is_dir():
         run([sys.executable, "linux/build/build_network.py", "rdna3"])
-    env = dict(os.environ, NR_GPU="rdna3")
+    env = dict(os.environ, NR_GPU="rdna3", NR_INT4_LEGACY="1")
     r = subprocess.run(["bash", "linux/build/build_int4.sh", str(INT4)], cwd=ROOT, capture_output=True, text=True, env=env)
     if r.returncode:
         sys.exit(f"build_int4.sh failed:\n{r.stdout}{r.stderr}")
-    cxx = ["g++", "-std=c++20", "-O1", "-w", "-DNR_INT4=1", "-Ilinux/src/core", "-Ilinux/test"] + host_defines()
+    cxx = ["g++", "-std=c++20", "-O1", "-w", "-DNR_INT4=1", "-DNR_TEST_LEGACY_INT4=1", "-Itoolchain/Vulkan-Headers/include", "-Ilinux/src/core", "-Ilinux/test"] + host_defines()
     run(cxx + ["linux/test/run_frame.cpp", "linux/src/core/nr_runtime.cpp", "linux/src/core/nr_native_plan.cpp",
                "-o", str(BUILD / "run_frame_int4"), "-lvulkan", "-lpthread"])
     run(cxx + ["linux/src/core/nr_graph.cpp", "-o", str(BUILD / "nr_graph_int4"), "-lvulkan"])
@@ -54,8 +54,8 @@ def build(model):
     data.mkdir(parents=True)
     shutil.copytree(ROOT / "build" / "linux" / "rdna3" / "network", data / "shaders")
     shutil.copytree(INT4 / "data", data / "int4")
-    shutil.copyfile(model, data / "dlssnr.bin")
-    log = run([str(INT4 / "dlssnr-int4-weights"), str(data / "dlssnr.bin"), str(data / "int4"), str(data / "dlssnr-int4.bin")])
+    shutil.copyfile(model, data / "CC_SILVER_AARDWOLD.bin")
+    log = run([str(INT4 / "dlssnr-int4-weights"), str(data / "CC_SILVER_AARDWOLD.bin"), str(data / "int4"), str(data / "dlssnr-int4.bin")])
     return log
 
 
@@ -64,7 +64,7 @@ def tables_name():
 
 
 def check_weights():
-    want = (ROOT / "linux" / "data" / "int4" / tables_name() / "dlssnr-int4.sha256").read_text().split()[0]
+    want = (ROOT / "linux" / "data" / "int4-legacy" / tables_name() / "dlssnr-int4.sha256").read_text().split()[0]
     got = hashlib.sha256((INST / "dlssnr-amd" / "dlssnr-int4.bin").read_bytes()).hexdigest()
     print(f"weights: {'identical to the shipped SHA-256' if got == want else 'FAIL (' + got[:16] + ' against ' + want[:16] + ')'}")
     return got == want
@@ -144,7 +144,7 @@ def layer_hashes():
         if line and not line.startswith("#") and "=" in line:
             k, v = line.split("=", 1)
             env[k] = v
-    out = run([str(BUILD / "nr_graph_int4"), "--plan", str(plan), "--model-pack", str(INST / "dlssnr-amd" / "dlssnr.bin"),
+    out = run([str(BUILD / "nr_graph_int4"), "--plan", str(plan), "--model-pack", str(INST / "dlssnr-amd" / "CC_SILVER_AARDWOLD.bin"),
                "--spv-dir", str(data / "shaders"), "--host-boundary", "--no-reuse",
                "--source-width", str(w), "--source-height", str(h), "--in-image", str(blob), "--value-stats"], env=env)
     rows = []

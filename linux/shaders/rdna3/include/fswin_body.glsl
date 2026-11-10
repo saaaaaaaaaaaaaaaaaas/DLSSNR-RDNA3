@@ -1,3 +1,10 @@
+// Fitted networks use a fixed probability table and a merged V/output projection.
+#ifndef NR_VOMERGE
+#define NR_VOMERGE 0
+#endif
+#if NR_VOMERGE && (NR_HWAVES || NR_CONTEXT_LDS || NR_HEADS != 1)
+#error "NR_VOMERGE requires one-head fixed attention without LDS context"
+#endif
 // The per-item body of fswin_t.comp, moved here unchanged so that the
 // persistent kernels can instantiate it once per live-tile mask (NR_EDGE_BODIES).
 // Everything it declares is local to one instantiation. NR_LIVE (set by the
@@ -356,6 +363,17 @@
             const uint qb = qix + (uint(nrhw_h * 2) + hh) * 16u;
             float lo_[8], hi_[8];
             for (int j = 0; j < 8; ++j) { lo_[j] = v_[j]; hi_[j] = v_[8 + j]; }
+#if NR_SWI4_ROT == 8
+            // Each gfx11 operand contains all sixteen channels. Rotate its two
+            // consecutive H8 blocks in the same butterfly order as the fitted weights.
+#define NR_BF8_(v, a, b) { const float t_ = v[a]; v[a] = t_ + v[b]; v[b] = t_ - v[b]; }
+#define NR_H8_(v) NR_BF8_(v,0,1) NR_BF8_(v,2,3) NR_BF8_(v,4,5) NR_BF8_(v,6,7) \
+    NR_BF8_(v,0,2) NR_BF8_(v,1,3) NR_BF8_(v,4,6) NR_BF8_(v,5,7) \
+    NR_BF8_(v,0,4) NR_BF8_(v,1,5) NR_BF8_(v,2,6) NR_BF8_(v,3,7)
+            NR_H8_(lo_) NR_H8_(hi_)
+#undef NR_H8_
+#undef NR_BF8_
+#endif
             const uvec2 w2 = uvec2(nr_s4pack(lo_, qb), nr_s4pack(hi_, qb + 8u));
             const uint a4 = NR_LXB_ NR_SWI4_X4 + uint(m) * uint(NR_C * 2) + uint(nrhw_h / 2) * 128u + lane * 4u + uint(nrhw_h % 2) * 2u;
             lds_y4[a4] = w2.x; lds_y4[a4 + 1u] = w2.y;
@@ -1442,6 +1460,9 @@
         const int hh = nrhw_h;
 #else
     NR_OPB cq[NR_MF][NR_CF];
+#if NR_VOMERGE
+    NR_ACCF nr_ctxf[NR_MF][NR_CF];
+#endif
     for (int hh = 0; hh < NR_HEADS; ++hh) {
 #endif
 #if NR_K_REGS
@@ -2435,6 +2456,22 @@
 #endif
         }
 #endif
+#if defined(NR_FIXP) && NR_FIXP
+#if NR_HWAVES
+#error "NR_FIXP requires the C=32 body"
+#endif
+        for (int m = 0; m < NR_MF; ++m) for (int j = 0; j < NR_JF; ++j)
+        {
+            NR_LOAD_B(pb[m][j], wgt_e4m3, pc.b_off * 4u + 16384u + (tok0 + uint(m) * 16u) * 64u + uint(j) * 16u, 64u);
+#if NR_KV_LDS_SWAP
+            // V's odd rows use swapped key pairs; the upper lane's P operand
+            // must use the same key order, as the softmax-built operand does.
+            if (nr_hi) for (int c = 0; c < 16; c += 2) {
+                const NR_E4M3 t = pb[m][j][c]; pb[m][j][c] = pb[m][j][c + 1]; pb[m][j][c + 1] = t;
+            }
+#endif
+        }
+#endif
 #if !(NR_HWAVES && NR_EXP_NOHI_HEAD)
         // ctx^T = V^T . P^T; this head's output occupies channel fragments
         // [hh*NR_DF, (hh+1)*NR_DF) of the concatenated C rows.
@@ -2457,6 +2494,9 @@
                 if (NR_ACC_F16 > 0 && (j + 1) % NR_ACC_F16 == 0)
                     for (int m = 0; m < NR_MF; ++m) NR_RND(a[m])
             }
+#if NR_VOMERGE
+            for (int m = 0; m < NR_MF; ++m) nr_ctxf[m][hh * NR_DF + e] = a[m];
+#endif
             for (int m = 0; m < NR_MF; ++m) NR_MGA(m) {
 #if NR_CONTEXT_LDS || NR_HWAVES
                 NR_STAGE_FRAG out_context;
@@ -2697,6 +2737,9 @@
             a[m][c]=nr_round_f16(wgt_f32[pc.ars_off+uint(n)*16u+NR_ROW(c)]*NR_Y(m,n,c));
 #endif
 #endif
+#if NR_VOMERGE
+        for (int m = 0; m < NR_MF; ++m) a[m] = a[m] + nr_ctxf[m][n];
+#else
         for (int k = 0; k < NR_CF; ++k) {
 #if NR_HWAVES
             NR_FRAG_B cqk[NR_MF];
@@ -2719,6 +2762,7 @@
             if (NR_ACC_F16 > 0 && (k + 1) % NR_ACC_F16 == 0)
                 for (int m = 0; m < NR_MF; ++m) NR_RND(a[m])
         }
+#endif
 #endif
         // Again element-wise: `ars` is per accumulator row and `y` has been in
         // registers since stage 2. The block's output leaves ColumnMajor,

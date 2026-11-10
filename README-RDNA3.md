@@ -6,13 +6,32 @@ Everything in the [main README](README.md) that is not about the card still appl
 warnings: this is an early project, do not use it in online games with anti-cheat, and it comes
 without warranty.
 
-- **Tested only on an RX 7900 XTX** (Mesa 26.2.3, RADV). Other RDNA3 cards should work and are untested.
+- The **pre-port fork was tested only on an RX 7900 XTX** (Mesa 26.2.3, RADV). This port still needs GPU qualification.
 - Verified on single frames against NVIDIA's own output, with the frames and settings of
   [docs/ngx-verification](docs/ngx-verification/NGX-VERIFICATION.md): 45.47 dB at 1080p, 47.71 dB at
   1440p and 49.02 dB at 4K, against 45.56, 47.99 and 49.06 dB for the RDNA4 build. Moving sequences
   have not been run on RDNA3.
-- The package also carries the optional [int4 mixed](#int4-mixed-optional) network: 7 to 8 % less time a
-  frame for 3.5 to 5.4 dB less against NVIDIA's output. The installer asks; the default is the network above.
+- The original fork's optional [int4 mixed](#int4-mixed-optional) network measured 7 to 8 % less time a
+  frame for 3.5 to 5.4 dB less against NVIDIA's output. These historical measurements are retained below;
+  this port installs the new optimized networks instead.
+
+## Port to 0.0.8.3
+
+The Linux runtime, menus and model installation have been ported to the pinned
+upstream 0.0.8.3, including experimental and all four optimized levels on gfx11.
+This port is a build-tested candidate: GPU numerical and game checks are still
+required. The measurements below describe the original fork on an RX 7900 XTX;
+they are not measurements of this port or of the Z1 Extreme.
+
+See [the port and acceptance report](docs/RDNA3-PORT-0.0.8.3.md) for exact commits,
+build commands, checks, target-machine tests and rollback. Models now use their
+network names (`CC_SMALL_FP8.bin`, `CC_SILVER_AARDWOLD.bin`, etc.). The installer
+migrates checksum-verified legacy source models and rebuilds the fitted networks.
+The old INT4 network is deliberately replaced by optimized in installations; its
+old tables and goldens are isolated for the legacy regression harness.
+
+For the NR Control pointer / XeSS MFG XMX status and footer follow-up, see
+[the plugin update and trial instructions](docs/NR-CONTROL-FIX.md).
 
 ## What it costs
 
@@ -289,9 +308,10 @@ glslang: `fetch_deps.sh` puts glslang 16.5.0 into `toolchain/`, the build uses t
 reproducible only with it.
 
 ```
-git clone <this repository> && cd DLSSNR-AMD && git checkout rdna3
+git clone https://github.com/hedonemaeda/DLSSNR-RDNA3 && cd DLSSNR-RDNA3
+git checkout port/rdna3-0.0.8.3
 bash fetch_deps.sh                        # pinned third-party sources and glslang 16.5.0 -> toolchain/, artifacts/ref/
-bash linux/build/build_vulkan_loader.sh   # the patched Vulkan loader the vulkan and dx9 routes ship
+NR_ARCH=x86_64 bash linux/build/build_vulkan_loader.sh   # the patched Vulkan loader the vulkan and dx9 routes ship
 NR_GPU=rdna3 bash linux/build/build_package.sh
 ```
 
@@ -317,7 +337,7 @@ ReShade add-on, the OptiScaler DLLs and the model tools, and writes
 Unpack the package, then point the installer at the folder with the game's exe and at the zip:
 
 ```
-bash install.sh "<folder with the game's exe>" reshade --dll streamline.zip
+bash install.sh "<folder with the game's exe>" reshade-feeder --dll streamline.zip
 ```
 
 The routes are the main project's: `optiscaler` for games with a DLSS, FSR or XeSS option, `reshade` for

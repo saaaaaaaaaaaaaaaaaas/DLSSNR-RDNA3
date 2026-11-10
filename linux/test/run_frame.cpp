@@ -78,6 +78,11 @@ int main(int argc, char** argv) try {
     temporal.enable = engine;
     temporal.shaders = std::string(argv[1]) + "/dlssnr-amd/shaders/temporal";
     nr::Runtime runtime(host, config, nr::ControlMaskConfig{}, temporal);
+    printf("network_selected %d experimental %d optimized %d", int(runtime.network()), runtime.experimental(), runtime.optimized());
+#if NR_INT4
+    printf(" layers %d int4 %d", runtime.layers(), runtime.int4());
+#endif
+    printf("\n");
 
     nr::ColourFrame frame;
     frame.image = image.handle; frame.format = format; frame.width = width; frame.height = height;

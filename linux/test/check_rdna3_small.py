@@ -40,7 +40,7 @@ def build(model):
         sys.exit(f"{model} is not the tested small model (SHA-256 {digest}, want {MODEL_SHA256}): make it with "
                  "extract_model.sh <nvngx_dlssnr.dll 310.9.16> <folder>")
     run([sys.executable, "linux/build/build_network.py", "rdna3"])
-    cxx = ["g++", "-std=c++20", "-O1", "-w", "-Ilinux/src/core", "-Ilinux/test"] + host_defines()
+    cxx = ["g++", "-std=c++20", "-O1", "-w", "-Itoolchain/Vulkan-Headers/include", "-Ilinux/src/core", "-Ilinux/test"] + host_defines()
     run(cxx + ["linux/test/run_frame.cpp", "linux/src/core/nr_runtime.cpp", "linux/src/core/nr_native_plan.cpp",
                "-o", str(BUILD / "run_frame_small"), "-lvulkan", "-lpthread"])
     run(cxx + ["linux/src/core/nr_graph.cpp", "-o", str(BUILD / "nr_graph_small"), "-lvulkan"])
@@ -50,7 +50,7 @@ def build(model):
     shutil.rmtree(INST, ignore_errors=True)
     data.mkdir(parents=True)
     shutil.copytree(ROOT / "build" / "linux" / "rdna3" / "network", data / "shaders")
-    shutil.copyfile(model, data / "dlssnr-small.bin")
+    shutil.copyfile(model, data / "CC_SMALL_FP8.bin")
 
 
 def run_frame(name, in_path, out_path, timed=0):
@@ -112,7 +112,7 @@ def layer_hashes():
     rgba = np.fromfile(BUILD / "in_1080p.rgba8", np.uint8).reshape(-1, 4).astype(np.float32) / 255
     blob = BUILD / "in_1080p.f32"
     rgba.tofile(blob)
-    out = run([str(BUILD / "nr_graph_small"), "--plan", str(plan), "--model-pack", str(INST / "dlssnr-amd" / "dlssnr-small.bin"),
+    out = run([str(BUILD / "nr_graph_small"), "--plan", str(plan), "--model-pack", str(INST / "dlssnr-amd" / "CC_SMALL_FP8.bin"),
                "--spv-dir", str(INST / "dlssnr-amd" / "shaders"), "--host-boundary", "--no-reuse",
                "--source-width", str(w), "--source-height", str(h), "--in-image", str(blob), "--value-stats"])
     import re

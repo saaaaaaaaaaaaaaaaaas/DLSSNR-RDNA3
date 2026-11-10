@@ -30,7 +30,14 @@ void track_d3d10(ID3D10Resource* resource, Kind kind);
 // by `key` until forget_external(key); forgetting a key not counted does nothing.
 void add_external(uint64_t key, uint64_t bytes, Kind kind);
 void forget_external(uint64_t key);
+// A VkDevice destroyed: its allocations go from the breakdown, also those freed past the wrapped entry points (the
+// ReShade add-on frees through the driver's own functions while a device goes, nr_vk_device_direct).
+void forget_device(uint64_t device);
 // Device-local bytes now, by owner (the network, nr::NetworkChoice; the last: none) and kind.
 static constexpr int kOwners = nr::kNetworkChoices + 1;
 void totals(uint64_t out[kOwners][kKinds]);
+// Device-local bytes now of the allocations network build `build` made (BuildScope), by kind: what the build took on
+// this GPU, whatever its driver and network path (RDNA3's FP16 twins included). All 0 when our allocations are not
+// wrapped (install_vulkan not called in this process).
+void build_totals(uint32_t build, uint64_t out[kKinds]);
 }  // namespace nr::vram

@@ -4,9 +4,16 @@
 // the menu draws on a Wayland surface, the game window's keyboard and mouse for it (a layer cannot read them there),
 // kept from the game while the menu is open.
 #include "nr_ini_network.hpp"
+#include "nr_control_presentation.hpp"
 #include <cstdint>
 #include <string>
 #include <vector>
+
+// A text the menus show as it comes and translate there (nr_lang.hpp tr_text): make_lang.py takes the literal into
+// the language file.
+#ifndef NR_N
+#define NR_N(text) text
+#endif
 
 namespace nr::control { struct Shared; }
 
@@ -30,6 +37,7 @@ struct Status {
     float fast_passes = 0.f;
     bool motion = false, fast_fallback = false;
     bool waiting = false;                  // the run passed its frame through, not building (`waiting_why`)
+    bool ran = false;                      // this run's network ran (a switch builds behind the network before)
     std::string waiting_why;
     bool vram_known = false;               // the process's device-local heap: use, budget, size (Session::video_memory)
     uint64_t vram_usage = 0, vram_budget = 0, vram_heap = 0;
@@ -52,6 +60,8 @@ void layer_changed(int number);
 void present_layers(); // clear running rows with no recording since the preceding presentation
 // The .asi's build and its frame-generation line, for NR Control (and its report).
 void asi_facts(const char* build, const char* frame_gen);
+// Process-local facts for the plugin's menu; the mapped control.bin ABI stays unchanged.
+nr::control::PresentationFacts& presentation_facts();
 // HUD FIX's line for NR Control: what it does now (null: unchanged) and why Mode 2 / 3 / 4 cannot run (null: unchanged,
 // "" it can).
 void hud_facts(const char* now, const char* why_game, const char* why_captured, const char* why_estimated);

@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
-# The int4 mixed option's Linux-side parts, from the same tree as everything else:
-#   <out>/network/             the int4 network (build_network.py <arch> --int4)
+# CC_SILVER_AARDWOLD_OPTIMIZED's int4 layers: the Linux-side parts, from the same tree as everything else:
+#   <out>/network/             the network with them (build_network.py <arch> --int4)
 #   <out>/layer/               the Vulkan layer that gives the game's device VK_KHR_pipeline_binary (src/layer)
 #   <out>/dlssnr-int4-weights  the install-time weights generator (src/tools/nr_int4_weights.cpp), fully static
-#   <out>/data/                the int4 data: the network, linux/data/int4/<NR_INT4_DATA>/ (quantisers, recovery tables,
-#                              settings.txt), the layer; what install.sh copies into dlssnr-amd/int4/
+#   <out>/data/                the int4 data: the network, linux/data/int4/<arch>/ (quantisers, recovery tables,
+#                              settings.txt), the layer; what install.sh copies into dlssnr-amd/int4/ (Optimized layers:
+#                              Balanced)
+#   <out>/data-performance/    Performance: its network (--performance) and Balanced's tables -> dlssnr-amd/int4-performance/
+#   <out>/data-ultra/          Ultra Performance: its network (--ultra), Balanced's tables with linux/data/int4-ultra/<arch>/
+#                              added (and its settings.txt) -> dlssnr-amd/int4-ultra/; the install-time generator makes
+#                              the int4 weights of all three from these tables (theirs cover the others')
 #
 #   [NR_GPU=rdna3|rdna4] build_int4.sh <out dir>      (default rdna4)
 set -euo pipefail
@@ -12,11 +17,19 @@ cd -- "$(dirname -- "$0")/../.."
 out=$(realpath -m -- "${1:?usage: build_int4.sh <out dir>}")
 case "$out" in "$(pwd)"/*) ;; *) echo 'build directory must be in the project' >&2; exit 2;; esac
 source "linux/build/arch/${NR_GPU:-rdna4}.sh"
+legacy=${NR_INT4_LEGACY:-0}   # test harness only: the old network has its own golden and tables
 src=linux/data/int4/$NR_INT4_DATA
+[[ $legacy == 1 ]] && src=linux/data/int4-legacy/$NR_INT4_DATA
 [[ -f "$src/settings.txt" ]] || { echo "missing $src" >&2; exit 1; }
 rm -rf -- "$out"; mkdir -p -- "$out/layer" "$out/gen"
 
-python3 linux/build/build_network.py "$NR_GPU_ARCH" --int4 --out "$out/network" > /dev/null
+if [[ $legacy == 1 ]]; then
+    python3 linux/build/build_network.py "$NR_GPU_ARCH" --legacy-int4 --out "$out/network" > /dev/null
+else
+    python3 linux/build/build_network.py "$NR_GPU_ARCH" --int4 --out "$out/network" > /dev/null
+    python3 linux/build/build_network.py "$NR_GPU_ARCH" --performance --out "$out/network-performance" > /dev/null
+    python3 linux/build/build_network.py "$NR_GPU_ARCH" --ultra --out "$out/network-ultra" > /dev/null
+fi
 
 python3 linux/build/generate_device_chain.py toolchain/Vulkan-Headers "$out/gen/nr_device_chain_sizes.hpp" > /dev/null
 g++ -std=c++17 -O2 -fPIC -shared -Wl,-Bsymbolic -Wl,-z,defs -static-libstdc++ -static-libgcc \
@@ -62,4 +75,17 @@ cp -r -- "$out/network/temporal" "$d/shaders/temporal"
 cp -r -- "$src"/. "$d/"
 rm -f -- "$d/dlssnr-int4.sha256"
 cp -r -- "$out/layer" "$d/layer"
-echo "$out: int4 network $(ls "$d/shaders"/g_*.spv | wc -l) pipelines"
+if [[ $legacy == 1 ]]; then
+    echo "$out: legacy int4 network (test harness only)"
+    exit 0
+fi
+for lv in performance ultra; do
+    e="$out/data-$lv"
+    mkdir -p -- "$e/shaders"
+    cp -- "$out/network-$lv"/g_* "$out/network-$lv"/*.txt "$e/shaders/"
+    cp -r -- "$out/network-$lv/temporal" "$e/shaders/temporal"
+    cp -r -- "$src"/. "$e/"
+    rm -f -- "$e/dlssnr-int4.sha256"
+    [[ $lv == ultra ]] && cp -r -- "linux/data/int4-ultra/$NR_INT4_DATA"/. "$e/"   # its tables and settings.txt
+done
+echo "$out: int4 networks $(ls "$d/shaders"/g_*.spv | wc -l) / $(ls "$out/data-performance/shaders"/g_*.spv | wc -l) / $(ls "$out/data-ultra/shaders"/g_*.spv | wc -l) pipelines"

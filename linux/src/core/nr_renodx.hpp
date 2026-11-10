@@ -79,8 +79,8 @@ struct Settings {
     float chroma_clamp_stops = 1.0f;    // NRChromaClamp
     uint32_t transfer_mode = 0;         // NRTransferMode
     float style_highlight_guard = 0.0f; // NRStyleHighlightGuard
-    uint32_t display_pedestal = 0;      // NRDisplayPedestal
-    uint32_t sdr_black_restore = 0;     // NRSdrBlackRestore: 0 auto, 1 every block, 2 smooth
+    uint32_t display_pedestal = 0;      // NRDisplayPedestal: 0 off (default), 1 always, 2 smooth, 3 auto
+    uint32_t sdr_black_restore = 0;     // NRSdrBlackRestore: 0 off (default), 1 every block, 2 smooth, 3 auto
     bool neural_floor_guard = true;     // NRNeuralFloorGuard
     uint32_t feed_mode = 0;             // NRFeedMode: 0 auto, 1 the content meter, 2 the game's exposure
     uint32_t norm_governor = 2;         // NRNormGovernor
@@ -91,7 +91,7 @@ struct Settings {
     uint32_t detail_stability = 1;      // NRDetailStability: 0 auto, 1 off (default), 2 always
     float resolution_scale = 1.0f;      // NRResolutionScale: the network at 0.33..1 of the frame
     bool follow_input_res = false;      // NRFollowInputRes: the network at the game's render resolution
-    uint32_t look_upsample = 0;         // NRLookUpsample: 0 auto, 1 edge-aware, 2 classic, 3 area input
+    uint32_t look_upsample = 0;         // NRLookUpsample: 0 auto, 1 edge-aware, 2 classic, 3 area input, 4 Ditto SR
     // Adjust NR's look (look_stage.hpp Settings; every default the identity, NRLookMode off).
     bool look_mode = false;             // NRLookMode
     float look_strength = 1.0f;         // NRLookStrength 0..2
@@ -170,6 +170,12 @@ struct StageFrame {
     // The game's motion vectors, for Detail stability: the region (x, y, motion.width/height) of the
     // texture and the scale that turns a texel into normalised screen units (EngineFrame's convention).
     ColourFrame motion;
+    ColourFrame depth;
+    uint32_t depth_x = 0, depth_y = 0;
+    bool depth_inverted = false;
+    float jitter_x = 0.f, jitter_y = 0.f; // game render pixels, FSR/NGX convention
+    uint32_t render_width = 0, render_height = 0;
+    bool jitter_known = false, jittered_motion = false;
     uint32_t motion_x = 0, motion_y = 0;
     float motion_scale_x = 0.0f, motion_scale_y = 0.0f;
     // The game's exposure as DLSS was given it (RenoDX's feed v2): the exposure texture (texel 0,0 is read),

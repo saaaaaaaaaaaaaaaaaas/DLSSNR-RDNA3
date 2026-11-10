@@ -41,3 +41,5 @@ for k in st_fb_in st_prep st_box st_apply; do
         > "$tmp/log" || { cat "$tmp/log" >&2; exit 1; }
 done
 echo "$out: $(ls "$out"/renodx_*.spv | wc -l) RenoDX shaders"
+
+bash linux/build/build_dittosr.sh "$out"

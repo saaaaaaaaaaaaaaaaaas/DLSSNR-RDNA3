@@ -308,7 +308,10 @@ public:
         facts_.prep_outside = x.prep_outside; facts_.prep_missing = x.prep_missing;
         facts_.fast_passes = x.fast_passes; facts_.fast_fallback = x.fast_fallback;
         told_.emplace(&facts_);
-        route::note_pass(f_->flags, 1.0f, f_->depth_rect.width, f_->depth_rect.height, w_, h_);
+        // the output NR Control shows: before the upscaler the upscaler's (the frame is the render's; "No upscaling" was
+        // shown), else the frame
+        route::note_pass(f_->flags, 1.0f, f_->depth_rect.width, f_->depth_rect.height, f_->out_w ? f_->out_w : w_,
+                         f_->out_h ? f_->out_h : h_);
         rf_.before_upscale = before_;
         rf_.pre_exposure = f_->pre_exposure;
         rf_.exposure = f_->exposure;
@@ -533,6 +536,47 @@ bool wilsjo2_hudfix(ID3D12GraphicsCommandList* cmd, ID3D12Device* device, const 
                 run(w2::kHudCompose, back, &ref, &frame, &alpha, frame, w, h);
             } catch (const std::exception& x) {
                 log("[nr] HUD FIX: %s", x.what());
+                return false;
+            }
+            return true;
+        });
+        if (g_stage) g_stage->end_recording();
+    });
+    return recorded;
+}
+
+bool wilsjo2_fg_delta(ID3D12GraphicsCommandList* cmd, ID3D12Device* device, ID3D12Resource* hudless, ID3D12Resource* before,
+                      ID3D12Resource* after, ID3D12Resource* zero, ID3D12Resource* stats, ID3D12Resource* out, uint32_t w,
+                      uint32_t h) {
+    if (g_stage_retry.blocked()) return false;
+    bool recorded = false;
+    nr::dlssnr::with_d3d12_session([&](nr::pe::Session& session) {
+        recorded = session.record_raw(device, cmd, [&](VkCommandBuffer vk, const HostDevice& host,
+                                                       const nr::pe::Session::RawLookup& lookup) {
+            if (!g_stage) {
+                try {
+                    if (stage_fail_test()) throw std::runtime_error("NR_TEST_STAGE_FAIL");
+                    g_stage = std::make_unique<w2::Stage>(host, std::string(nr::pe::module_folder()) +
+                                                                    "\\dlssnr-amd\\shaders\\wilsjo2");
+                    g_stage_retry.made();
+                } catch (const std::exception& x) {
+                    g_stage_retry.fail(x.what());
+                    return false;
+                }
+            }
+            w2::Dispatch d;
+            d.t0 = image_of(lookup(hudless, kUav, true));   // Back: the HUD-less frame
+            d.t1 = image_of(lookup(before, kUav, true));    // Hudless: the frame before the layers
+            d.t2 = image_of(lookup(after, kUav, true));     // Enhanced: the frame after them
+            d.t3 = image_of(lookup(zero, kUav, true));      // a = 0
+            d.u0 = image_of(lookup(out, kUav, true));
+            d.u1 = image_of(lookup(stats, kUav, true));
+            if (!d.t0.format || !d.t1.format || !d.t2.format || !d.t3.format || !d.u0.format || !d.u1.format) return false;
+            d.constants = w2::hudfix_constants(w2::kHudCompose, w, h, 0u, false);   // HudMode 0: a = t3.r
+            try {
+                g_stage->record(vk, d);
+            } catch (const std::exception& x) {
+                log("[nr] frame generation's HUD-less frame: %s", x.what());
                 return false;
             }
             return true;

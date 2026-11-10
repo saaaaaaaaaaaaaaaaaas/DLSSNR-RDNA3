@@ -110,6 +110,8 @@ void note_encode_seen(bool linear, float white_point);
 // that call is on this thread; the model's evaluate happens inside it), with what its MakeDlssNrPass saw of the
 // game's DLSS evaluate just before (create flags, DLSS.Exposure.Scale). `known` is false outside such a call.
 struct Frame {
+    float jitter_x = 0.f, jitter_y = 0.f;
+    bool jitter_known = false, jittered_motion = false;
     bool known = false;
     bool before_upscale = false;
     bool finished_picture = false;

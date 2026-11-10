@@ -93,15 +93,10 @@ def build(model):
     BUILD.mkdir(parents=True, exist_ok=True)
     glslang = ROOT / "toolchain" / "glslang" / "bin" / "glslang"
     if not glslang.exists():
-        found = shutil.which("glslang")
-        if not found:
-            sys.exit("no glslang: run fetch_deps.sh, or put glslang on PATH")
-        glslang.parent.mkdir(parents=True, exist_ok=True)
-        glslang.symlink_to(found)
-        print(f"toolchain/glslang/bin/glslang -> {found} (fetch_deps.sh pins 16.5.0; this one may differ)")
+        sys.exit("no pinned glslang: run bash fetch_deps.sh")
     run([sys.executable, "linux/build/build_network.py", "rdna3"])
     defines = host_defines()
-    inc = ["-Ilinux/src/core", "-Ilinux/test"]
+    inc = ["-Itoolchain/Vulkan-Headers/include", "-Ilinux/src/core", "-Ilinux/test"]
     cxx = ["g++", "-std=c++20", "-O1", "-w"] + inc + defines
     run(cxx + ["linux/test/run_frame.cpp", "linux/src/core/nr_runtime.cpp", "linux/src/core/nr_native_plan.cpp",
                "-o", str(BUILD / "run_frame"), "-lvulkan", "-lpthread"])
@@ -117,7 +112,7 @@ def build(model):
     shutil.rmtree(inst, ignore_errors=True)
     inst.mkdir(parents=True)
     shutil.copytree(ROOT / "build" / "linux" / "rdna3" / "network", inst / "shaders")
-    shutil.copyfile(model, inst / "dlssnr.bin")
+    shutil.copyfile(model, inst / "CC_SILVER_AARDWOLD.bin")
 
 
 # ---- the checks ----------------------------------------------------------------------------------
@@ -197,7 +192,7 @@ def layer_hashes():
     rgba = np.fromfile(BUILD / "in_1080p.rgba8", np.uint8).reshape(-1, 4).astype(np.float32) / 255
     blob = BUILD / "in_1080p.f32"
     rgba.tofile(blob)
-    out = run([str(BUILD / "nr_graph"), "--plan", str(plan), "--model-pack", str(BUILD / "inst/dlssnr-amd/dlssnr.bin"),
+    out = run([str(BUILD / "nr_graph"), "--plan", str(plan), "--model-pack", str(BUILD / "inst/dlssnr-amd/CC_SILVER_AARDWOLD.bin"),
                "--spv-dir", str(ROOT / "build/linux/rdna3/network"), "--host-boundary", "--no-reuse",
                "--source-width", str(w), "--source-height", str(h), "--in-image", str(blob), "--value-stats"])
     rows = []
@@ -217,7 +212,7 @@ def profile(name="4k"):
     plan.write_text(run([str(BUILD / "mkplan"), str(w), str(h)]))
     blob = BUILD / f"in_{name}.f32"
     (np.fromfile(in_path, np.uint8).reshape(-1, 4).astype(np.float32) / 255).tofile(blob)
-    out = run([str(BUILD / "nr_graph"), "--plan", str(plan), "--model-pack", str(BUILD / "inst/dlssnr-amd/dlssnr.bin"),
+    out = run([str(BUILD / "nr_graph"), "--plan", str(plan), "--model-pack", str(BUILD / "inst/dlssnr-amd/CC_SILVER_AARDWOLD.bin"),
                "--spv-dir", str(ROOT / "build/linux/rdna3/network"), "--host-boundary", "--reuse",
                "--source-width", str(w), "--source-height", str(h), "--in-image", str(blob),
                "--warmup", "3", "--repeats", "10", "--per-layer"])
@@ -241,7 +236,7 @@ def isa(name="1080p"):
     plan.write_text(run([str(BUILD / "mkplan"), str(w), str(h)]))
     blob = BUILD / f"in_{name}.f32"
     (np.fromfile(in_path, np.uint8).reshape(-1, 4).astype(np.float32) / 255).tofile(blob)
-    argv = [str(BUILD / "nr_graph"), "--plan", str(plan), "--model-pack", str(BUILD / "inst/dlssnr-amd/dlssnr.bin"),
+    argv = [str(BUILD / "nr_graph"), "--plan", str(plan), "--model-pack", str(BUILD / "inst/dlssnr-amd/CC_SILVER_AARDWOLD.bin"),
             "--spv-dir", str(ROOT / "build/linux/rdna3/network"), "--host-boundary", "--reuse",
             "--source-width", str(w), "--source-height", str(h), "--in-image", str(blob)]
     wiring = run(argv + ["--wiring"])

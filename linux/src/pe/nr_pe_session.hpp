@@ -151,6 +151,9 @@ class Session {
     // builds or when the frame cannot be taken (the caller then copies the input over, which OptiScaler
     // outputs as it is).
     struct RenoDXFrame {
+        uint32_t render_width = 0, render_height = 0;
+        float jitter_x = 0.f, jitter_y = 0.f;
+        bool jitter_known = false, jittered_motion = false;
         bool fast_motion_available = true;
         bool hdr_flag = false;        // the game's colour is HDR (OptiScaler's own judgement)
         bool after_upscale = true;    // NR runs on the upscaler's output

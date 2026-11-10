@@ -21,6 +21,7 @@
 # this shares every object with below the ABI layer.
 set -euo pipefail
 cd -- "$(dirname -- "$0")/../.."
+source linux/build/reproducible.sh
 
 arch=${NR_ARCH:-x86_64}
 case "$arch" in x86_64|i686) ;; *) echo "NR_ARCH must be x86_64 or i686" >&2; exit 2;; esac
@@ -90,7 +91,7 @@ core_objs=("$out/ngx_core.o" "$out/optifix.o" "${shared_objs[@]}")
 # generated thunk file serves both.
 extra_vk_objs=()
 [[ ${NR_ASI_VK_OBJECTS:-0} == 1 ]] && extra_vk_objs=("$out/menu.o" "$out/im_imgui_impl_vulkan.o")
-undefined=$({ "$cxx" -shared -o /dev/null "${extra_vk_objs[@]}" "${forwarder_objs[@]}" "$out/ngx_core.o" "$out/optifix.o" "${ldflags[@]}" 2>&1 || true; } |
+undefined=$({ "$cxx" -Wl,--no-insert-timestamp -shared -o /dev/null "${extra_vk_objs[@]}" "${forwarder_objs[@]}" "$out/ngx_core.o" "$out/optifix.o" "${ldflags[@]}" 2>&1 || true; } |
     grep -o "undefined reference to \`_*vk[A-Za-z0-9_@]*'" | sed "s/.*\`//; s/'//" | sort -u)
 count=$(echo "$undefined" | grep -c . || true)
 plain() { echo "$1" | sed 's/^_//; s/@[0-9]*$//'; }
@@ -174,12 +175,12 @@ C
 "$cc" -O2 -c "$out/vulkan_lazy.c" -o "$out/vulkan_lazy_c.o"
 echo "vulkan entry points resolved at run time: $count"
 
-"$cxx" -shared -o "$out/nvngx.dll_dlssnr.dll" \
+"$cxx" -Wl,--no-insert-timestamp -shared -o "$out/nvngx.dll_dlssnr.dll" \
     "${forwarder_objs[@]}" "$out/vulkan_lazy_s.o" "$out/vulkan_lazy_c.o" "${ldflags[@]}"
 
 # The core is no longer a stub: it carries the same model, because wilsjo2's fork drives feature 18
 # through it and loads nothing else.
-"$cxx" -shared -o "$out/_nvngx.dll" \
+"$cxx" -Wl,--no-insert-timestamp -shared -o "$out/_nvngx.dll" \
     "${core_objs[@]}" "$out/vulkan_lazy_s.o" "$out/vulkan_lazy_c.o" "${ldflags[@]}"
 
 # The presence check. Dagherbou's fork will not create a feature unless a file by this name sits

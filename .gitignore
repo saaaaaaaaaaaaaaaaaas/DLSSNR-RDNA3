@@ -5,6 +5,7 @@
 /build/
 __pycache__/
 /linux/package/*.tar.gz
+/linux/package/*.tar.gz.sha256
 /windows/package/*.zip
 /linux/package/DLSSNR-AMD-Vulkan-*/
 /windows/package/DLSSNR-AMD-Vulkan-Windows-*/
@@ -12,8 +13,10 @@ dlssnr-amd.pipelinecache
 # Never commit NVIDIA's files or anything made from them
 *.dll
 *.bin
-# except the int4 mixed tables: per-matrix corrections and calibration means, no weight values
+# except the INT4 tables: per-matrix corrections and calibration means, no weight values
 !/linux/data/int4/**/*.bin
+!/linux/data/int4-ultra/**/*.bin
+!/linux/data/int4-legacy/**/*.bin
 nvngx*
 /temp/
 /logs/

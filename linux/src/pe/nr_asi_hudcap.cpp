@@ -19,6 +19,8 @@
 #include "nr_asi_hudcap.hpp"
 #include "nr_hud_capture.hpp"
 #include "nr_pe_log.hpp"
+#include "nr_pe_control.hpp"
+#include "nr_ngx_abi.hpp"
 
 #include <MinHook.h>
 
@@ -701,8 +703,10 @@ int format_group(DXGI_FORMAT f) {
     }
 }
 
+bool (*g_game_caller)(void*) = nullptr;   // set_game_caller
 struct FgState {
     std::atomic<bool> armed{false};
+    std::atomic<bool> list_copies{false};   // copies on the hand-over's command list (HUD FIX takes it)
     std::atomic<int> in_present{0};
     std::mutex m;
     ID3D12Resource* copy = nullptr;   // ours
@@ -715,16 +719,45 @@ struct FgState {
     bool copied = false, until_present = false, substitute = false;
     const char* source = "";
     std::string refused;              // the last one not taken: why
-    bool hooked_ffx[3] = {}, hooked_xefg = false, hooked_sl = false;
+    // a hand-over seen while not armed (HUD FIX in another mode): its time (GetTickCount64), so NR Control can tell
+    // whether the method could run before it is picked
+    std::atomic<uint64_t> offered_ms{0};
+    bool hooked_ffx[3] = {}, hooked_xefg = false, hooked_sl = false, hooked_xemfg = false;
     uint64_t looked = 0;
+    std::atomic<uint64_t> dlssg_ms{0};   // the last DLSS-G evaluate (through NGX) the Present layers ran at
 } gf;
 
 // A hand-over of `r` (in `state`; `list`: the game's command list it was made on, null none) by `source`.
-void fg_note(ID3D12Resource* r, D3D12_RESOURCE_STATES state, ID3D12GraphicsCommandList* list, bool until_present,
+void fg_note(void* caller, ID3D12Resource* r, D3D12_RESOURCE_STATES state, ID3D12GraphicsCommandList* list, bool until_present,
              bool substitute, const char* source) {
-    if (!r || !gf.armed.load(std::memory_order_relaxed) || t_own) return;
+    if (!r || t_own) return;
+    // While the Present layers run at DLSS-G's evaluate (DLSS-G through NGX) the HUD-less frame frame generation reads
+    // is the one that evaluate hands over (Streamline's copy, fg_note_dlssg): the game's own hand-overs (its Streamline
+    // tag) are not taken. Made on the game's threads, one could land between that evaluate's hand-over and the layers,
+    // which then wrote NR's change into the game's next HUD-less frame instead: one generated frame without NR, the
+    // next with it twice.
+    if (caller) {
+        const uint64_t d = gf.dlssg_ms.load();
+        if (d && GetTickCount64() - d < 1000) return;
+    }
+    // OptiScaler's own frame generation's (its lists, its threads): not taken (caller null: NGX's DLSS-G evaluate, the game's)
+    if (caller && g_game_caller && !g_game_caller(caller)) {
+        static std::atomic<int> told{0};
+        if (told.fetch_add(1) < 2)
+            log("[nr] HUD FIX (frame generation): %s's HUD-less frame handed over by OptiScaler's own frame generation (or "
+                "another library) is not taken; only the game's own hand-overs are", source);
+        return;
+    }
+    if (!gf.armed.load(std::memory_order_relaxed)) {   // only seen (not during the Present: OptiScaler's own)
+        if (!gf.in_present.load()) gf.offered_ms.store(GetTickCount64());
+        return;
+    }
     std::lock_guard<std::mutex> lk(gf.m);
-    if (gf.in_present.load()) { gf.refused = std::string(source) + "'s is handed over during the Present (OptiScaler's own frame generation): the capture serves it"; return; }
+    // During a Present the hand-overs are OptiScaler's own frame generation's - but not DLSS-G's own (caller null: its
+    // evaluate through NGX). The count is the process's: Streamline's presenting thread sits in its Present most of the
+    // time while DLSS-G evaluates on another, and most of its HUD-less frames went without NR's change (the generated
+    // frames weaker than the real ones: the picture flickered).
+    if (caller && gf.in_present.load()) { gf.refused = std::string(source) + "'s is handed over during the Present (OptiScaler's own frame generation): the capture serves it"; return; }
     const D3D12_RESOURCE_DESC d = r->GetDesc();
     ID3D12Device* rd = nullptr, *cd = nullptr;
     if (gf.copy) { r->GetDevice(IID_PPV_ARGS(&rd)); gf.copy->GetDevice(IID_PPV_ARGS(&cd)); }
@@ -744,7 +777,7 @@ void fg_note(ID3D12Resource* r, D3D12_RESOURCE_STATES state, ID3D12GraphicsComma
     gf.substitute = substitute && until_present;
     gf.copied = false;
     gf.refused.clear();
-    if (list && reinterpret_cast<uintptr_t>(list) > 0xFFFF) {   // copied now, on the game's list (XeSS-FG's fake list: 1)
+    if (list && reinterpret_cast<uintptr_t>(list) > 0xFFFF && gf.list_copies.load()) {   // copied now, on the game's list (XeSS-FG's fake list: 1)
         ++t_own;
         transition(list, r, state, D3D12_RESOURCE_STATE_COPY_SOURCE);
         transition(list, gf.copy, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_COPY_DEST);
@@ -762,27 +795,72 @@ void fg_note(ID3D12Resource* r, D3D12_RESOURCE_STATES state, ID3D12GraphicsComma
 using PFN_FfxConfigure = int32_t (*)(void*, const FfxHeader*);
 PFN_FfxConfigure real_ffx_configure[3];
 template <int I> int32_t ffx_configure(void* ctx, const FfxHeader* desc) {
+    const FfxConfigureFg* config = nullptr;
     for (const FfxHeader* h = desc; h; h = h->next)
         if (h->type == kFfxConfigureFg) {
             const auto* c = reinterpret_cast<const FfxConfigureFg*>(h);
+            config = c;
             if (c->enabled && c->hudless.resource)
-                fg_note(static_cast<ID3D12Resource*>(c->hudless.resource), d3d12_state_of_ffx(c->hudless.state), nullptr, true, true,
-                        "FSR frame generation");
+                fg_note(__builtin_return_address(0), static_cast<ID3D12Resource*>(c->hudless.resource),
+                        d3d12_state_of_ffx(c->hudless.state), nullptr, true, true, "FSR frame generation");
             break;
         }
-    return real_ffx_configure[I](ctx, desc);
+    const int32_t result = real_ffx_configure[I](ctx, desc);
+    if (result == 0 && config)
+        nr::pe::control::presentation_facts().provider(nr::control::FgSource::FSR, reinterpret_cast<uintptr_t>(ctx),
+                                                      config->enabled, 0, GetTickCount64());
+    return result;
 }
+// Intel's xefg_swapchain_present_status_t has three 32-bit fields. Unlike the HUD-less resource tags, its
+// enabled flag and presented-frame count describe OptiScaler's output even when no HUD-less image was supplied.
+struct XefgPresentStatus { uint32_t frames; int32_t result; uint32_t enabled; };
+static_assert(sizeof(XefgPresentStatus) == 12);
+using PFN_XefgStatus = int32_t (*)(void*, XefgPresentStatus*);
+PFN_XefgStatus real_xefg_status;
+int32_t xefg_status(void* sc, XefgPresentStatus* status) {
+    const int32_t result = real_xefg_status(sc, status);
+    if (result >= 0 && status)
+        nr::pe::control::presentation_facts().provider(nr::control::FgSource::XeSS, reinterpret_cast<uintptr_t>(sc),
+                                                      status->enabled != 0, status->frames, GetTickCount64());
+    return result;
+}
+
+// dlssg-to-xefg-xmx calls XeFG's private execution API; no xefgSwapChain present-status call observes that route.
+// Follow its public NGX evaluate without changing parameters, resources, the result or its generated frames.
+using PFN_XemfgEvaluate = NVSDK_NGX_Result(NR_NGX_MSABI*)(ID3D12GraphicsCommandList*, const NVSDK_NGX_Handle*,
+                                                       NVSDK_NGX_Parameter*, void*);
+PFN_XemfgEvaluate real_xemfg_evaluate;
+NVSDK_NGX_Result NR_NGX_MSABI xemfg_evaluate(ID3D12GraphicsCommandList* list, const NVSDK_NGX_Handle* handle,
+                                             NVSDK_NGX_Parameter* params, void* callback) {
+    const auto result = real_xemfg_evaluate(list, handle, params, callback);
+    if (result == NVSDK_NGX_Result_Success && handle && params) {
+        unsigned enabled = 1, generated = 1;
+        params->Get("DLSSG.EnableInterp", &enabled);
+        params->Get("DLSSG.MultiFrameCount", &generated);
+        // This replacement defaults to one generated frame and clamps its supported range to 1..5.
+        generated = std::clamp(generated, 1u, 5u);
+        nr::pe::control::presentation_facts().provider(nr::control::FgSource::XeSSMFG, handle->Id,
+                                                      enabled != 0, generated + 1, GetTickCount64());
+        static std::atomic<unsigned> previous{~0u};
+        const unsigned state = enabled ? generated + 1 : 0;
+        if (previous.exchange(state) != state)
+            log("[nr] NR Control: XeSS MFG XMX successful NGX evaluate, interpolation %s, requested multiplier %ux",
+                enabled ? "on" : "off", state);
+    }
+    return result;
+}
+
 using PFN_XefgTag = int32_t (*)(void*, ID3D12CommandList*, uint32_t, const XefgResource*);
 PFN_XefgTag real_xefg_tag;
 int32_t xefg_tag(void* sc, ID3D12CommandList* list, uint32_t id, const XefgResource* r) {
     if (r && r->type == 0 && r->resource) {
         ID3D12GraphicsCommandList* gl = nullptr;
         if (list && reinterpret_cast<uintptr_t>(list) > 0xFFFF && SUCCEEDED(list->QueryInterface(IID_PPV_ARGS(&gl))) && gl) gl->Release();
-        fg_note(r->resource, r->state, gl, r->validity == 0, r->validity == 0, "XeSS frame generation");
+        fg_note(__builtin_return_address(0), r->resource, r->state, gl, r->validity == 0, r->validity == 0, "XeSS frame generation");
     }
     return real_xefg_tag(sc, list, id, r);
 }
-void sl_tags(const SlTag* tags, uint32_t n, void* cmd) {
+void sl_tags(void* caller, const SlTag* tags, uint32_t n, void* cmd) {
     for (uint32_t i = 0; tags && i < n; ++i) {
         const SlTag& t = tags[i];
         if (t.type != 2 || !t.resource || !t.resource->native) continue;   // kBufferTypeHUDLessColor
@@ -791,7 +869,7 @@ void sl_tags(const SlTag* tags, uint32_t n, void* cmd) {
         if (u && reinterpret_cast<uintptr_t>(u) > 0xFFFF && SUCCEEDED(u->QueryInterface(IID_PPV_ARGS(&gl))) && gl) gl->Release();
         // lifecycle 0 valid only now, 1 until the present, 2 until its evaluate: only 1 is read at the Present; the others
         // are copied on their command list (refused without one)
-        fg_note(static_cast<ID3D12Resource*>(t.resource->native), D3D12_RESOURCE_STATES(t.resource->state), gl, t.lifecycle == 1,
+        fg_note(caller, static_cast<ID3D12Resource*>(t.resource->native), D3D12_RESOURCE_STATES(t.resource->state), gl, t.lifecycle == 1,
                 t.lifecycle == 1, "DLSS frame generation (Streamline)");
     }
 }
@@ -799,9 +877,12 @@ using PFN_SlSetTag = int (*)(const void*, const SlTag*, uint32_t, void*);
 using PFN_SlSetTagForFrame = int (*)(const void*, const void*, const SlTag*, uint32_t, void*);
 PFN_SlSetTag real_sl_set_tag;
 PFN_SlSetTagForFrame real_sl_set_tag_frame;
-int sl_set_tag(const void* vp, const SlTag* tags, uint32_t n, void* cmd) { sl_tags(tags, n, cmd); return real_sl_set_tag(vp, tags, n, cmd); }
+int sl_set_tag(const void* vp, const SlTag* tags, uint32_t n, void* cmd) {
+    sl_tags(__builtin_return_address(0), tags, n, cmd);
+    return real_sl_set_tag(vp, tags, n, cmd);
+}
 int sl_set_tag_frame(const void* f, const void* vp, const SlTag* tags, uint32_t n, void* cmd) {
-    sl_tags(tags, n, cmd);
+    sl_tags(__builtin_return_address(0), tags, n, cmd);
     return real_sl_set_tag_frame(f, vp, tags, n, cmd);
 }
 
@@ -815,8 +896,13 @@ bool hook_export(HMODULE m, const char* name, void* detour, void** real) {
 }
 // The frame-generation libraries as they come (looked for once a second of Presents): each hooked once.
 void fg_hook_libraries() {
-    if (g.presents - gf.looked < 60 && gf.looked) return;
-    gf.looked = g.presents;
+    static std::mutex poll_mutex;
+    std::unique_lock<std::mutex> lock(poll_mutex, std::try_to_lock);
+    if (!lock.owns_lock()) return;
+    static ULONGLONG looked = 0;
+    const ULONGLONG now = GetTickCount64();
+    if (looked && now - looked < 1000) return;
+    looked = now;
     MH_Initialize();
     static const wchar_t* const ffx[3] = {L"amd_fidelityfx_dx12.dll", L"amd_fidelityfx_loader_dx12.dll",
                                           L"amd_fidelityfx_framegeneration_dx12.dll"};
@@ -828,9 +914,17 @@ void fg_hook_libraries() {
                 if (hook_export(m, "ffxConfigure", ffx_detour[i], reinterpret_cast<void**>(&real_ffx_configure[i])))
                     log("[nr] HUD FIX (frame generation): %ls's ffxConfigure followed", ffx[i]);
             }
+    if (!gf.hooked_xemfg)
+        if (HMODULE m = GetModuleHandleW(L"dlssg_to_xefg_intel_is_better.dll")) {
+            gf.hooked_xemfg = hook_export(m, "NVSDK_NGX_D3D12_EvaluateFeature", as(&xemfg_evaluate),
+                                         reinterpret_cast<void**>(&real_xemfg_evaluate));
+            if (gf.hooked_xemfg) log("[nr] NR Control: XeSS MFG XMX NGX provider status followed");
+        }
     if (!gf.hooked_xefg)
         if (HMODULE m = GetModuleHandleW(L"libxess_fg.dll")) {
             gf.hooked_xefg = true;
+            if (hook_export(m, "xefgSwapChainGetLastPresentStatus", as(&xefg_status), reinterpret_cast<void**>(&real_xefg_status)))
+                log("[nr] NR Control: XeSS frame generation present status followed");
             if (hook_export(m, "xefgSwapChainD3D12TagFrameResource", as(&xefg_tag), reinterpret_cast<void**>(&real_xefg_tag)))
                 log("[nr] HUD FIX (frame generation): libxess_fg.dll's resource tags followed");
         }
@@ -876,11 +970,16 @@ void d3d12_executed(unsigned count, ID3D12CommandList* const* lists) { executed(
 
 Own::Own() { ++t_own; }
 Own::~Own() { --t_own; }
+void set_game_caller(bool (*game)(void* caller)) { g_game_caller = game; }
 PresentCall::PresentCall() { ++gf.in_present; }
 PresentCall::~PresentCall() { --gf.in_present; }
 
-void fg_note_dlssg(ID3D12GraphicsCommandList* list, ID3D12Resource* hudless) {
-    if (hudless && list) fg_note(hudless, D3D12_RESOURCE_STATE_COPY_DEST, list, false, false, "DLSS frame generation (NGX)");
+void fg_note_dlssg(ID3D12GraphicsCommandList* list, ID3D12Resource* hudless, bool layers_here) {
+    // layers_here: the Present layers run in this evaluate, on its list, before frame generation reads the frame - it is
+    // read (and may be substituted) as one valid until the present
+    if (layers_here) gf.dlssg_ms.store(GetTickCount64());
+    if (hudless && list)
+        fg_note(nullptr, hudless, D3D12_RESOURCE_STATE_COPY_DEST, list, layers_here, layers_here, "DLSS frame generation (NGX)");
 }
 
 void d3d12_device(ID3D12Device* device, bool armed_now) {
@@ -890,9 +989,29 @@ void d3d12_device(ID3D12Device* device, bool armed_now) {
     hook_device(device);
 }
 
+namespace {
+void store_backs(IDXGISwapChain* sc) {
+    DXGI_SWAP_CHAIN_DESC d{};
+    if (FAILED(sc->GetDesc(&d))) return;
+    for (UINT i = 0; i < 8; ++i) {
+        ID3D12Resource* b = nullptr;
+        uint64_t v = 0;
+        if (i < d.BufferCount && SUCCEEDED(sc->GetBuffer(i, IID_PPV_ARGS(&b))) && b) { v = reinterpret_cast<uint64_t>(b); b->Release(); }
+        g.backs[i].store(v);
+    }
+}
+}  // namespace
+
+void poll_frame_generation() { fg_hook_libraries(); }
+
+void d3d12_backs(IDXGISwapChain* sc) {
+    if (sc && g.armed.load()) store_backs(sc);
+}
+
 Frame d3d12_present(ID3D12Device* device, IDXGISwapChain* sc, ID3D12CommandQueue* queue, ID3D12Resource* back,
-                    DXGI_FORMAT format, uint32_t w, uint32_t h, bool armed, bool fg_armed) {
+                    DXGI_FORMAT format, uint32_t w, uint32_t h, bool armed, bool fg_armed, bool fg_list_copies) {
     Frame f;
+    gf.list_copies.store(fg_list_copies);
     {   // frame generation's HUD-less frame: this frame's hand-over (since the last Present), and its copy made ready
         std::lock_guard<std::mutex> lk(gf.m);
         if (fg_armed && device) {
@@ -925,8 +1044,12 @@ Frame d3d12_present(ID3D12Device* device, IDXGISwapChain* sc, ID3D12CommandQueue
             gf.at = ~0ull;
         }
         gf.armed.store(fg_armed && device);
+        const uint64_t offered = gf.offered_ms.load();
+        f.fg.offered = offered && GetTickCount64() - offered <= 2000;
     }
-    if (fg_armed && device) fg_hook_libraries();
+    // followed in every mode: NR Control greys the method from the start where no hand-over comes (cheap: the
+    // libraries' entry points hooked once; while not armed a hand-over only notes its time)
+    if (device) fg_hook_libraries();
     ++g.presents;
     // earlier copies' images (g.retired) are kept: a list the game recorded with one may still run (it is not freed
     // without a proof that none can; each resize retires one or two)
@@ -946,19 +1069,10 @@ Frame d3d12_present(ID3D12Device* device, IDXGISwapChain* sc, ID3D12CommandQueue
         f.broken = true;
         return f;
     }
-    {   // the swap chain's back buffers
-        DXGI_SWAP_CHAIN_DESC d{};
-        if (SUCCEEDED(sc->GetDesc(&d))) {
-            for (UINT i = 0; i < 8; ++i) {
-                ID3D12Resource* b = nullptr;
-                uint64_t v = 0;
-                if (i < d.BufferCount && SUCCEEDED(sc->GetBuffer(i, IID_PPV_ARGS(&b))) && b) { v = reinterpret_cast<uint64_t>(b); b->Release(); }
-                g.backs[i].store(v);
-            }
-        }
-        g.back_w.store(w);
-        g.back_h.store(h);
-    }
+    // the swap chain's back buffers (at DLSS-G's evaluate none in hand: those its Presents saw, d3d12_backs)
+    if (sc) store_backs(sc);
+    g.back_w.store(w);
+    g.back_h.store(h);
     const bool image = ensure_hudless(device, format, w, h);
     g.armed.store(true);
     std::vector<Rec> recs;

@@ -22,6 +22,7 @@ struct Entry {
     uint64_t bytes;
     uint32_t type;   // Vulkan memory type; ~0u: a D3D12 default-heap resource
     Tag tag;
+    uint64_t device = 0;   // a Vulkan allocation's VkDevice (forget_device)
 };
 std::mutex g_lock;
 std::unordered_map<uint64_t, Entry> g_vk;    // by VkDeviceMemory
@@ -37,7 +38,7 @@ VKAPI_ATTR VkResult VKAPI_CALL allocate(VkDevice device, const VkMemoryAllocateI
     const VkResult r = g_real_allocate(device, info, callbacks, memory);
     if (r == VK_SUCCESS && info && memory && *memory) {
         std::lock_guard<std::mutex> guard(g_lock);
-        g_vk[uint64_t(*memory)] = Entry{info->allocationSize, info->memoryTypeIndex, t_tag};
+        g_vk[uint64_t(*memory)] = Entry{info->allocationSize, info->memoryTypeIndex, t_tag, uint64_t(uintptr_t(device))};
     }
     return r;
 }
@@ -232,6 +233,12 @@ void forget_external(uint64_t key) {
     g_ext.erase(key);
 }
 
+void forget_device(uint64_t device) {
+    if (!device) return;
+    std::lock_guard<std::mutex> guard(g_lock);
+    for (auto i = g_vk.begin(); i != g_vk.end();) i = i->second.device == device ? g_vk.erase(i) : std::next(i);
+}
+
 void totals(uint64_t out[kOwners][kKinds]) {
     std::memset(out, 0, sizeof(uint64_t) * kOwners * kKinds);
     std::lock_guard<std::mutex> guard(g_lock);
@@ -239,5 +246,14 @@ void totals(uint64_t out[kOwners][kKinds]) {
         if (e.type < 32 && (g_device_local >> e.type) & 1u) out[owner_index(e.tag.owner)][e.tag.kind] += e.bytes;
     for (const auto& [key, e] : g_d3d) out[owner_index(e.tag.owner)][e.tag.kind] += e.bytes;
     for (const auto& [key, e] : g_ext) out[owner_index(e.tag.owner)][e.tag.kind] += e.bytes;
+}
+
+void build_totals(uint32_t build, uint64_t out[kKinds]) {
+    std::memset(out, 0, sizeof(uint64_t) * kKinds);
+    if (!build) return;
+    std::lock_guard<std::mutex> guard(g_lock);
+    for (const auto& [memory, e] : g_vk)
+        if (e.tag.build == build && e.type < 32 && (g_device_local >> e.type) & 1u) out[e.tag.kind] += e.bytes;
+    for (const auto& [key, e] : g_d3d) if (e.tag.build == build) out[e.tag.kind] += e.bytes;
 }
 }  // namespace nr::vram

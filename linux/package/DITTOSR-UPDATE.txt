@@ -1,0 +1,28 @@
+NR Control: Ditto SR trial update (Linux/Proton, x86_64, RDNA3)
+
+Requires the existing RDNA3 0.0.8.3 port package and OptiScaler route.
+Exit the game. Back up OptiScaler/plugins/dlssnr-amd.asi and the existing
+dlssnr-amd/shaders/renodx folder outside the game folder.
+Copy this archive's OptiScaler and dlssnr-amd folders into the game folder,
+merging them with the existing folders. Replace the ASI and all five Ditto
+shaders together; the old prepare shader is incompatible with this update.
+
+In NR Control (End), choose a RenoDX layer and set:
+  Placement: Before the upscaler
+  Resolution scale: for example 0.33
+  Upsampling: Ditto SR
+Keep your preferred upscaler, such as FSR 4, selected in OptiScaler.
+
+At 1280x720 SR input, 0.33 runs NR at 422x238. Ditto SR reconstructs neural
+to up_neural at 1280x720. NR's normal resolve uses up_proxy and up_neural;
+then OptiScaler's SR can upscale the composed result to 1920x1080.
+At scale 1, Ditto SR has no enlargement to do and the normal NR path runs.
+Follow render resolution overrides Resolution scale; disable it for this example.
+Ditto SR needs the game's readable depth, motion vectors and jitter.
+Unsupported placement or missing inputs are reported in NR Control.
+
+Build and software Vulkan checks passed. AMD GPU image quality, timing,
+frame generation and the in-game FSR 4 chain still require a target trial.
+No model, NVIDIA DLL, OptiScaler or frame-generation provider is included.
+
+Rollback: exit the game and restore the backed-up ASI and shader folder.

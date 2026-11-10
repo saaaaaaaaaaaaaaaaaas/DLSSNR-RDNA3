@@ -22,6 +22,7 @@
 #include <windows.h>
 #include <d3d12.h>
 
+#include "nr_path_win.hpp"
 #include "nr_dlssnr_model.hpp"
 #include "nr_pe_config.hpp"
 #include "nr_pe_interop.hpp"
@@ -197,6 +198,7 @@ bool frame_keys() {
     static nr::pe::KeyPress screenshot_key;
     const nr::pe::RenoDXConfig cfg = renodx_now();
     g_nr_on = toggle.frame(cfg);
+    nr::pe::layer_keys_frame();   // [LayerN] ToggleKey
     // RenoDX's NR screenshot: NRScreenshotKey (the menu's button comes through control.bin, nr_pe_control.cpp)
     nr::pe::screenshot::configure({cfg.screenshot_source, cfg.screenshot_format, cfg.screenshot_layout,
                                    cfg.screenshot_jpeg_quality, cfg.screenshot_max_mb});
@@ -236,10 +238,10 @@ int optiscaler_white_point_source() {
     const ULONGLONG now = GetTickCount64();
     if (read && now - read < 5000) return value;
     read = now;
-    char path[MAX_PATH + 32];
+    char path[MAX_PATH * 4 + 32];
     std::snprintf(path, sizeof path, "%s\\OptiScaler.ini", nr::pe::module_folder());
     char v[16] = {};
-    GetPrivateProfileStringA("DlssNr", "WhitePointSource", "", v, sizeof v, path);
+    nr::u8::profile("DlssNr", "WhitePointSource", "", v, sizeof v, path);
     value = v[0] >= '0' && v[0] <= '9' ? std::atoi(v) : -1;
     return value;
 }
@@ -285,7 +287,6 @@ void report_control(nr::pe::Session& session, const Feature* f, uint32_t route, 
     st.renodx = rs != nullptr;
     st.nr_on = rs ? rs->nr_enabled : true;
     st.preprocess = f->controls.preprocess.active() || f->prep_by_layer;
-    st.building = session.building() && !ran;
     st.gpu_ms = session.gpu_ms();
     st.network_ms = session.network_ms();
     st.width = w; st.height = h;
@@ -374,8 +375,11 @@ void report_control(nr::pe::Session& session, const Feature* f, uint32_t route, 
         st.panel = nr::pe::panel::lines(pf);
     }
     st.net_running = ss.running_net; st.net_want = ss.want_net;
+    // a network being built (a plan is none) while this layer still runs the one before: a switch, the OSD's bar
+    st.building = ss.building;
+    st.ran = ran;
     st.waiting = !ran && !ss.building;
-    if (st.waiting) st.waiting_why = ss.status.empty() ? "this frame passed through" : ss.status;
+    if (st.waiting) st.waiting_why = ss.status.empty() ? NR_N("this frame passed through") : ss.status;
     // a frame passed through ran nothing: no time on its row (the session's averages are an earlier run's - another
     // placement's, feature's or configuration's)
     if (!ran) st.gpu_ms = st.network_ms = 0.f;
@@ -988,7 +992,7 @@ void dump_ppm(const DebugReadback& rb, const uint8_t* base, uint64_t feature_id,
     std::snprintf(name, sizeof name, "dlssnr-amd-f%u-e%u-%s.ppm", static_cast<unsigned>(feature_id),
                   static_cast<unsigned>(rb.pending_n), which);
     path += name;
-    FILE* fp = std::fopen(path.c_str(), "wb");
+    FILE* fp = nr::u8::fopen(path.c_str(), "wb");
     if (!fp) { log("[nr] dump: cannot write %s", path.c_str()); return; }
     const UINT w = rb.fp.Footprint.Width, h = rb.fp.Footprint.Height;
     const size_t pitch = rb.fp.Footprint.RowPitch;
@@ -1394,6 +1398,9 @@ int evaluate_d3d12(ID3D12GraphicsCommandList* cmd, Feature* f, void* params, ID3
             rf.exposure = static_cast<ID3D12Resource*>(frame.exposure);
             rf.exposure_state = static_cast<D3D12_RESOURCE_STATES>(frame.exposure_state);
             rf.pre_exposure = frame.pre_exposure > 0.0f ? frame.pre_exposure : 1.0f;
+            rf.jitter_x = frame.jitter_x; rf.jitter_y = frame.jitter_y;
+            rf.jitter_known = frame.jitter_known; rf.jittered_motion = frame.jittered_motion;
+            rf.render_width = frame.render_width; rf.render_height = frame.render_height;
             rf.exposure_scale = frame.exposure_scale;
             rf.auto_exposure = frame.flags_known && (frame.create_flags & 0x40u) != 0;   // AutoExposure
             rf.create_flags_known = frame.flags_known;
@@ -1727,6 +1734,9 @@ int evaluate_vk(void* cmd_buffer, Feature* f, void* params, const void* color, c
         if (info.known) {
             rf.after_upscale = !info.before_upscale;
             rf.pre_exposure = info.pre_exposure > 0.0f ? info.pre_exposure : 1.0f;
+            rf.jitter_x = info.jitter_x; rf.jitter_y = info.jitter_y;
+            rf.jitter_known = info.jitter_known; rf.jittered_motion = info.jittered_motion;
+            rf.render_width = info.render_width; rf.render_height = info.render_height;
             rf.vk_exposure = (VkImage)(uintptr_t)info.vk_exposure;
             rf.vk_exposure_format = VkFormat(info.vk_exposure_format);
             rf.vk_exposure_width = info.vk_exposure_width;
@@ -1900,6 +1910,9 @@ int evaluate_vk_asi(void* cmd_buffer, Feature* f, const VkImageRef& colour, cons
         } else if (info.known) {
             rf.after_upscale = !info.before_upscale;
             rf.pre_exposure = info.pre_exposure > 0.0f ? info.pre_exposure : 1.0f;
+            rf.jitter_x = info.jitter_x; rf.jitter_y = info.jitter_y;
+            rf.jitter_known = info.jitter_known; rf.jittered_motion = info.jittered_motion;
+            rf.render_width = info.render_width; rf.render_height = info.render_height;
             rf.exposure_scale = info.exposure_scale;
             rf.vk_exposure = (VkImage)(uintptr_t)info.vk_exposure;
             rf.vk_exposure_format = VkFormat(info.vk_exposure_format);

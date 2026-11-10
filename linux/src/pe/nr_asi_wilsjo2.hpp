@@ -30,6 +30,7 @@ struct Wilsjo2Frame {
     float pre_exposure = 1.0f;          // DLSS.Pre.Exposure as given (sanitised by the flow)
     float mv_x = 1.0f, mv_y = 1.0f;     // the game's MV scale (non-finite or 0 -> 1)
     nr::dlssnr::Rect depth_rect, motion_rect;   // the guide regions
+    uint32_t out_w = 0, out_h = 0;      // the upscaler's output, for NR Control (0: the frame's own extent)
 };
 
 // One OptiScaler feature's wilsjo2 state at one placement: the surfaces, the model's feature, the reset latch.
@@ -80,6 +81,12 @@ struct HudFixD3D12 {
 };
 bool wilsjo2_hudfix(ID3D12GraphicsCommandList* cmd, ID3D12Device* device, const HudFixD3D12& r, uint32_t w, uint32_t h,
                     uint32_t source, bool show_mask, bool fresh, uint32_t parity, bool estimate_too = false);
+// Frame generation's HUD-less frame with the Present layers' change (present_layers' fg_delta): `out` = `hudless` +
+// (`after` - `before`), HUD_COMPOSE with HudMode 0 and `zero` (an alpha of 0); every resource UNORDERED_ACCESS, `stats`
+// HUD FIX's R32_UINT texture (bound, not read in this mode). False when not recorded.
+bool wilsjo2_fg_delta(ID3D12GraphicsCommandList* cmd, ID3D12Device* device, ID3D12Resource* hudless, ID3D12Resource* before,
+                      ID3D12Resource* after, ID3D12Resource* zero, ID3D12Resource* stats, ID3D12Resource* out, uint32_t w,
+                      uint32_t h);
 
 // The finished picture's HDR10 conversion on `cmd`: to_linear: `source` (PQ BT.2020) -> `target` (linear
 // BT.709 scRGB, RGBA16F); else `source` (linear) with `original` (the PQ picture) -> `target` (PQ, the original's
@@ -107,6 +114,7 @@ struct Wilsjo2VkFrame {
     float pre_exposure = 1.0f;
     float mv_x = 1.0f, mv_y = 1.0f;
     nr::dlssnr::Rect depth_rect, motion_rect;
+    uint32_t out_w = 0, out_h = 0;   // as Wilsjo2Frame's
 };
 struct Wilsjo2VkOwner;
 Wilsjo2VkOwner* wilsjo2_vk_owner();

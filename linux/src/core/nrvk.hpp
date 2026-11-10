@@ -11,10 +11,11 @@
 // them back without staging; the adapter that owns the game's VkDevice will
 // allocate the same arenas out of device-local memory.
 #pragma once
+#include "nr_path_u8.hpp"
 #include "nr_gpu_completion.hpp"
+#include "nr_log.hpp"   // (nrvk::blit's lines; the int4 path's too)
 #if NR_INT4
 #include "nr_build_cfg.hpp"
-#include "nr_log.hpp"
 #endif
 // RDNA3 (gfx11) has no FP8: the network runs on FP16 operands holding e4m3 values
 // (linux/build/arch/rdna3.sh defines this).
@@ -118,9 +119,9 @@ struct Context {
         NRVK_CHECK(r);
     }
 
-    // The RX 9070 XT. NR_GPU overrides with a physical-device index, which is
-    // the only reason to run on anything else: the iGPU at 1002:13c0 shares
-    // /dev/dri and would otherwise be a silent wrong answer.
+    // RDNA4's reference card, or an AMD discrete/integrated gfx11 candidate.
+    // Z1 Extreme is integrated; require_matrix_config validates its WMMA support.
+    // NR_GPU overrides with a physical-device index when several candidates exist.
     void create() {
         VkApplicationInfo app{VK_STRUCTURE_TYPE_APPLICATION_INFO};
         app.pApplicationName = "DLSS-NR-on-AMD";
@@ -138,7 +139,8 @@ struct Context {
             VkPhysicalDeviceProperties p;
             vkGetPhysicalDeviceProperties(devices[i], &p);
             const bool want = forced ? (i == uint32_t(atoi(forced)))
-                                     : (p.vendorID == 0x1002 && (NR_ARCH_RDNA3 ? p.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU
+                                     : (p.vendorID == 0x1002 && (NR_ARCH_RDNA3 ? (p.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU ||
+                                                                                      p.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
                                                                    : p.deviceID == 0x7550));
             if (!want) continue;
             if (physical) throw std::runtime_error("more than one candidate GPU; set NR_GPU");
@@ -405,7 +407,7 @@ struct Context {
         pipeline_cache_path = path;
         std::vector<char> blob;
         {
-            std::ifstream f(path, std::ios::binary | std::ios::ate);
+            std::ifstream f(nr::u8::path(path), std::ios::binary | std::ios::ate);
             if (f) {
                 const std::streamoff n = f.tellg();
                 // 32 bytes is the header every implementation writes; anything
@@ -439,14 +441,14 @@ struct Context {
         // not leave a half-written file behind for the next one to read.
         const std::string tmp = pipeline_cache_path + ".tmp";
         {
-            std::ofstream f(tmp, std::ios::binary | std::ios::trunc);
+            std::ofstream f(nr::u8::path(tmp), std::ios::binary | std::ios::trunc);
             if (!f) return 0;
             f.write(blob.data(), std::streamsize(bytes));
             if (!f) return 0;
         }
-        std::remove(pipeline_cache_path.c_str());
-        if (std::rename(tmp.c_str(), pipeline_cache_path.c_str()) != 0) {
-            std::remove(tmp.c_str());
+        nr::u8::remove(pipeline_cache_path);
+        if (nr::u8::rename(tmp, pipeline_cache_path) != 0) {
+            nr::u8::remove(tmp);
             return 0;
         }
         return bytes;
@@ -873,7 +875,7 @@ struct Context {
 };
 
 inline std::vector<uint32_t> read_spirv(const std::string& path) {
-    std::ifstream f(path, std::ios::binary | std::ios::ate);
+    std::ifstream f(nr::u8::path(path), std::ios::binary | std::ios::ate);
     if (!f) throw std::runtime_error("cannot open " + path);
     const std::streamoff n = f.tellg();
     if (n <= 0 || n % 4) throw std::runtime_error("not a SPIR-V module: " + path);
@@ -964,6 +966,12 @@ struct Kernel {
     // bind the same way `create` does, or the kernel reads and writes an arena in the wrong format.
     std::vector<uint32_t> twin_bindings, alias_bindings;
     const std::map<VkBuffer, VkBuffer>* twin_map{};
+    // What `retarget` needs: the image bindings' views (after the buffers) and the pool's sizes.
+    uint32_t buffer_bindings{};
+    std::vector<VkImageView> image_views;
+    std::vector<VkDescriptorPoolSize> pool_sizes;
+    std::vector<uint32_t> binding_ids;   // every binding of the set
+    std::vector<VkBuffer> buffers;       // the buffer bindings' buffers, in binding order
 
     // **Image bindings follow the buffers**, in set 0, continuing the binding
     // numbers. The two image adapters are the only layers that need them - a
@@ -1044,6 +1052,12 @@ struct Kernel {
         for (uint32_t i = 0; i < ni; ++i)
             ps.push_back({images[i]->sampler ? VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER
                                              : VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1});
+        buffer_bindings = nb; pool_sizes = ps;
+        buffers = bindings;
+        image_views.clear();
+        for (uint32_t i = 0; i < ni; ++i) image_views.push_back(images[i]->view);
+        binding_ids.clear();
+        for (const auto& b : lb) binding_ids.push_back(b.binding);
         VkDescriptorPoolCreateInfo dpi{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
         dpi.maxSets = 1; dpi.poolSizeCount = uint32_t(ps.size()); dpi.pPoolSizes = ps.data();
         NRVK_CHECK(vkCreateDescriptorPool(device, &dpi, nullptr, &pool));
@@ -1115,7 +1129,7 @@ struct Kernel {
         // key. Only this pipeline changes; the file holds the expected count. gfx12 has a 16x16x32 iu4
         // (0xcc4a) that takes the same operand registers; gfx11 has only the 16x16x16 one (0xcc45), which reads
         // the first half of them.
-        std::ifstream iu4(spirv_path + ".iu4");
+        std::ifstream iu4(nr::u8::path(spirv_path + ".iu4"));
         if (iu4) {
             int want = -1; iu4 >> want;
             if (!ctx.pipeline_binary) throw std::runtime_error("int4 pipeline needs VK_KHR_pipeline_binary: " + spirv_path);
@@ -1187,7 +1201,7 @@ struct Kernel {
             char hx[24]; std::snprintf(hx, sizeof hx, "%016llx", (unsigned long long)h);
             const size_t sl = path.find_last_of("/\\");
             cfile = std::string(cd) + "/" + (sl == std::string::npos ? path : path.substr(sl + 1)) + "." + hx + ".bin";
-            std::ifstream f(cfile, std::ios::binary);
+            std::ifstream f(nr::u8::path(cfile), std::ios::binary);
             if (f) try {
                 std::vector<uint8_t> blob((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
                 size_t o = 0; auto rd = [&](void* d, size_t n) { if (o + n > blob.size()) throw std::runtime_error("short"); std::memcpy(d, blob.data() + o, n); o += n; };
@@ -1263,7 +1277,7 @@ struct Kernel {
         nr::logf("[nr] int4 pipeline %s: %d WMMA rewrites", path.c_str(), n);
         if (!cfile.empty()) {
             const std::string tmpf = cfile + ".tmp";
-            if (FILE* f = std::fopen(tmpf.c_str(), "wb")) {
+            if (FILE* f = nr::u8::fopen(tmpf.c_str(), "wb")) {
                 const uint32_t hdr[3] = {0x43344955u, uint32_t(data.size()), uint32_t(n)};
                 bool ok = std::fwrite(hdr, 4, 3, f) == 3;
                 for (size_t i = 0; i < data.size() && ok; ++i) {
@@ -1272,7 +1286,7 @@ struct Kernel {
                          std::fwrite(&sz, 8, 1, f) == 1 && std::fwrite(data[i].data(), 1, data[i].size(), f) == data[i].size();
                 }
                 ok = std::fclose(f) == 0 && ok;
-                if (ok) { std::remove(cfile.c_str()); std::rename(tmpf.c_str(), cfile.c_str()); } else std::remove(tmpf.c_str());
+                if (ok) { nr::u8::remove(cfile); nr::u8::rename(tmpf, cfile); } else nr::u8::remove(tmpf);
             }
         }
 #endif
@@ -1282,6 +1296,85 @@ struct Kernel {
         vkDestroyDescriptorPool(device, pool, nullptr);
         pool = VK_NULL_HANDLE; set = VK_NULL_HANDLE;
         shared.reset();   // the pipeline itself goes with the last kernel that uses it
+    }
+
+    // **An image made after the kernel, in place of the stand-in it was created with** (an image the runtime only
+    // makes when a frame needs it): a new set with every descriptor of the old one, the bindings that showed `from`
+    // showing `to` (the same kind - sampled or storage - and the layout it is in now). The old set may still be
+    // bound in a recording in flight, so its pool goes to `retired`, for the owner to destroy with the kernel.
+    bool retarget(const Context::Image& from, const Context::Image& to, std::vector<VkDescriptorPool>& retired) {
+        if (!pool || !from.view) return false;
+        std::vector<uint32_t> hit;
+        for (uint32_t i = 0; i < uint32_t(image_views.size()); ++i) if (image_views[i] == from.view) hit.push_back(i);
+        if (hit.empty()) return false;
+        if (bool(from.sampler) != bool(to.sampler)) throw std::runtime_error("retarget: an image of another kind");
+        const VkDescriptorSet ns = copy_set(retired);
+        const VkDescriptorImageInfo ii{to.sampler, to.view, to.layout};
+        std::vector<VkWriteDescriptorSet> w;
+        for (uint32_t i : hit) {
+            VkWriteDescriptorSet x{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+            x.dstSet = ns; x.dstBinding = buffer_bindings + i; x.descriptorCount = 1;
+            x.descriptorType = to.sampler ? VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER : VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+            x.pImageInfo = &ii;
+            w.push_back(x);
+            image_views[i] = to.view;
+        }
+        vkUpdateDescriptorSets(device, uint32_t(w.size()), w.data(), 0, nullptr);
+        return true;
+    }
+    // The same for a buffer binding (`from`'s every binding of this kernel).
+    bool retarget_buffer(VkBuffer from, VkBuffer to, std::vector<VkDescriptorPool>& retired) {
+        if (!pool || !from) return false;
+        std::vector<uint32_t> hit;
+        for (uint32_t i = 0; i < uint32_t(buffers.size()); ++i) if (buffers[i] == from) hit.push_back(i);
+        if (hit.empty()) return false;
+        const VkDescriptorSet ns = copy_set(retired);
+        // Keep logical arena handles in `buffers`; every replacement uses the same
+        // SPIR-V view classification as create(), including raw aliases at 16+k.
+        std::vector<VkDescriptorBufferInfo> bi;
+        std::vector<uint32_t> ids;
+        for (uint32_t i : hit) {
+            VkBuffer view = to;
+            if (twin_map && std::find(twin_bindings.begin(), twin_bindings.end(), i) != twin_bindings.end()) {
+                const auto t = twin_map->find(to);
+                if (t != twin_map->end()) view = t->second;
+            }
+            ids.push_back(i); bi.push_back({view, 0, VK_WHOLE_SIZE});
+            if (std::find(alias_bindings.begin(), alias_bindings.end(), kAliasBase + i) != alias_bindings.end()) {
+                ids.push_back(kAliasBase + i); bi.push_back({to, 0, VK_WHOLE_SIZE});
+            }
+            buffers[i] = to;
+        }
+        std::vector<VkWriteDescriptorSet> w(ids.size());
+        for (size_t i = 0; i < ids.size(); ++i) {
+            w[i] = {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+            w[i].dstSet = ns; w[i].dstBinding = ids[i]; w[i].descriptorCount = 1;
+            w[i].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER; w[i].pBufferInfo = &bi[i];
+        }
+        vkUpdateDescriptorSets(device, uint32_t(w.size()), w.data(), 0, nullptr);
+        return true;
+    }
+    // A new pool and set holding every descriptor of the current one; the old pool to `retired`.
+    VkDescriptorSet copy_set(std::vector<VkDescriptorPool>& retired) {
+        VkDescriptorPoolCreateInfo dpi{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
+        dpi.maxSets = 1; dpi.poolSizeCount = uint32_t(pool_sizes.size()); dpi.pPoolSizes = pool_sizes.data();
+        VkDescriptorPool np{};
+        NRVK_CHECK(vkCreateDescriptorPool(device, &dpi, nullptr, &np));
+        VkDescriptorSetAllocateInfo dai{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+        dai.descriptorPool = np; dai.descriptorSetCount = 1; dai.pSetLayouts = &dsl;
+        VkDescriptorSet ns{};
+        NRVK_CHECK(vkAllocateDescriptorSets(device, &dai, &ns));
+        std::vector<VkCopyDescriptorSet> copies(binding_ids.size());
+        for (size_t b = 0; b < binding_ids.size(); ++b) {
+            copies[b] = {VK_STRUCTURE_TYPE_COPY_DESCRIPTOR_SET};
+            copies[b].srcSet = set; copies[b].srcBinding = binding_ids[b];
+            copies[b].dstSet = ns; copies[b].dstBinding = binding_ids[b];
+            copies[b].descriptorCount = 1;
+        }
+        vkUpdateDescriptorSets(device, 0, nullptr, uint32_t(copies.size()), copies.data());
+        retired.push_back(pool);
+        pool = np; set = ns;
+        return ns;
     }
 };
 
@@ -1641,5 +1734,222 @@ struct Runner {
         vkDestroyCommandPool(ctx->device, pool, nullptr);
     }
 };
+
+// ---- blits on compute-only command buffers --------------------------------------------------------------------------
+// A D3D12 COMPUTE list is recorded through vkd3d-proton into a compute queue's command buffer (Streamline runs DLSS frame
+// generation's evaluate on one; the Present layers are recorded into it there). vkCmdBlitImage is a graphics command
+// (RADV draws it): in such a command buffer it is an illegal packet ("Illegal opcode in command stream", the compute
+// ring times out, the device is lost). While a recording into such a list is open (ComputeOnly, the session's
+// begin_recording), blit() records runtime_blit.comp instead; anywhere else it records vkCmdBlitImage exactly as before.
+inline bool& compute_only_recording() { static thread_local bool on = false; return on; }
+struct ComputeOnly {
+    bool was;
+    explicit ComputeOnly(bool on) : was(compute_only_recording()) { compute_only_recording() = on; }
+    ~ComputeOnly() { compute_only_recording() = was; }
+    ComputeOnly(const ComputeOnly&) = delete;
+    ComputeOnly& operator=(const ComputeOnly&) = delete;
+};
+// runtime_blit.spv's path: the first runtime built tells it (its adapter folder; the RenoDX stage has none of its own).
+inline std::mutex& compute_blit_lock() { static std::mutex m; return m; }
+inline std::string& compute_blit_spirv() { static std::string path; return path; }
+inline void set_compute_blit_spirv(const std::string& path) {
+    std::lock_guard<std::mutex> guard(compute_blit_lock());
+    if (compute_blit_spirv().empty()) compute_blit_spirv() = path;
+}
+
+// runtime_blit.comp on one device: its pipeline, samplers, and a ring of per-blit views and descriptor pools, each slot
+// reused once the recording that used it is done (nr_gpu_completion.hpp).
+struct ComputeBlit {
+    VkDevice device{};
+    VkPhysicalDevice physical{};
+    VkDescriptorSetLayout dsl{};
+    VkPipelineLayout layout{};
+    VkShaderModule module{};
+    VkPipeline pipeline{};
+    VkSampler nearest{}, linear{};
+    bool failed = false;
+    struct Slot { nr::gpu::Ticket gpu; VkImageView sv{}, dv{}; VkDescriptorPool pool{}; };
+    std::vector<Slot> ring;
+    uint64_t used = 0;
+    std::map<VkFormat, bool> storable;
+    struct Push { int32_t s[4]; int32_t d[4]; uint32_t linear; uint32_t rtz16; };
+
+    bool init(const std::string& spirv) {
+        try {
+            VkDescriptorSetLayoutBinding b[2] = {
+                {0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr},
+                {1, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, VK_SHADER_STAGE_COMPUTE_BIT, nullptr}};
+            VkDescriptorSetLayoutCreateInfo li{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+            li.bindingCount = 2; li.pBindings = b;
+            NRVK_CHECK(vkCreateDescriptorSetLayout(device, &li, nullptr, &dsl));
+            VkPushConstantRange pcr{VK_SHADER_STAGE_COMPUTE_BIT, 0, uint32_t(sizeof(Push))};
+            VkPipelineLayoutCreateInfo pli{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+            pli.setLayoutCount = 1; pli.pSetLayouts = &dsl; pli.pushConstantRangeCount = 1; pli.pPushConstantRanges = &pcr;
+            NRVK_CHECK(vkCreatePipelineLayout(device, &pli, nullptr, &layout));
+            const std::vector<uint32_t> code = read_spirv(spirv);
+            VkShaderModuleCreateInfo smi{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
+            smi.codeSize = code.size() * 4; smi.pCode = code.data();
+            NRVK_CHECK(vkCreateShaderModule(device, &smi, nullptr, &module));
+            VkComputePipelineCreateInfo cpi{VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO};
+            cpi.stage = {VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};
+            cpi.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT; cpi.stage.module = module; cpi.stage.pName = "main";
+            cpi.layout = layout;
+            NRVK_CHECK(vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &cpi, nullptr, &pipeline));
+            for (const VkFilter f : {VK_FILTER_NEAREST, VK_FILTER_LINEAR}) {
+                VkSamplerCreateInfo si{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
+                si.magFilter = si.minFilter = f;
+                si.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+                si.addressModeU = si.addressModeV = si.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+                NRVK_CHECK(vkCreateSampler(device, &si, nullptr, f == VK_FILTER_LINEAR ? &linear : &nearest));
+            }
+            ring.resize(16);
+            return true;
+        } catch (const std::exception& e) {
+            nr::logf("[nr] the compute blit (runtime_blit.spv) could not be made: %s; blits into compute-only command "
+                     "lists are left out", e.what());
+            failed = true;
+            return false;
+        }
+    }
+    bool can_store(VkFormat f) {
+        const auto it = storable.find(f);
+        if (it != storable.end()) return it->second;
+        VkFormatProperties fp{};
+        vkGetPhysicalDeviceFormatProperties(physical, f, &fp);
+        const bool ok = (fp.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT) != 0;
+        storable[f] = ok;
+        return ok;
+    }
+    static void barrier(VkCommandBuffer cmd, VkImage image, VkImageLayout from, VkImageLayout to, VkPipelineStageFlags ss,
+                        VkAccessFlags sa, VkPipelineStageFlags ds, VkAccessFlags da) {
+        VkImageMemoryBarrier b{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
+        b.oldLayout = from; b.newLayout = to; b.srcAccessMask = sa; b.dstAccessMask = da;
+        b.srcQueueFamilyIndex = b.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        b.image = image; b.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+        vkCmdPipelineBarrier(cmd, ss, ds, 0, 0, nullptr, 0, nullptr, 1, &b);
+    }
+    // One region. False (nothing recorded) when it cannot: a flip, another mip or layer, a destination format no storage
+    // image takes, or a view / set that could not be made.
+    bool record(VkCommandBuffer cmd, VkImage src, VkFormat sf, VkImageLayout sl, VkImage dst, VkFormat df,
+                VkImageLayout dl, const VkImageBlit& r, VkFilter filter) {
+        if (failed || !pipeline) return false;
+        const int32_t dw = r.dstOffsets[1].x - r.dstOffsets[0].x, dh = r.dstOffsets[1].y - r.dstOffsets[0].y;
+        if (dw <= 0 || dh <= 0 || r.srcOffsets[1].x <= r.srcOffsets[0].x || r.srcOffsets[1].y <= r.srcOffsets[0].y ||
+            r.srcSubresource.mipLevel || r.dstSubresource.mipLevel || r.srcSubresource.baseArrayLayer ||
+            r.dstSubresource.baseArrayLayer)
+            return false;
+        if (!can_store(df)) return false;
+        Slot& slot = nr::gpu::slot(ring, size_t(used++ % ring.size()));
+        if (slot.sv) vkDestroyImageView(device, slot.sv, nullptr);
+        if (slot.dv) vkDestroyImageView(device, slot.dv, nullptr);
+        slot.sv = slot.dv = VK_NULL_HANDLE;
+        slot.gpu = nr::gpu::current();
+        if (!slot.pool) {
+            const VkDescriptorPoolSize sizes[] = {{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1},
+                                                  {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1}};
+            VkDescriptorPoolCreateInfo pi{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
+            pi.maxSets = 1; pi.poolSizeCount = 2; pi.pPoolSizes = sizes;
+            if (vkCreateDescriptorPool(device, &pi, nullptr, &slot.pool) != VK_SUCCESS) { slot.pool = VK_NULL_HANDLE; return false; }
+        } else if (vkResetDescriptorPool(device, slot.pool, 0) != VK_SUCCESS) {
+            return false;
+        }
+        const auto view = [&](VkImage im, VkFormat f, VkImageUsageFlags usage, VkImageView* out) {
+            VkImageViewUsageCreateInfo uci{VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO};
+            uci.usage = usage;
+            VkImageViewCreateInfo vi{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
+            vi.pNext = &uci;
+            vi.image = im; vi.viewType = VK_IMAGE_VIEW_TYPE_2D; vi.format = f;
+            vi.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+            return vkCreateImageView(device, &vi, nullptr, out) == VK_SUCCESS;
+        };
+        if (!view(src, sf, VK_IMAGE_USAGE_SAMPLED_BIT, &slot.sv) || !view(dst, df, VK_IMAGE_USAGE_STORAGE_BIT, &slot.dv))
+            return false;
+        VkDescriptorSetAllocateInfo ai{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+        ai.descriptorPool = slot.pool; ai.descriptorSetCount = 1; ai.pSetLayouts = &dsl;
+        VkDescriptorSet set{};
+        if (vkAllocateDescriptorSets(device, &ai, &set) != VK_SUCCESS) return false;
+        VkDescriptorImageInfo ii[2] = {{filter == VK_FILTER_LINEAR ? linear : nearest, slot.sv, VK_IMAGE_LAYOUT_GENERAL},
+                                       {VK_NULL_HANDLE, slot.dv, VK_IMAGE_LAYOUT_GENERAL}};
+        VkWriteDescriptorSet w[2] = {{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET}, {VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET}};
+        w[0].dstSet = set; w[0].dstBinding = 0; w[0].descriptorCount = 1;
+        w[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER; w[0].pImageInfo = &ii[0];
+        w[1].dstSet = set; w[1].dstBinding = 1; w[1].descriptorCount = 1;
+        w[1].descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE; w[1].pImageInfo = &ii[1];
+        vkUpdateDescriptorSets(device, 2, w, 0, nullptr);
+        // the layouts the caller put them in for the blit -> GENERAL for the pass -> back; everything before it done
+        // first, everything after it seeing its writes (a caller's barrier after a blit names the transfer stage)
+        barrier(cmd, src, sl, VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_ACCESS_MEMORY_WRITE_BIT,
+                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT);
+        barrier(cmd, dst, dl, VK_IMAGE_LAYOUT_GENERAL, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                VK_ACCESS_SHADER_WRITE_BIT);
+        Push p{};
+        p.s[0] = r.srcOffsets[0].x; p.s[1] = r.srcOffsets[0].y; p.s[2] = r.srcOffsets[1].x; p.s[3] = r.srcOffsets[1].y;
+        p.d[0] = r.dstOffsets[0].x; p.d[1] = r.dstOffsets[0].y; p.d[2] = r.dstOffsets[1].x; p.d[3] = r.dstOffsets[1].y;
+        p.linear = filter == VK_FILTER_LINEAR ? 1u : 0u;
+        // RADV's blit exports these through FP16 toward zero (runtime_blit.comp): the same here
+        switch (df) {
+            case VK_FORMAT_R8_UNORM: case VK_FORMAT_R8G8_UNORM: case VK_FORMAT_R8G8B8A8_UNORM:
+            case VK_FORMAT_B8G8R8A8_UNORM: case VK_FORMAT_A8B8G8R8_UNORM_PACK32:
+            case VK_FORMAT_A2B10G10R10_UNORM_PACK32: case VK_FORMAT_A2R10G10B10_UNORM_PACK32:
+                p.rtz16 = 1u;
+                break;
+            default:
+                p.rtz16 = 0u;
+                break;
+        }
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, layout, 0, 1, &set, 0, nullptr);
+        vkCmdPushConstants(cmd, layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof p, &p);
+        vkCmdDispatch(cmd, uint32_t(dw + 7) / 8, uint32_t(dh + 7) / 8, 1);
+        barrier(cmd, dst, VK_IMAGE_LAYOUT_GENERAL, dl, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_WRITE_BIT,
+                VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT);
+        barrier(cmd, src, VK_IMAGE_LAYOUT_GENERAL, sl, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT,
+                VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0);
+        return true;
+    }
+};
+inline std::map<VkDevice, std::unique_ptr<ComputeBlit>>& compute_blits() {
+    static std::map<VkDevice, std::unique_ptr<ComputeBlit>> m;
+    return m;
+}
+
+// vkCmdBlitImage, or on a compute-only command buffer runtime_blit.comp. The formats are the images' own (the views
+// the pass needs). False when the compute pass could not record a region (said
+// once; the destination keeps what it had - a wrong picture for that frame, never a hung queue).
+inline bool blit(VkPhysicalDevice physical, VkDevice device, VkCommandBuffer cmd, VkImage src, VkFormat sf,
+                 VkImageLayout sl, VkImage dst, VkFormat df, VkImageLayout dl, uint32_t regions, const VkImageBlit* r,
+                 VkFilter filter) {
+    if (!compute_only_recording()) {
+        vkCmdBlitImage(cmd, src, sl, dst, dl, regions, r, filter);
+        return true;
+    }
+    std::lock_guard<std::mutex> guard(compute_blit_lock());
+    auto& cb = compute_blits()[device];
+    if (!cb) {
+        cb = std::make_unique<ComputeBlit>();
+        cb->device = device; cb->physical = physical;
+        if (compute_blit_spirv().empty()) {
+            cb->failed = true;
+            nr::logf("[nr] a blit into a compute-only command list, before any runtime was built: left out");
+        } else {
+            cb->init(compute_blit_spirv());
+        }
+    }
+    bool ok = true;
+    for (uint32_t i = 0; i < regions; ++i) ok = cb->record(cmd, src, sf, sl, dst, df, dl, r[i], filter) && ok;
+    static bool said = false, said_fail = false;
+    if (ok && !said) {
+        said = true;
+        nr::logf("[nr] a compute-only command list (DLSS-G's evaluate through Streamline, say): its blits run as a compute "
+                 "pass (runtime_blit)");
+    }
+    if (!ok && !said_fail) {
+        said_fail = true;
+        nr::logf("[nr] a blit into a compute-only command list could not be recorded as a compute pass (VkFormat %u -> "
+                 "%u); that image keeps what it had", unsigned(sf), unsigned(df));
+    }
+    return ok;
+}
 
 }  // namespace nrvk

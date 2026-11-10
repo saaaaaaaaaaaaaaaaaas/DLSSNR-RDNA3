@@ -170,8 +170,9 @@ w2 = formats(body_of("void write_wilsjo2("))[0][0]   # no values: every key at a
 logsec = render("void write_log(", {"enabled": config["log_enabled"], "clear": config["log_clear"]})[0]
 reusesec = render("void write_reuse(", {"every": config["controls"]["reuse_every"], "gate": config["controls"]["reuse_gate"]})[0]
 inspect = render("void write_inspect(", {"i": struct("InspectConfig")})[0]   # every tool off
-hudfix = render("void write_hudfix(", {"h": struct("HudFixConfig")})[0]   # auto
+hudfix = render("void write_hudfix(", {"h": struct("HudFixConfig")})[0]   # off (the struct's default)
 hudfix_addon = render("void write_hudfix(", {"h": dict(struct("HudFixConfig"), mode=0)})[0]   # off on the ReShade route
+nrcontrol = formats(body_of("void write_nrcontrol("))[0][0]   # NR Control's key (the OptiScaler route's menu)
 save = formats(body_of("void Config::save("))
 assert len(save) == 8, len(save)   # [DlssNr], six Pass<N> lines (none by default), own keys
 scope = dict(config, k=config["controls"], spatial=config["spatial"])
@@ -184,10 +185,10 @@ def renodx_section(enabled):
     return "".join(render("void write_renodx(", {"r": r, "v": r["values"]}))
 
 
-(out / "dlssnr-amd-optiscaler.ini").write_text(network + preprocess + renodx_section(False) + w2 + inspect + hudfix + logsec + reusesec,
-                                                encoding="utf-8")
-(out / "dlssnr-amd-optiscaler-renodx.ini").write_text(network + preprocess + renodx_section(True) + w2 + inspect + hudfix + logsec + reusesec,
-                                                      encoding="utf-8")
+(out / "dlssnr-amd-optiscaler.ini").write_text(network + preprocess + renodx_section(False) + w2 + inspect + hudfix +
+                                                nrcontrol + logsec + reusesec, encoding="utf-8")
+(out / "dlssnr-amd-optiscaler-renodx.ini").write_text(network + preprocess + renodx_section(True) + w2 + inspect + hudfix +
+                                                      nrcontrol + logsec + reusesec, encoding="utf-8")
 (out / "dlssnr-amd-addon.ini").write_text(dlssnr + own + "\n" + network + preprocess + renodx_section(False) + inspect + hudfix_addon + logsec + reusesec,
                                           encoding="utf-8")
 print("wrote", out / "dlssnr-amd-optiscaler.ini", out / "dlssnr-amd-optiscaler-renodx.ini", out / "dlssnr-amd-addon.ini")

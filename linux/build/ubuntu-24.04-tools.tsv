@@ -1,0 +1,16 @@
+# package	version	sha256	filename
+7zip	23.01+dfsg-11	0f79450d81e64326a862a8645ae1613890e486115101e51e41ca07d929388d87	7zip_23.01+dfsg-11_amd64.deb
+binutils-mingw-w64-x86-64	2.41.90.20240122-1ubuntu1+11.4	28bfabbf64a68813a56360bca056072af9ff71ef4090a4b8a8a085afcda3e4dd	binutils-mingw-w64-x86-64_2.41.90.20240122-1ubuntu1+11.4_amd64.deb
+cmake-data	3.28.3-1build7	20a3b644211ce82f35c24f1f5052199adeb0ac159978a8740fd6c0959611557f	cmake-data_3.28.3-1build7_all.deb
+cmake	3.28.3-1build7	4b0a7f8c0daf27b26b46997d994ae5d1ee7a3d11dfcda9f7627bb1462c162295	cmake_3.28.3-1build7_amd64.deb
+g++-mingw-w64-x86-64-posix	13.2.0-6ubuntu1+26.1	52c3613f386e462ae71105d1a0b2a48d866ccb048ad253acff629c5a2291252d	g++-mingw-w64-x86-64-posix_13.2.0-6ubuntu1+26.1_amd64.deb
+gcc-mingw-w64-base	13.2.0-6ubuntu1+26.1	a30c07e807e9874ea93909448c5d6d37f9569ebe60ad32de8e490aad198538a3	gcc-mingw-w64-base_13.2.0-6ubuntu1+26.1_amd64.deb
+gcc-mingw-w64-x86-64-posix-runtime	13.2.0-6ubuntu1+26.1	aca6b438e0b55b11cedcf1170a1ee26e7979e34192e34f6e6389e560908a5bfc	gcc-mingw-w64-x86-64-posix-runtime_13.2.0-6ubuntu1+26.1_amd64.deb
+gcc-mingw-w64-x86-64-posix	13.2.0-6ubuntu1+26.1	0855fa1d4a618550faac3a3e4352aa3226833b28184ad3c3b496a68a22c4eda2	gcc-mingw-w64-x86-64-posix_13.2.0-6ubuntu1+26.1_amd64.deb
+libarchive13t64	3.7.2-2ubuntu0.9	b4e618d2237da9b00b88947113ebad8f93134f07f670a2df59cc5201c6c4307f	libarchive13t64_3.7.2-2ubuntu0.9_amd64.deb
+libjsoncpp25	1.9.5-6build1	8efea5b75952f3ad1c40e6b5b31de687c297ea29f87f8b63efebb55e13467211	libjsoncpp25_1.9.5-6build1_amd64.deb
+librhash0	1.4.3-3build1	e9ee69963ff1a56378b9c5ffdd21ea0feaec9647c522349b7612b25103490528	librhash0_1.4.3-3build1_amd64.deb
+libvulkan-dev	1.3.275.0-1build1	9577a2c5379372ca8231e700728390fa7d4991a0d8c6484ad83da849c728e76e	libvulkan-dev_1.3.275.0-1build1_amd64.deb
+mingw-w64-common	11.0.1-3build1	4a42fd30fbc3838c58c929d8a4882682fc12408bb7a0e6cafa913c0f0a57c187	mingw-w64-common_11.0.1-3build1_all.deb
+mingw-w64-x86-64-dev	11.0.1-3build1	018480a62907fcca19c6bf2975ae01f5c92c23dee8c3cf7a8355c10bf7d42c6f	mingw-w64-x86-64-dev_11.0.1-3build1_all.deb
+ninja-build	1.11.1-2	6a17f76a0f75586f1292f6c61a9b07fd0dec963baf6a102b17673f601c6b323a	ninja-build_1.11.1-2_amd64.deb

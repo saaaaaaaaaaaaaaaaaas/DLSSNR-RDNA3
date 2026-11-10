@@ -63,6 +63,10 @@ layout(set=0,binding=11,rgba32f) uniform writeonly image2D nr_hpass;
 layout(set=0,binding=6) uniform sampler2D nr_tex;
 #endif
 shared NR_F16 input_features[4*256];
+#if NR_NOISE_FIELD
+// Dedicated raw buffer: this binding must never read an e4m3 twin.
+layout(set=0,binding=5,std430) readonly buffer NrNoiseU32 { uint nr_noise_u32[]; };
+#endif
 
 #include "image_noise.glsl"
 void nr_prepare_features() {
@@ -87,14 +91,14 @@ void nr_prepare_features() {
 #if NR_NOISE_FIELD
     // The noise features are a fixed function of (x, y, seed) and the noise
     // gain, so the host computes them once at build (noise_field.comp, the same
-    // code below) into the weight arena, [row][pixel] f16 x4 over the padded
+    // code below) into the noise buffer, [row][pixel] f16 x4 over the padded
     // working grid, and every frame reads them back: two dwords a pixel instead
     // of a 32-bit hash with four quarter-rate multiplies and four
     // transcendentals (1080p 19 us, 4K 87 us a frame). Offset 0: compute here.
     [[dont_flatten]] if (pc.image_noise_off != 0u) {
         const uint nr_ni = pc.image_noise_off + (y * (gl_NumWorkGroups.x * 8u) + x) * 2u;
-        const vec2 nr_n01 = unpackHalf2x16(wgt_u32[nr_ni]);
-        const vec2 nr_n2 = unpackHalf2x16(wgt_u32[nr_ni + 1u]);
+        const vec2 nr_n01 = unpackHalf2x16(nr_noise_u32[nr_ni]);
+        const vec2 nr_n2 = unpackHalf2x16(nr_noise_u32[nr_ni + 1u]);
         f[0]=nr_n01.x;f[1]=nr_n01.y;f[2]=nr_n2.x;
     } else
 #endif

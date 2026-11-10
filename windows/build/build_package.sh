@@ -134,7 +134,7 @@ fi
 aco="$pkg/dlssnr-amd/aco"
 mkdir -p -- "$aco/records"
 rm -rf -- "$out/aco-shaders"
-python3 linux/build/build_network.py rdna4 --out "$out/aco-shaders" > /dev/null
+python3 windows/build/build_linux_aco.py --out "$out/aco-shaders" > /dev/null
 cp -r -- "$out/aco-shaders" "$aco/shaders"
 cp -- windows/data/aco/records/*.nrp "$aco/records/"
 cp -- windows/data/aco/shell-aliases.txt "$aco/"
@@ -142,7 +142,7 @@ if [[ "${NR_INT4:-1}" == 1 ]]; then
     # int4 mixed as ACO's machine code (windows/data/aco/int4/records) and the Linux int4 network the records were
     # made from (linux/build/build_network.py --int4)
     rm -rf -- "$out/aco-shaders-int4"
-    python3 linux/build/build_network.py rdna4 --int4 --out "$out/aco-shaders-int4" > /dev/null
+    python3 windows/build/build_linux_aco.py --int4 --out "$out/aco-shaders-int4" > /dev/null
     mkdir -p -- "$aco/int4/records"
     cp -r -- "$out/aco-shaders-int4" "$aco/int4/shaders"
     cp -- windows/data/aco/int4/records/*.nrp "$aco/int4/records/"

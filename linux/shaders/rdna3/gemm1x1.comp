@@ -1871,9 +1871,23 @@ shared fe4m3vec4 lds_bv[2 * NR_BLDSV_V4];
 #define NR_I4P01_I(i) NR_I4PS_I(i, ua0, va0, ub0, vb0, 1, NR_I4P01_J)
 #define NR_I4P10_I(i) NR_I4PS_I(i, ua1, va1, ub1, vb1, 0, NR_I4P10_J)
 #define NR_I4P11_I(i) NR_I4PS_I(i, ua1, va1, ub1, vb1, 1, NR_I4P11_J)
-#if defined(NR_I4_PD) && NR_I4_PD == 4
-#error "NR_I4_PD=4 is not built for gfx11"
-#endif
+#define NR_I4PLDA2_I(i) NR_I4PLD(ua2[i], act_u32i4, a4[i]) NR_I4PLD(va2[i], act_u32i4, a4[i] + 64u)
+#define NR_I4PLDA3_I(i) NR_I4PLD(ua3[i], act_u32i4, a4[i]) NR_I4PLD(va3[i], act_u32i4, a4[i] + 64u)
+#define NR_I4PLDB2_J(j) NR_I4PLD(ub2[j], wgt_u32i4, b4[j]) NR_I4PLD(vb2[j], wgt_u32i4, b4[j] + 64u)
+#define NR_I4PLDB3_J(j) NR_I4PLD(ub3[j], wgt_u32i4, b4[j]) NR_I4PLD(vb3[j], wgt_u32i4, b4[j] + 64u)
+#define NR_I4P20_J(j) NR_I4PMMA_J(j, ub2, vb2, 0)
+#define NR_I4P30_J(j) NR_I4PMMA_J(j, ub3, vb3, 0)
+#define NR_I4P21_J(j) NR_I4PMMA_J(j, ub2, vb2, 1)
+#define NR_I4P31_J(j) NR_I4PMMA_J(j, ub3, vb3, 1)
+#define NR_I4P20_I(i) NR_I4PS_I(i, ua2, va2, ub2, vb2, 0, NR_I4P20_J)
+#define NR_I4P30_I(i) NR_I4PS_I(i, ua3, va3, ub3, vb3, 0, NR_I4P30_J)
+#define NR_I4P21_I(i) NR_I4PS_I(i, ua2, va2, ub2, vb2, 1, NR_I4P21_J)
+#define NR_I4P31_I(i) NR_I4PS_I(i, ua3, va3, ub3, vb3, 1, NR_I4P31_J)
+#define NR_I4PMMA2 NR_FOR_I(NR_MFRAG, NR_I4P20_I) NR_FOR_I(NR_MFRAG, NR_I4P21_I)
+#define NR_I4PMMA3 NR_FOR_I(NR_MFRAG, NR_I4P30_I) NR_FOR_I(NR_MFRAG, NR_I4P31_I)
+#define NR_I4DEPV (uint(ia[NR_MFRAG - 1][NR_NFRAG - 1][7]) & (pc.crow >> 31u))
+#define NR_I4PBANK(K, rec) { const uint ko = min(rec, rc1 - 1u) * 128u + NR_I4DEPV; \
+    NR_FOR_I(NR_MFRAG, NR_I4PLDA##K##_I) NR_FOR_J(NR_NFRAG, NR_I4PLDB##K##_J) }
 #define NR_I4PMMA0 NR_FOR_I(NR_MFRAG, NR_I4P00_I) NR_FOR_I(NR_MFRAG, NR_I4P01_I)
 #define NR_I4PMMA1 NR_FOR_I(NR_MFRAG, NR_I4P10_I) NR_FOR_I(NR_MFRAG, NR_I4P11_I)
 #endif
@@ -1978,6 +1992,7 @@ void main() {
 #endif
 #if NR_I4_PD == 4
         uvec4 ua2[NR_MFRAG], ub2[NR_NFRAG], ua3[NR_MFRAG], ub3[NR_NFRAG];
+        uvec4 va2[NR_MFRAG], vb2[NR_NFRAG], va3[NR_MFRAG], vb3[NR_NFRAG];
         NR_I4PBANK(0, rc0) NR_I4PBANK(1, rc0 + 1u) NR_I4PBANK(2, rc0 + 2u) NR_I4PBANK(3, rc0 + 3u)
 #if defined(NR_I4_NREC)
         [[unroll]]
