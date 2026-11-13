@@ -5,6 +5,8 @@ cd -- "$(dirname -- "$0")/../.."
 root=$(pwd)
 selection=${1:-baseline}
 mode=${selection%-dx10}
+frames=${2:-600}
+[[ "$mode" == reshade ]] && frames=${2:-1800}
 exe=optifg_probe.exe
 [[ "$selection" == *-dx10 ]] && exe=optifg_probe_dx10.exe
 case "$mode" in baseline|direct|reshade) ;; *) echo 'usage: run_probe.sh baseline|direct|reshade[-dx10] [frames]' >&2; exit 2;; esac
@@ -56,6 +58,8 @@ LoadReShade=true
 INI
     cp artifacts/package-build/nr/dlssnr_amd.addon64 "$out/"
     cp linux/optifg/optifg-bridge.ini "$out/"
+    # Recreate this generated stage so reruns never mix shader revisions.
+    rm -rf -- "$out/reshade-shaders"
     mkdir -p "$out/reshade-shaders/Shaders" "$out/reshade-shaders/Textures"
     cp -r artifacts/ref/reshade-shaders/Shaders/. "$out/reshade-shaders/Shaders/"
     cp -r artifacts/ref/vort_Shaders/Shaders/. "$out/reshade-shaders/Shaders/"
@@ -63,6 +67,9 @@ INI
     cp artifacts/ref/DLSS5-Feeder/shaders/DLSS5_Feed.fx "$out/reshade-shaders/Shaders/"
     python3 linux/build/patch_reshade_effects.py "$out/reshade-shaders/Shaders"
     if [[ "$motion" == lumenite ]]; then
+        # The shared patcher expects both providers. Do not compile inactive
+        # VORT techniques during a Lumenite-only qualification run.
+        rm -- "$out/reshade-shaders/Shaders/vort_Motion.fx" "$out/reshade-shaders/Shaders/vort_Static.fx"
         # The author's link is the only propagation route; never bundle these files.
         lumenite_pin=f80e98d716ad72e12af6f7baa727bcfeb4be5094
         lumenite_zip="artifacts/ref/downloads/LumeniteFX-$lumenite_pin.zip"
@@ -116,11 +123,12 @@ args=()
 [[ "$mode" == reshade ]] && args+=(--reshade)
 [[ "${NR_OPTIFG_10BIT:-0}" == 1 ]] && args+=(--10bit)
 cd -- "$out"
+rm -f -- dlssnr-amd.log ReShade.log OptiScaler.log
 echo "Standalone $mode probe: $out (private prefix: $prefix)"
 env WINEPREFIX="$prefix" WINEDEBUG=-all DISABLE_LSFGVK=1 WINEDLLPATH="$vkd3d:$wine_lib" \
     LD_LIBRARY_PATH="$proton/files/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
     WINEDLLOVERRIDES='dxgi,d3d10core,d3d11,d3d12,d3d12core=n;mscoree,mshtml=' \
-    "$proton/files/bin/wine" "./$exe" "${args[@]}" --frames "${2:-600}" > probe.log 2>&1
+    "$proton/files/bin/wine" "./$exe" "${args[@]}" --frames "$frames" > probe.log 2>&1
 tail -5 probe.log
 if [[ "$mode" == reshade ]]; then
     if ! rg -q '\[optifg\] captured [1-9][0-9]*, consumed presents [1-9]' dlssnr-amd.log; then

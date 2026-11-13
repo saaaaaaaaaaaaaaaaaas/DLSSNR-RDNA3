@@ -4,7 +4,7 @@
 #include <windows.h>
 #include <d3d11.h>
 #include <d3dcompiler.h>
-#include <dxgi1_2.h>
+#include <dxgi1_4.h>
 #include "../optifg/include/opti_reshade_bridge.h"
 #include <cstdio>
 #include <cstring>
@@ -100,6 +100,12 @@ int main(int argc, char** argv) {
         desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
         Com<IDXGISwapChain> swapchain;
         check(factory->CreateSwapChain(device.p, &desc, swapchain.put()), "CreateSwapChain");
+        if (tenBit) {
+            Com<IDXGISwapChain3> colorSwapchain;
+            check(swapchain->QueryInterface(__uuidof(IDXGISwapChain3),
+                reinterpret_cast<void**>(colorSwapchain.put())), "SDR swapchain interface");
+            check(colorSwapchain->SetColorSpace1(DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709), "SDR color space");
+        }
         Com<Texture> color;
         check(swapchain->GetBuffer(0, __uuidof(Texture), reinterpret_cast<void**>(color.put())), "GetBuffer");
         Com<RenderView> colorView;

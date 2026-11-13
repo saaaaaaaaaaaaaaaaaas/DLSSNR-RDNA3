@@ -71,6 +71,11 @@ use actual D3D10 device/draw/resource entry points and shader model 4.
 Debug view is on.
 Set `NR_OPTIFG_10BIT=1` to test an SDR R10G10B10A2 swapchain, like Tekken 7.
 The producer tags SDR explicitly; the bit depth alone does not establish HDR.
+For DX10, ReShade 6.8's public color-space query returns unknown. The publisher
+reads ReShade's per-swapchain record of successful `SetColorSpace1` calls; a
+legacy fixed-point DXGI surface with no recorded change uses the SDR default.
+Explicit non-SDR metadata still stops publication. The 10-bit probe sets SDR
+through DXGI explicitly.
 Bridge counters count captures and consumed **real** presents, not generated
 frames. Record the output to check intermediate frames, motion direction,
 occlusion edges, reset behavior and pacing before claiming successful FG.

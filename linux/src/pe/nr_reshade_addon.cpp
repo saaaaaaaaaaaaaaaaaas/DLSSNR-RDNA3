@@ -4036,7 +4036,30 @@ void publish_optifg(effect_runtime* rt, command_list* cl, resource_view rtv, boo
     if (dev->get_api() != device_api::d3d11 && dev->get_api() != device_api::d3d10) {
         optifg_client.reject("only DX10/DX11 through DXVK is supported"); return;
     }
-    if (back_buffer_space != color_space::srgb_nonlinear) {
+    bool sdr = back_buffer_space == color_space::srgb_nonlinear;
+    // ReShade 6.8's D3D10 backend reports unknown. Its DXGI wrapper records
+    // successful SetColorSpace1 calls under this SpecialK/ReShade GUID.
+    // Read the selected runtime's data, never a different swapchain's state.
+    auto* native = reinterpret_cast<IDXGISwapChain*>(rt->get_native());
+    constexpr GUID color_space_guid = {0x018b57e4, 0x1493, 0x4953, {0xad,0xf2,0xde,0x6d,0x99,0xcc,0x05,0xe5}};
+    DXGI_COLOR_SPACE_TYPE dxgi_space = DXGI_COLOR_SPACE_CUSTOM;
+    UINT space_size = sizeof dxgi_space;
+    const auto described = native ? native->GetPrivateData(color_space_guid, &space_size, &dxgi_space) : E_FAIL;
+    if (SUCCEEDED(described) && space_size == sizeof dxgi_space) {
+        sdr = dxgi_space == DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709;
+    } else if (described == DXGI_ERROR_NOT_FOUND && back_buffer_space == color_space::unknown &&
+               dev->get_api() == device_api::d3d10) {
+        // With no SetColorSpace1 recorded, fixed-point DXGI backbuffers use
+        // the default G22/Rec.709 transfer. Floating-point/unknown formats stay rejected.
+        DXGI_SWAP_CHAIN_DESC desc {};
+        if (SUCCEEDED(native->GetDesc(&desc))) {
+            const auto f = desc.BufferDesc.Format;
+            sdr = f == DXGI_FORMAT_R8G8B8A8_UNORM || f == DXGI_FORMAT_R8G8B8A8_UNORM_SRGB ||
+                  f == DXGI_FORMAT_B8G8R8A8_UNORM || f == DXGI_FORMAT_B8G8R8A8_UNORM_SRGB ||
+                  f == DXGI_FORMAT_R10G10B10A2_UNORM;
+        }
+    }
+    if (!sdr) {
         optifg_client.reject("HDR is not qualified; an SDR swapchain is required"); return;
     }
     const int provider = feed_provider(rt);

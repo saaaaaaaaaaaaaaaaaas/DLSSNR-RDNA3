@@ -72,6 +72,13 @@ test qualifies the bridge in that game, not universal interpolation quality.
   the displayed frame rate. This is a limited synthetic interpolation check.
 - Full ReShade/VORT DX11: at least 2,389 accepted captures after shader loading.
 - Full ReShade/VORT DX10: at least 4,789 accepted captures after shader loading.
+- Full ReShade/LumeniteFX native DX10, after the SDR metadata fix: separate
+  1,800-real-frame runs with 8-bit default SDR and explicitly tagged SDR10 each
+  logged at least 1,189 accepted captures and 1,188 consumed real presents,
+  with 11 warmup rejections and no hard bridge status errors. The 8-bit run made
+  no `SetColorSpace1` call. Logs/settings are in
+  `artifacts/optifg-evidence/lumenite-sdr8-dx10/` and `lumenite-sdr10-dx10/`;
+  `lumenite-sdr10-dx10.png` shows the debug inputs and correct scene output.
 - LumeniteFX is the user's preferred provider and the probe runner's default. Download
   it directly from the author's pinned archive; do not redistribute its files.
 
@@ -80,6 +87,14 @@ DX11 runtime rather than a hidden/probe or DX12 presenter runtime; load OptiScal
 as the game's imported `winmm.dll`, then ReShade64 via `LoadReShade=true`; accept
 R10G10B10A2 only when the producer explicitly tags SDR. The camera values in the
 transport test are provisional and are not a calibrated game profile.
+
+The later SDR guard exposed ReShade 6.8's unknown color-space report on DX10.
+The publisher now uses the selected runtime's color-space private data maintained
+by [ReShade's DXGI wrapper](https://github.com/crosire/reshade/blob/v6.8.0/source/dxgi/dxgi_swapchain.cpp).
+With no recorded change, legacy fixed-point surfaces use the
+[DXGI SDR default](https://learn.microsoft.com/en-us/windows/win32/direct3darticles/high-dynamic-range).
+Explicit non-SDR metadata is rejected. The SDR10 probe calls `SetColorSpace1`
+explicitly; an 8-bit run also checks the default without that call.
 
 Tekken 7, NR off, LumeniteFX Kernel at
 `f80e98d716ad72e12af6f7baa727bcfeb4be5094`:
