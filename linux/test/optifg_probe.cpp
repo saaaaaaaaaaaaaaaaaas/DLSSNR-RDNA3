@@ -17,6 +17,9 @@ template<class T> struct Com {
     T* operator->() const { return p; }
     T** put() { return &p; }
 };
+#include "optifg_probe_api.hpp"
+using namespace probe;
+
 static void check(HRESULT result, const char* operation) {
     if (FAILED(result)) {
         std::fprintf(stderr, "%s: HRESULT %08lx\n", operation, (unsigned long)result);
@@ -82,10 +85,8 @@ int main(int argc, char** argv) {
             CW_USEDEFAULT, CW_USEDEFAULT, 1280, 720, nullptr, nullptr, wc.hInstance, nullptr);
         if (!hwnd) throw std::runtime_error("CreateWindow failed");
         ShowWindow(hwnd, SW_SHOW);
-        Com<ID3D11Device> device; Com<ID3D11DeviceContext> context;
-        D3D_FEATURE_LEVEL level;
-        check(D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0, nullptr, 0,
-                D3D11_SDK_VERSION, device.put(), &level, context.put()), "D3D11CreateDevice");
+        Com<Device> device; Com<Context> context;
+        check(createDevice(device, context), "CreateDevice");
         Com<IDXGIDevice> dxgiDevice; Com<IDXGIAdapter> adapter; Com<IDXGIFactory> factory;
         check(device->QueryInterface(__uuidof(IDXGIDevice), reinterpret_cast<void**>(dxgiDevice.put())), "IDXGIDevice");
         check(dxgiDevice->GetAdapter(adapter.put()), "GetAdapter");
@@ -98,44 +99,44 @@ int main(int argc, char** argv) {
         desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
         Com<IDXGISwapChain> swapchain;
         check(factory->CreateSwapChain(device.p, &desc, swapchain.put()), "CreateSwapChain");
-        Com<ID3D11Texture2D> color;
-        check(swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(color.put())), "GetBuffer");
-        Com<ID3D11RenderTargetView> colorView;
+        Com<Texture> color;
+        check(swapchain->GetBuffer(0, __uuidof(Texture), reinterpret_cast<void**>(color.put())), "GetBuffer");
+        Com<RenderView> colorView;
         check(device->CreateRenderTargetView(color.p, nullptr, colorView.put()), "Color RTV");
-        auto texture = [&](DXGI_FORMAT format, UINT bind, Com<ID3D11Texture2D>& out) {
-            D3D11_TEXTURE2D_DESC d {}; d.Width = 1280; d.Height = 720;
+        auto texture = [&](DXGI_FORMAT format, UINT bind, Com<Texture>& out) {
+            TextureDesc d {}; d.Width = 1280; d.Height = 720;
             d.MipLevels = d.ArraySize = d.SampleDesc.Count = 1; d.Format = format; d.BindFlags = bind;
             check(device->CreateTexture2D(&d, nullptr, out.put()), "CreateTexture2D");
         };
-        Com<ID3D11Texture2D> motion, depth, gameDepth;
-        texture(DXGI_FORMAT_R16G16_FLOAT, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, motion);
-        texture(DXGI_FORMAT_R32_FLOAT, D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE, depth);
-        texture(DXGI_FORMAT_R32_TYPELESS, D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE, gameDepth);
-        Com<ID3D11RenderTargetView> motionView, depthView;
+        Com<Texture> motion, depth, gameDepth;
+        texture(DXGI_FORMAT_R16G16_FLOAT, bindRender | bindShader, motion);
+        texture(DXGI_FORMAT_R32_FLOAT, bindRender | bindShader, depth);
+        texture(DXGI_FORMAT_R32_TYPELESS, bindDepth | bindShader, gameDepth);
+        Com<RenderView> motionView, depthView;
         check(device->CreateRenderTargetView(motion.p, nullptr, motionView.put()), "Motion RTV");
         check(device->CreateRenderTargetView(depth.p, nullptr, depthView.put()), "Depth RTV");
-        D3D11_DEPTH_STENCIL_VIEW_DESC dsv {}; dsv.Format = DXGI_FORMAT_D32_FLOAT;
-        dsv.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-        Com<ID3D11DepthStencilView> gameDepthView;
+        DepthViewDesc dsv {}; dsv.Format = DXGI_FORMAT_D32_FLOAT;
+        dsv.ViewDimension = depthDimension;
+        Com<DepthView> gameDepthView;
         check(device->CreateDepthStencilView(gameDepth.p, &dsv, gameDepthView.put()), "Game depth DSV");
-        Com<ID3D11DepthStencilState> depthState;
-        D3D11_DEPTH_STENCIL_DESC ds {}; ds.DepthEnable = TRUE;
-        ds.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL; ds.DepthFunc = D3D11_COMPARISON_ALWAYS;
+        Com<DepthState> depthState;
+        DepthDesc ds {}; ds.DepthEnable = TRUE;
+        ds.DepthWriteMask = depthWrite; ds.DepthFunc = depthAlways;
         check(device->CreateDepthStencilState(&ds, depthState.put()), "Depth state");
-        D3D11_RASTERIZER_DESC rd {}; rd.FillMode = D3D11_FILL_SOLID; rd.CullMode = D3D11_CULL_NONE;
+        RasterDesc rd {}; rd.FillMode = fillSolid; rd.CullMode = cullNone;
         rd.DepthClipEnable = TRUE;
-        Com<ID3D11RasterizerState> rasterizer;
+        Com<RasterState> rasterizer;
         check(device->CreateRasterizerState(&rd, rasterizer.put()), "Rasterizer");
         Com<ID3DBlob> vsCode, psCode, error;
-        check(D3DCompile(shader, std::strlen(shader), nullptr, nullptr, nullptr, "VS", "vs_5_0", 0, 0,
+        check(D3DCompile(shader, std::strlen(shader), nullptr, nullptr, nullptr, "VS", vsTarget, 0, 0,
                         vsCode.put(), error.put()), "Compile VS");
-        check(D3DCompile(shader, std::strlen(shader), nullptr, nullptr, nullptr, "PS", "ps_5_0", 0, 0,
+        check(D3DCompile(shader, std::strlen(shader), nullptr, nullptr, nullptr, "PS", psTarget, 0, 0,
                         psCode.put(), nullptr), "Compile PS");
-        Com<ID3D11VertexShader> vs; Com<ID3D11PixelShader> ps;
-        check(device->CreateVertexShader(vsCode->GetBufferPointer(), vsCode->GetBufferSize(), nullptr, vs.put()), "Create VS");
-        check(device->CreatePixelShader(psCode->GetBufferPointer(), psCode->GetBufferSize(), nullptr, ps.put()), "Create PS");
-        D3D11_BUFFER_DESC bd {}; bd.ByteWidth = 16; bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-        Com<ID3D11Buffer> constants;
+        Com<VertexShader> vs; Com<PixelShader> ps;
+        check(createVS(device.p, vsCode.p, vs.put()), "Create VS");
+        check(createPS(device.p, psCode.p, ps.put()), "Create PS");
+        BufferDesc bd {}; bd.ByteWidth = 16; bd.BindFlags = bindConstant;
+        Com<Buffer> constants;
         check(device->CreateBuffer(&bd, nullptr, constants.put()), "Constants");
         uint64_t stream = 0;
         if (api && !reshade) {
@@ -157,16 +158,18 @@ int main(int argc, char** argv) {
             const auto position = [](unsigned n) { return 0.5f + 0.3f * std::sin(float(n) * 0.025f); };
             float values[] = {position(frame), position(frame - 1), 1280, 720};
             context->UpdateSubresource(constants.p, 0, nullptr, values, 0, 0);
-            ID3D11RenderTargetView* views[] = {colorView.p, motionView.p, depthView.p};
+            RenderView* views[] = {colorView.p, motionView.p, depthView.p};
             context->OMSetRenderTargets(3, views, gameDepthView.p);
             context->OMSetDepthStencilState(depthState.p, 0);
             context->RSSetState(rasterizer.p);
-            D3D11_VIEWPORT viewport {0, 0, 1280, 720, 0, 1}; context->RSSetViewports(1, &viewport);
-            context->ClearDepthStencilView(gameDepthView.p, D3D11_CLEAR_DEPTH, 1, 0);
-            context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-            context->VSSetShader(vs.p, nullptr, 0); context->PSSetShader(ps.p, nullptr, 0);
+            Viewport viewport {0, 0, 1280, 720, 0, 1}; context->RSSetViewports(1, &viewport);
+            context->ClearDepthStencilView(gameDepthView.p, clearDepth, 1, 0);
+            context->IASetPrimitiveTopology(topology);
+            bindShaders(context.p, vs.p, ps.p);
             context->PSSetConstantBuffers(0, 1, &constants.p);
-            context->Draw(16 * 9 * 6, 0);
+            // Generic Depth treats <=8 draws on a lone depth buffer as an
+            // emulator's repeated present and omits its selection update.
+            for (int draw = 0; draw < 9; ++draw) context->Draw(16 * 9 * 6, 0);
             context->OMSetRenderTargets(0, nullptr, nullptr);
             LARGE_INTEGER now; QueryPerformanceCounter(&now);
             if (stream) {

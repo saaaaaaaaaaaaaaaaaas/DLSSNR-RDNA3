@@ -24,11 +24,28 @@ opti_bridge::Timeline timeline;
 OptiBridgeStats stats { sizeof(OptiBridgeStats), OPTI_BRIDGE_VERSION };
 uint64_t token = 0, nextToken = 0, startedSerial = 0;
 
+ComPtr<IUnknown> Unwrap(IUnknown* object) {
+    ComPtr<IUnknown> current = object;
+    // ReShade 6.8 com_utils.hpp IID_UnwrappedObject: QueryInterface returns an
+    // owned reference. No private proxy layout or adapter-only comparison.
+    constexpr GUID unwrapped = {0x7f2c9a11, 0x3b4e, 0x4d6a, {0x81,0x2f,0x5e,0x9c,0xd3,0x7a,0x1b,0x42}};
+    for (unsigned i = 0; current && i < 4; ++i) {
+        ComPtr<IUnknown> original;
+        if (FAILED(current->QueryInterface(unwrapped, reinterpret_cast<void**>(original.GetAddressOf()))) ||
+            !original || original.Get() == current.Get()) break;
+        current = original;
+    }
+    return current;
+}
 bool SameObject(IUnknown* a, IUnknown* b) {
     if (!a || !b) return false;
     ComPtr<IUnknown> x, y;
-    return SUCCEEDED(a->QueryInterface(IID_PPV_ARGS(&x))) &&
-           SUCCEEDED(b->QueryInterface(IID_PPV_ARGS(&y))) && x.Get() == y.Get();
+    if (SUCCEEDED(a->QueryInterface(IID_PPV_ARGS(&x))) &&
+        SUCCEEDED(b->QueryInterface(IID_PPV_ARGS(&y))) && x.Get() == y.Get()) return true;
+    auto originalA = Unwrap(a), originalB = Unwrap(b);
+    x.Reset(); y.Reset();
+    return originalA && originalB && SUCCEEDED(originalA->QueryInterface(IID_PPV_ARGS(&x))) &&
+        SUCCEEDED(originalB->QueryInterface(IID_PPV_ARGS(&y))) && x.Get() == y.Get();
 }
 uint32_t Result(uint32_t status) {
     if (stats.last_status != status)
@@ -62,7 +79,8 @@ uint32_t OPTI_BRIDGE_CALL Register(void* object, uint64_t hwnd, uint64_t* out) {
         return Result(OPTI_BRIDGE_NOT_READY);
     if (state.activeFgOutput != FGOutput::FSRFG) return Result(OPTI_BRIDGE_UNSUPPORTED);
     ComPtr<ID3D11Device> device;
-    if (FAILED(static_cast<IUnknown*>(object)->QueryInterface(IID_PPV_ARGS(&device))) ||
+    auto original = Unwrap(static_cast<IUnknown*>(object));
+    if (!original || FAILED(original->QueryInterface(IID_PPV_ARGS(&device))) ||
         !SameObject(device.Get(), state.currentD3D11Device) ||
         (uint64_t)(uintptr_t)state.currentFG->Hwnd() != hwnd)
         return Result(OPTI_BRIDGE_WRONG_DEVICE);
@@ -83,7 +101,8 @@ uint32_t OPTI_BRIDGE_CALL Register(void* object, uint64_t hwnd, uint64_t* out) {
 
 uint32_t Texture(void* object, const OptiBridgeFrame& f, DXGI_FORMAT format,
                  ComPtr<ID3D11Texture2D>& texture) {
-    if (!object || FAILED(static_cast<IUnknown*>(object)->QueryInterface(IID_PPV_ARGS(&texture))))
+    auto original = Unwrap(static_cast<IUnknown*>(object));
+    if (!original || FAILED(original->QueryInterface(IID_PPV_ARGS(&texture))))
         return OPTI_BRIDGE_BAD_FRAME;
     ComPtr<ID3D11Device> owner;
     texture->GetDevice(&owner);
