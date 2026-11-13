@@ -199,3 +199,18 @@ numerical results and remaining independent-reference work above.
 [Implementation CI](https://github.com/saaaaaaaaaaaaaaaaaas/DLSSNR-RDNA3/actions/runs/43435661819)
 completed successfully for both RDNA3 and RDNA4 Linux package jobs, including
 the RDNA3 CPU regression checks. Windows and release jobs were skipped.
+
+## CI cache after repository rename
+
+The later branch run `43440651042` failed during Vulkan Loader configuration
+after restoring the dependency cache created under the old repository name.
+That cache also carried Loader/dependency CMake builds with absolute checkout
+paths. Relocating the existing CMake cache reproduces the source/build-directory
+mismatch; the wrapper previously hid the configure log.
+
+CI now excludes `artifacts/ref/Vulkan-Loader` from both dependency caches and
+uses new `v2` keys to avoid restoring existing incompatible archives. Loader
+configure/build failures print their logs and upload them as CI artifacts.
+Matrix jobs run independently so one failure does not cancel the other GPU job.
+Shell/YAML checks, the configure-error reporting probe and local Loader builds
+for i686 and x86_64 pass. Runtime and shader arithmetic are unchanged.

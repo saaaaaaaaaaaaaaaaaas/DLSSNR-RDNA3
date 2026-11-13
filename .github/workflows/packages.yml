@@ -25,6 +25,7 @@ jobs:
     if: ${{ !contains(github.ref_name, '-win-') }}
     runs-on: ubuntu-24.04
     strategy:
+      fail-fast: false
       matrix:
         gpu: [rdna3, rdna4]
     env:
@@ -42,16 +43,27 @@ jobs:
       - name: Cache pinned dependencies
         uses: actions/cache@v4
         with:
+          # Loader builds contain absolute CMake paths and must be recreated after checkout relocation.
           path: |
             toolchain
             artifacts/ref
-          key: deps-${{ hashFiles('fetch_deps.sh') }}
+            !artifacts/ref/Vulkan-Loader
+          key: deps-v2-${{ hashFiles('fetch_deps.sh') }}
 
       - name: Fetch dependencies
         run: bash fetch_deps.sh
 
       - name: Build the Vulkan loader
         run: bash linux/build/build_vulkan_loader.sh
+
+      - name: Upload Vulkan loader failure logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vulkan-loader-logs-${{ matrix.gpu }}
+          path: |
+            artifacts/ref/Vulkan-Loader/cmake-*.log
+            artifacts/ref/Vulkan-Loader/ninja-*.log
 
       - name: Build packages
         run: |
@@ -97,7 +109,8 @@ jobs:
             toolchain
             !toolchain/GE-Proton11-7-x86_64
             artifacts/ref
-          key: deps-windows-${{ hashFiles('fetch_deps.sh') }}
+            !artifacts/ref/Vulkan-Loader
+          key: deps-windows-v2-${{ hashFiles('fetch_deps.sh') }}
 
       - name: Fetch dependencies
         run: bash fetch_deps.sh --windows

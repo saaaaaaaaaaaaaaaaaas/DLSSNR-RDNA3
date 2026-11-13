@@ -44,8 +44,10 @@ for arch in "${arches[@]}"; do
     mkdir -p "$out"
     cmake -S "$src" -B "$src/build-$arch" -G Ninja \
         -DCMAKE_TOOLCHAIN_FILE="$PWD/linux/vulkan-loader/toolchain-$arch.cmake" \
-        -DCMAKE_SHARED_LINKER_FLAGS=-Wl,--no-insert-timestamp -DCMAKE_BUILD_TYPE=Release -DUPDATE_DEPS=ON -DBUILD_TESTS=OFF -DUSE_GAS=ON > "$src/cmake-$arch.log" 2>&1
-    ninja -C "$src/build-$arch" > "$src/ninja-$arch.log" 2>&1
+        -DCMAKE_SHARED_LINKER_FLAGS=-Wl,--no-insert-timestamp -DCMAKE_BUILD_TYPE=Release -DUPDATE_DEPS=ON -DBUILD_TESTS=OFF -DUSE_GAS=ON > "$src/cmake-$arch.log" 2>&1 ||
+        { cat "$src/cmake-$arch.log" >&2; exit 1; }
+    ninja -C "$src/build-$arch" > "$src/ninja-$arch.log" 2>&1 ||
+        { cat "$src/ninja-$arch.log" >&2; exit 1; }
     cp -- "$src/build-$arch/loader/vulkan-1.dll" "$out/vulkan-1.dll"
     extra=(); [[ $arch == i686 ]] && extra=(-Wl,--kill-at)
     "$arch-w64-mingw32-gcc" -shared -o "$out/winevulkan.dll" linux/vulkan-loader/winevulkan_forwarder.c \
