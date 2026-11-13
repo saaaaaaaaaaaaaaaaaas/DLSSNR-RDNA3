@@ -130,6 +130,8 @@ OutputWidth=1920
 OutputHeight=1080
 [Upscalers]
 Dx12Upscaler=ffx
+[FSR]
+UpscalerIndex=1
 [Menu]
 OverlayMenu=true
 ShortcutKey=45
@@ -143,7 +145,9 @@ from the render-buffer size. Source and target aspect ratios must match for
 temporal reconstruction. The default is SR off.
 
 Press Insert and use OptiScaler's Upscaling tab to select the DX12 provider.
-The first target is FSR 3.1; FSR 2.1/2.2 and XeSS use their existing providers.
+With the pinned runtime, FFX index 1 selects FSR 3.1.6; index 0 selects FSR
+4.1.2. Confirm the selected version in the menu and consumer log. FSR 2.1/2.2
+and XeSS use their existing providers.
 XeSS additionally needs the matching `OptiScaler/libxess.dll` and licence from
 the pinned nightly. Keep FG input `OptiFG (ReShade)` and output `FSR FG`; disable
 FG with its Enabled toggle to test reconstruction alone.
@@ -167,6 +171,8 @@ NR_OPTIFG_SR=1 NR_OPTIFG_10BIT=1 NR_OPTIFG_HUD=1 \
 ```
 
 Set `NR_OPTIFG_UPSCALER=fsr21`, `fsr22` or `xess` to qualify another provider.
+The runner selects FSR 3.1.6 by default; `NR_OPTIFG_FFX_INDEX=0` tests FSR 4.1.2
+with the pinned runtime. This index is independent of `[FSR] FGIndex`.
 
 ## Synchronization details
 

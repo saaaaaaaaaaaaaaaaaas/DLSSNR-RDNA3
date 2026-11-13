@@ -125,13 +125,16 @@ if [[ "${NR_OPTIFG_SR:-0}" == 1 && "$mode" != baseline ]]; then
         7z x -y -o"$out" artifacts/ref/downloads/OptiScaler_v10.0.0-pre1_20261030.7z \
             'OptiScaler/libxess.dll' 'Licenses/XeSS_LICENSE.txt' > "$out/extract-xess.log"
     fi
-    python3 - "$out/OptiScaler.ini" "$sr_backend" "${NR_OPTIFG_OUTPUT_WIDTH:-1920}" "${NR_OPTIFG_OUTPUT_HEIGHT:-1080}" <<'PY'
+    python3 - "$out/OptiScaler.ini" "$sr_backend" "${NR_OPTIFG_OUTPUT_WIDTH:-1920}" "${NR_OPTIFG_OUTPUT_HEIGHT:-1080}" "${NR_OPTIFG_FFX_INDEX:-1}" <<'PY'
 from pathlib import Path
 import sys
 p = Path(sys.argv[1])
 w, h = int(sys.argv[3]), int(sys.argv[4])
 assert 64 <= w <= 16384 and 64 <= h <= 16384
+index = int(sys.argv[5])
+assert 0 <= index <= 32
 s = p.read_text().replace('OverlayMenu=false', 'OverlayMenu=true\nShortcutKey=45').replace('DebugView=true', 'DebugView=false')
+s = s.replace('[FSR]\n', f'[FSR]\nUpscalerIndex={index}\n')
 s += f'\n[ReShadeSR]\nEnabled=true\nOutputWidth={w}\nOutputHeight={h}\n\n[Upscalers]\nDx12Upscaler={sys.argv[2]}\n'
 p.write_text(s)
 PY

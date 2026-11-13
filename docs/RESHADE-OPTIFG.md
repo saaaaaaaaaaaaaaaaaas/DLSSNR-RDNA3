@@ -62,20 +62,32 @@ of the source textures. Existing FG-only installations remain opt-in unchanged.
 
 | Area | Required behavior | Evidence |
 | --- | --- | --- |
-| Real scaling | Separate low-resolution game buffers and high-resolution DX12 presenter; no downsample-then-upsample shortcut | Pending |
-| Upscaler | Reuse OptiScaler's DX12 providers and menu selection, initially FSR 3.1 on RDNA3 | Pending |
-| Ordering | ReShade guides -> SR on real frames -> FG; generated frames never enter SR history | Pending |
-| Guides | Preserve render-resolution depth/MV and their pixel scale for SR/FG | Pending |
-| Missing guides | Spatial fallback in menus/loading, reset SR/FG on recovery; no stale temporal input | Pending |
-| HUD | Same-frame HUDless SR when available, preserve HUD separately, publish display-resolution HUDless to FG | Pending |
-| Lifetime | Present allocator/fences protect SR output, inputs and provider changes; no reverse GPU wait | Pending |
-| Controls | Explicit output size, off by default, provider selection through OptiScaler; native inputs keep their ownership | Pending |
-| Qualification | 720p -> 1080p analytic probe, ReShade/Lumenite probe, reset/change/resize, and Tekken 7 | Pending |
+| Real scaling | Separate low-resolution game buffers and high-resolution DX12 presenter; no downsample-then-upsample shortcut | GPU probes log 1280x720 -> 1920x1080; CPU geometry contract passes |
+| Upscaler | Reuse OptiScaler's DX12 providers and menu selection, initially FSR 3.1 on RDNA3 | FFX 4.1.2 -> 3.1.6 switched live; FSR 2.2.1 and XeSS pass separate GPU runs |
+| Ordering | ReShade guides -> SR on real frames -> FG; generated frames never enter SR history | SR records in the real source copy list before FG presentation; counters continue with FG disabled |
+| Guides | Preserve render-resolution depth/MV and their pixel scale for SR/FG | Analytic and Lumenite SDR10 runs consume source-sized guides; SR scale 1, FG scale 1/input extent |
+| Missing guides | Spatial fallback in menus/loading, reset SR/FG on recovery; no stale temporal input | 90-frame deliberate guide gap uses spatial fallback, then temporal reconstruction resumes |
+| HUD | Same-frame HUDless SR when available, preserve HUD separately, publish display-resolution HUDless to FG | Analytic white HUD bar and full Lumenite pre-HUD capture inspected; all-scene quality pending |
+| Lifetime | Present allocator/fences protect SR output, inputs and provider changes; no reverse GPU wait | 9,000-frame run survives buffer recreation and guide gap; live FFX version change and normal teardown pass |
+| Controls | Explicit output size, off by default, provider selection through OptiScaler; native inputs keep their ownership | Insert menu verified, FSR 3.1.6 selection saved, End toggles FG while SR continues; native owner guarded in code |
+| Qualification | 720p -> 1080p analytic probe, ReShade/Lumenite probe, reset/change/resize, and Tekken 7 | Standalone probes pass; Tekken 7 SR qualification pending |
 
 ReShade optical flow is estimated and no engine jitter is injected or recovered.
 This post-render temporal reconstruction is not equivalent to an engine-integrated
 upscaler with pre-TAA color, true motion, jitter and engine-provided reactive masks.
 Window/desktop presentation size and render-buffer size must be verified separately.
+
+SR evidence is under `artifacts/optifg-evidence/`: `sr-direct-gap-hud-7a9bbfb/`
+(810 accepted real frames, 90 fallback frames), `sr-lumenite-sdr10-7a9bbfb/`
+(at least 2,400 captured frames), `sr-recreate-9666cf7/` (8,910 accepted frames),
+`sr-fsr22-9666cf7/` (1,200 accepted frames), and `sr-xess-9666cf7/` (1,800).
+The default FFX provider in those early runs was 4.1.2, despite its generic
+`FSR 3.X` name in older logs. `sr-ui-switch-086c74d/` records 28,805 accepted
+frames without rejection, a live change to FSR 3.1.6 and FG off/on. Numeric SR
+version logging and an explicit FG reset on SR history changes follow in
+`65b0a2b`. The SR-disabled regression retains 589 accepted frames and 11 warmup
+frames out of 600. These are functional transport/reconstruction checks, not
+image-quality or performance comparisons between providers.
 
 ## Observed GPU evidence
 
