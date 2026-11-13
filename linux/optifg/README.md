@@ -38,6 +38,9 @@ Set `NR_PROTON` to a local Proton directory, and place the consumer artifact in
 NR_PROTON='/path/to/Proton' bash linux/optifg/run_probe.sh baseline 120
 NR_PROTON='/path/to/Proton' bash linux/optifg/run_probe.sh direct 600
 NR_PROTON='/path/to/Proton' bash linux/optifg/run_probe.sh reshade 1800
+NR_PROTON='/path/to/Proton' bash linux/optifg/run_probe.sh baseline-dx10 120
+NR_PROTON='/path/to/Proton' bash linux/optifg/run_probe.sh direct-dx10 600
+NR_PROTON='/path/to/Proton' bash linux/optifg/run_probe.sh reshade-dx10 1800
 ```
 
 `baseline` renders through DXVK. `direct` sends analytically known pixel motion
@@ -47,7 +50,9 @@ so Generic Depth can select it. It uses normal Z, not reversed Z. Shader loading
 can take longer than a short probe; inspect `ReShade.log` and use a longer run.
 
 The orange rectangle moves over a stationary grid. Source MV are current to
-previous in pixels; foreground depth is 0.3, background 0.95. Debug view is on.
+previous in pixels; foreground depth is 0.3, background 0.95. The `-dx10` variants
+use actual D3D10 device/draw/resource entry points and shader model 4.
+Debug view is on.
 Bridge counters count captures and consumed **real** presents, not generated
 frames. Record the output to check intermediate frames, motion direction,
 occlusion edges, reset behavior and pacing before claiming successful FG.

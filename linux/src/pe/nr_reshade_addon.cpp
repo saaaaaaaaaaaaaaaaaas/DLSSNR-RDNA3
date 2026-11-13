@@ -4100,6 +4100,16 @@ void on_render_technique(effect_runtime* rt, effect_technique t, command_list* c
     const nr::Controls& controls = settings();
     optifg_client.poll(std::string(nr::pe::module_folder()) + "\\optifg-bridge.ini");
     const bool nr_requested = controls.enabled || renodx_on || layered;
+    if (optifg_client.enabled()) {
+        // UE4 can keep a probe/hidden runtime alive beside the game runtime.
+        // OptiScaler validates the actual FG device and window before we bind.
+        if (!optifg_client.select_target(reinterpret_cast<void*>(rt->get_device()->get_native()),
+                uint64_t(reinterpret_cast<uintptr_t>(rt->get_hwnd())))) return;
+        if (bound != rt) {
+            bound = rt; resolve(rt); need_reset = true; optifg_at = ~0ull;
+            log("[optifg] selected game runtime %p through OptiScaler device/window identity", static_cast<void*>(rt));
+        }
+    }
     // With the RenoDX-style option NR's switch is [RenoDX] NeuralUplift ([DlssNr]'s does not apply).
     if (!nr_requested) {
         view.nr_on = 0;

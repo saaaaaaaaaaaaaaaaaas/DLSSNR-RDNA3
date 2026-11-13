@@ -76,4 +76,5 @@ jobs:
           path: |
             artifacts/package-build/nr/dlssnr_amd.addon64
             artifacts/optifg-probe/optifg_probe.exe
+            artifacts/optifg-probe/optifg_probe_dx10.exe
           if-no-files-found: error

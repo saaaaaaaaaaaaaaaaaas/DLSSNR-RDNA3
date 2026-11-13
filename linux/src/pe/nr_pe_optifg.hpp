@@ -12,6 +12,8 @@ namespace nr::pe::optifg {
 class Client {
     const OptiReShadeBridge* api_ = nullptr;
     HMODULE module_ = nullptr;
+    void* target_device_ = nullptr;
+    uint64_t target_hwnd_ = 0;
     uint64_t stream_ = 0, sequence_ = 0, polled_ = 0, probed_ = 0;
     uint32_t status_ = ~0u;
     bool enabled_ = false, reset_ = true, key_down_ = false, infinite_ = false;
@@ -71,6 +73,22 @@ public:
         if (!enabled_ && stream_) close();
     }
     bool enabled() const { return enabled_; }
+    bool select_target(void* device, uint64_t hwnd) {
+        if (!enabled_) return false;
+        if (stream_) {
+            if (target_device_ == device && target_hwnd_ == hwnd) return true;
+            OptiBridgeStats stats { sizeof stats, OPTI_BRIDGE_VERSION };
+            if (api_->GetStats(stream_, &stats) == OPTI_BRIDGE_OK) return false;
+            close();
+        }
+        if (!api_) discover();
+        if (!api_) return false;
+        const auto result = api_->Register(device, hwnd, &stream_);
+        if (result != OPTI_BRIDGE_OK) return false;
+        target_device_ = device; target_hwnd_ = hwnd;
+        reset_ = true;
+        return true;
+    }
     void reject(const char* reason) {
         if (rejection_ != reason) { log("[optifg] no guides: %s", reason); rejection_ = reason; }
         reset();
@@ -82,6 +100,7 @@ public:
     void close() {
         if (api_ && stream_) api_->Unregister(stream_);
         stream_ = 0; api_ = nullptr;
+        target_device_ = nullptr; target_hwnd_ = 0;
         if (module_) FreeLibrary(module_);
         module_ = nullptr; reset_ = true; last_.QuadPart = 0;
     }
@@ -109,8 +128,7 @@ public:
         if (!api_) discover();
         if (!api_) { status(OPTI_BRIDGE_NOT_READY); return; }
         if (!stream_) {
-            result = api_->Register(device, hwnd, &stream_);
-            if (result != OPTI_BRIDGE_OK) { status(result); return; }
+            if (!select_target(device, hwnd)) { status(OPTI_BRIDGE_NOT_READY); return; }
         }
         result = api_->Submit(stream_, &frame);
         status(result);

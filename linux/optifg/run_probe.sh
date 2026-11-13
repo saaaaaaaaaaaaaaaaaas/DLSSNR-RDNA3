@@ -3,20 +3,24 @@
 set -euo pipefail
 cd -- "$(dirname -- "$0")/../.."
 root=$(pwd)
-mode=${1:-baseline}
-case "$mode" in baseline|direct|reshade) ;; *) echo 'usage: run_probe.sh baseline|direct|reshade [frames]' >&2; exit 2;; esac
+selection=${1:-baseline}
+mode=${selection%-dx10}
+exe=optifg_probe.exe
+[[ "$selection" == *-dx10 ]] && exe=optifg_probe_dx10.exe
+case "$mode" in baseline|direct|reshade) ;; *) echo 'usage: run_probe.sh baseline|direct|reshade[-dx10] [frames]' >&2; exit 2;; esac
 : "${NR_PROTON:?Set NR_PROTON to a Proton installation directory}"
 proton=$(realpath -- "$NR_PROTON")
 wine_lib="$proton/files/lib/wine"
 [[ -d "$wine_lib" ]] || wine_lib="$proton/files/lib64/wine"
 [[ -d "$wine_lib/dxvk/x86_64-windows" ]] || { echo "DXVK missing in $wine_lib" >&2; exit 1; }
-out="$root/artifacts/optifg-probe-$mode"
+out="$root/artifacts/optifg-probe-$selection"
 prefix="$root/build/optifg-prefix"
 mkdir -p "$out"
 bash linux/build/build_optifg_probe.sh
-cp artifacts/optifg-probe/optifg_probe.exe "$out/"
+cp "artifacts/optifg-probe/$exe" "$out/"
 for name in d3d11 dxgi; do install -m644 "$wine_lib/dxvk/x86_64-windows/$name.dll" "$out/$name.dll"; done
 for name in d3d12 d3d12core; do install -m644 "$wine_lib/vkd3d-proton/x86_64-windows/$name.dll" "$out/$name.dll"; done
+[[ -f "$wine_lib/dxvk/x86_64-windows/d3d10core.dll" ]] && install -m644 "$wine_lib/dxvk/x86_64-windows/d3d10core.dll" "$out/d3d10core.dll"
 vkd3d="$proton/files/lib/vkd3d"
 [[ -d "$vkd3d" ]] || vkd3d="$proton/files/lib64/vkd3d"
 if [[ -d "$vkd3d/x86_64-windows" ]]; then
@@ -89,8 +93,8 @@ cd -- "$out"
 echo "Standalone $mode probe: $out (private prefix: $prefix)"
 env WINEPREFIX="$prefix" WINEDEBUG=-all WINEDLLPATH="$vkd3d:$wine_lib" \
     LD_LIBRARY_PATH="$proton/files/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
-    WINEDLLOVERRIDES='dxgi,d3d11,d3d12,d3d12core=n;mscoree,mshtml=' \
-    "$proton/files/bin/wine" ./optifg_probe.exe "${args[@]}" --frames "${2:-600}" > probe.log 2>&1
+    WINEDLLOVERRIDES='dxgi,d3d10core,d3d11,d3d12,d3d12core=n;mscoree,mshtml=' \
+    "$proton/files/bin/wine" "./$exe" "${args[@]}" --frames "${2:-600}" > probe.log 2>&1
 tail -5 probe.log
 if [[ "$mode" == reshade ]]; then
     if ! rg -q '\[optifg\] captured [1-9][0-9]*, consumed presents [1-9]' dlssnr-amd.log; then
