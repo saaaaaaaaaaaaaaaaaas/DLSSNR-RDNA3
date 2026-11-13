@@ -217,10 +217,29 @@ index a60e1bc..b58cb8a 100644
                  ID3D11DeviceContext* context = nullptr;
                  state.currentD3D11Device->GetImmediateContext(&context);
 diff --git a/OptiScaler/menu/menu_common.cpp b/OptiScaler/menu/menu_common.cpp
-index d4e5bd4..0564027 100644
+index d4e5bd4..3c043e7 100644
 --- a/OptiScaler/menu/menu_common.cpp
 +++ b/OptiScaler/menu/menu_common.cpp
-@@ -3614,10 +3614,12 @@ void MenuCommon::RenderActiveUpscalerSettings(RenderMenuContext& ctx)
+@@ -3521,7 +3521,17 @@ void MenuCommon::RenderUpscalerStateMessage(RenderMenuContext& ctx)
+     auto& primaryGpu = *ctx.primaryGpu;
+ 
+     // No active upscaler message
+-    if (currentFeature == nullptr || !currentFeature->IsInited())
++    if ((currentFeature == nullptr || !currentFeature->IsInited()) &&
++        state.activeFgInput == FGInput::ReShade && config->ReShadeSREnabled.value_or_default())
++    {
++        ImGui::TextWrapped("ReShade SR: waiting for valid depth/motion or a supported provider. "
++                           "Spatial scaling remains active.");
++        RenderUpscalerCombo(API::DX12, config->Dx12Upscaler.value_or(Upscaler::FFX),
++                            { Upscaler::FFX, Upscaler::FSR21, Upscaler::FSR22, Upscaler::XeSS });
++        ImGui::TextDisabled("Output: %dx%d (restart after changing output size)",
++                            config->ReShadeSRWidth.value_or_default(), config->ReShadeSRHeight.value_or_default());
++    }
++    else if (currentFeature == nullptr || !currentFeature->IsInited())
+     {
+         ImGui::Spacing();
+ 
+@@ -3614,10 +3624,12 @@ void MenuCommon::RenderActiveUpscalerSettings(RenderMenuContext& ctx)
      auto& menuResScale = ctx.menuResScale;
      auto& primaryGpu = *ctx.primaryGpu;
  
@@ -234,7 +253,7 @@ index d4e5bd4..0564027 100644
  
      ImGui::PushItemWidth(150.0f * menuResScale);
  
-@@ -3631,7 +3633,7 @@ void MenuCommon::RenderActiveUpscalerSettings(RenderMenuContext& ctx)
+@@ -3631,14 +3643,18 @@ void MenuCommon::RenderActiveUpscalerSettings(RenderMenuContext& ctx)
      }
      else
      {
@@ -243,7 +262,19 @@ index d4e5bd4..0564027 100644
          {
          case DX11:
              AddDx11Backends(currentBackend);
-@@ -3681,7 +3683,7 @@ void MenuCommon::RenderActiveUpscalerSettings(RenderMenuContext& ctx)
+             break;
+ 
+         case DX12:
+-            AddDx12Backends(currentBackend);
++            if (state.activeFgInput == FGInput::ReShade)
++                RenderUpscalerCombo(API::DX12, currentBackend,
++                                    { Upscaler::FFX, Upscaler::FSR21, Upscaler::FSR22, Upscaler::XeSS });
++            else
++                AddDx12Backends(currentBackend);
+             break;
+ 
+         default:
+@@ -3681,7 +3697,7 @@ void MenuCommon::RenderActiveUpscalerSettings(RenderMenuContext& ctx)
      }
  
      // Dx11 with Dx12
@@ -252,7 +283,7 @@ index d4e5bd4..0564027 100644
      {
          ImGui::Spacing();
          if (auto ch = ScopedCollapsingHeader("Dx11 with Dx12 Settings"); ch.IsHeaderOpen())
-@@ -3698,7 +3700,7 @@ void MenuCommon::RenderActiveUpscalerSettings(RenderMenuContext& ctx)
+@@ -3698,7 +3714,7 @@ void MenuCommon::RenderActiveUpscalerSettings(RenderMenuContext& ctx)
          }
      }
  
@@ -261,7 +292,7 @@ index d4e5bd4..0564027 100644
      {
          ImGui::Spacing();
          if (auto ch = ScopedCollapsingHeader("Vulkan with Dx12 Settings"); ch.IsHeaderOpen())
-@@ -3781,12 +3783,12 @@ void MenuCommon::RenderActiveUpscalerSettings(RenderMenuContext& ctx)
+@@ -3781,12 +3797,12 @@ void MenuCommon::RenderActiveUpscalerSettings(RenderMenuContext& ctx)
      // FFX -----------------
      if (!usesDlssd && (currentBackend == Upscaler::FFX || currentBackend == Upscaler::FFX_on12))
      {
@@ -277,7 +308,7 @@ index d4e5bd4..0564027 100644
                              : customUpscaler != nullptr ? &customUpscaler->versions
                                                          : nullptr;
              versions != nullptr && !versions->names.empty())
-@@ -3910,7 +3912,7 @@ void MenuCommon::RenderActiveUpscalerSettings(RenderMenuContext& ctx)
+@@ -3910,7 +3926,7 @@ void MenuCommon::RenderActiveUpscalerSettings(RenderMenuContext& ctx)
              HMODULE upscalerModule = nullptr;
              if (customUpscaler != nullptr)
                  upscalerModule = customUpscaler->module.dll;
@@ -286,7 +317,7 @@ index d4e5bd4..0564027 100644
                       versions != nullptr && config->FfxUpscalerIndex.value_or_default() >= 0 &&
                       config->FfxUpscalerIndex.value_or_default() < versions->ids.size())
              {
-@@ -4401,7 +4403,9 @@ void MenuCommon::RenderFrameGenerationSelection(RenderMenuContext& ctx)
+@@ -4401,7 +4417,9 @@ void MenuCommon::RenderFrameGenerationSelection(RenderMenuContext& ctx)
          { FGInput::FSRFG30, "FSR 3.0 FG",
              "Can be used with any FG Output\n\nRequires enabling FSR-FG in game settings\nSupports HUDless out of the box" },
          { FGInput::XeFG, "XeFG",
@@ -298,7 +329,7 @@ index d4e5bd4..0564027 100644
  
      // clang-format on
 diff --git a/OptiScaler/with_dx12/dx11_with_dx12_sc.cpp b/OptiScaler/with_dx12/dx11_with_dx12_sc.cpp
-index 41f9c1b..0084842 100644
+index 41f9c1b..775ffed 100644
 --- a/OptiScaler/with_dx12/dx11_with_dx12_sc.cpp
 +++ b/OptiScaler/with_dx12/dx11_with_dx12_sc.cpp
 @@ -1,5 +1,6 @@
@@ -351,7 +382,20 @@ index 41f9c1b..0084842 100644
          }
      }
  
-@@ -756,6 +764,7 @@ HRESULT STDMETHODCALLTYPE Dx11wDx12SC::ResizeBuffers1(UINT BufferCount, UINT Wid
+@@ -559,6 +567,12 @@ HRESULT STDMETHODCALLTYPE Dx11wDx12SC::ResizeBuffers(UINT BufferCount, UINT Widt
+ 
+ HRESULT STDMETHODCALLTYPE Dx11wDx12SC::ResizeTarget(const DXGI_MODE_DESC* pNewTargetParameters)
+ {
++    DXGI_MODE_DESC outputMode {};
++    if (pNewTargetParameters && _fgSwapChain) {
++        outputMode = *pNewTargetParameters;
++        ReShadeFG_DisplaySize(outputMode.Width, outputMode.Height);
++        pNewTargetParameters = &outputMode;
++    }
+     return _fgSwapChain != nullptr
+                ? _fgSwapChain->ResizeTarget(pNewTargetParameters)
+                : (_real != nullptr ? _real->ResizeTarget(pNewTargetParameters) : DXGI_ERROR_DEVICE_REMOVED);
+@@ -756,6 +770,7 @@ HRESULT STDMETHODCALLTYPE Dx11wDx12SC::ResizeBuffers1(UINT BufferCount, UINT Wid
          LOG_WARN("continuing ResizeBuffers1 after FG/present queue wait failure");
      }
  
@@ -359,7 +403,7 @@ index 41f9c1b..0084842 100644
      MenuOverlayDx::CleanupRenderTarget(true, _handle);
      _ReleaseInteropBackBuffers();
  
-@@ -1190,6 +1199,18 @@ bool Dx11wDx12SC::_CopyDx11SharedToDx12FGBackBuffer(UINT dx11Index)
+@@ -1190,6 +1205,18 @@ bool Dx11wDx12SC::_CopyDx11SharedToDx12FGBackBuffer(UINT dx11Index)
          return false;
      }
  
@@ -378,7 +422,7 @@ index 41f9c1b..0084842 100644
      auto sourceBefore = _openedDx11BackBufferStates[copySlot];
  
      TransitionResource(_copyCommandLists[copySlot], _openedDx11BackBuffers[copySlot], sourceBefore,
-@@ -1205,6 +1226,7 @@ bool Dx11wDx12SC::_CopyDx11SharedToDx12FGBackBuffer(UINT dx11Index)
+@@ -1205,6 +1232,7 @@ bool Dx11wDx12SC::_CopyDx11SharedToDx12FGBackBuffer(UINT dx11Index)
                         sourceBefore);
  
      _openedDx11BackBufferStates[copySlot] = D3D12_RESOURCE_STATE_COMMON;
@@ -386,7 +430,7 @@ index 41f9c1b..0084842 100644
  
      fgBackBuffer->Release();
  
-@@ -1217,6 +1239,7 @@ bool Dx11wDx12SC::_CopyDx11SharedToDx12FGBackBuffer(UINT dx11Index)
+@@ -1217,6 +1245,7 @@ bool Dx11wDx12SC::_CopyDx11SharedToDx12FGBackBuffer(UINT dx11Index)
  
      ID3D12CommandList* lists[] = { _copyCommandLists[copySlot] };
      _dx12CommandQueue->ExecuteCommandLists(1, lists);

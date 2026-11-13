@@ -117,8 +117,6 @@ is published, initially with NR off. The final image is never labelled HUDless.
 Automatic capture is game-dependent. With NR on, the pre-NR capture is not a
 valid match for post-NR color and is deliberately omitted.
 
-## Synchronization
-
 ## Additional upscaling before FG
 
 The patched consumer can reconstruct a real low-resolution game backbuffer into

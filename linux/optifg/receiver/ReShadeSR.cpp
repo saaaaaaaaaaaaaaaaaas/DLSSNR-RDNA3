@@ -189,7 +189,8 @@ bool Record(ID3D12GraphicsCommandList* cmd, ID3D12Resource* source, ID3D12Resour
     if (FAILED(destination->GetDevice(IID_PPV_ARGS(&device)))) return false;
     device->Release(); // resources own their device throughout this call
     const UINT depthFlags = frame ? frame->flags & (OPTI_BRIDGE_REVERSED_DEPTH | OPTI_BRIDGE_INFINITE_DEPTH) : 0;
-    bool changed = current && current->feature && state.changeBackend[current->feature->Handle()->Id];
+    bool changed = current && current->feature &&
+                   (state.changeBackend[current->feature->Handle()->Id] || state.newBackend != Upscaler::Reset);
     if (current && (current->device != device || current->width != output.Width || current->height != output.Height ||
         current->sourceWidth != input.Width || current->sourceHeight != input.Height || changed ||
         current->sourceFormat != input.Format || current->outputFormat != output.Format ||
@@ -261,8 +262,9 @@ bool Record(ID3D12GraphicsCommandList* cmd, ID3D12Resource* source, ID3D12Resour
                          c.feature->Name(), input.Width, input.Height, output.Width, output.Height);
             } else {
                 // Keep a failed object alive until its recorded initialization work completes.
-                LOG_WARN("ReShade SR initialization failed; spatial fallback this frame");
+                LOG_WARN("ReShade SR initialization failed; spatial fallback until another provider is selected");
             }
+            state.newBackend = Upscaler::Reset;
         }
         if (c.feature && c.feature->IsInited()) {
             Transition(cmd, motion, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
