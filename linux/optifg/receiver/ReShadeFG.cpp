@@ -141,7 +141,6 @@ uint32_t SubmitImpl(uint64_t stream, const OptiBridgeFrame* frame) {
     // No GPU-side reverse wait: DXVK and vkd3d-proton may share one VkQueue.
     // A busy ring slot drops this frame rather than creating a queue cycle.
     if (completed < slotSerial[slot]) { timeline.reset = true; return Result(OPTI_BRIDGE_BUSY); }
-    OwnedLockGuard fgLock(fg->Mutex, 4);
     FG_Constants constants {};
     constants.displayWidth = frame->width; constants.displayHeight = frame->height;
     constants.flags |= FG_Flags::DisplayResolutionMVs;
@@ -149,6 +148,9 @@ uint32_t SubmitImpl(uint64_t stream, const OptiBridgeFrame* frame) {
     if (frame->flags & OPTI_BRIDGE_INFINITE_DEPTH) constants.flags |= FG_Flags::InfiniteDepth;
     if (Config::Instance()->FGAsync.value_or_default()) constants.flags |= FG_Flags::Async;
     fg->EvaluateState(device12, constants);
+    // EvaluateState owns the FG mutex itself. Only protect resource publication
+    // after it returns; wrapping that call would recursively lock a shared_mutex.
+    OwnedLockGuard fgLock(fg->Mutex, 4);
     fg->StartNewFrame();
     const bool reset = timeline.needs_reset(*frame);
     float nearPlane = frame->camera_near;
