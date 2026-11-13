@@ -37,6 +37,8 @@ if [[ "$mode" != baseline ]]; then
         'OptiScaler/amd_fidelityfx*.dll' 'Licenses/*' > "$out/extract-runtime.log"
 fi
 if [[ "$mode" == reshade ]]; then
+    motion=${NR_OPTIFG_MOTION:-lumenite}
+    case "$motion" in lumenite|vort) ;; *) echo 'NR_OPTIFG_MOTION must be lumenite or vort' >&2; exit 2;; esac
     [[ -d "$prefix/drive_c/windows/system32" ]] || { echo 'Run baseline first to create the private prefix' >&2; exit 1; }
     # Load ReShade after OptiScaler's hooks so it wraps the game-facing swapchain.
     # Replace a possible Wine symlink itself; never follow it into the Proton install.
@@ -60,6 +62,16 @@ INI
     cp -r artifacts/ref/vort_Shaders/Textures/. "$out/reshade-shaders/Textures/"
     cp artifacts/ref/DLSS5-Feeder/shaders/DLSS5_Feed.fx "$out/reshade-shaders/Shaders/"
     python3 linux/build/patch_reshade_effects.py "$out/reshade-shaders/Shaders"
+    if [[ "$motion" == lumenite ]]; then
+        # The author's link is the only propagation route; never bundle these files.
+        lumenite_pin=f80e98d716ad72e12af6f7baa727bcfeb4be5094
+        lumenite_zip="artifacts/ref/downloads/LumeniteFX-$lumenite_pin.zip"
+        if [[ ! -f "$lumenite_zip" ]]; then
+            curl -fL --retry 2 "https://github.com/umar-afzaal/LumeniteFX/archive/$lumenite_pin.zip" -o "$lumenite_zip.part"
+            mv -- "$lumenite_zip.part" "$lumenite_zip"
+        fi
+        python3 linux/package/lumenite.py install "$lumenite_zip" "$out/reshade-shaders/Shaders/DLSS5_Feed.fx" "$out/reshade-shaders"
+    fi
     cat > "$out/ReShade.ini" <<'INI'
 [GENERAL]
 EffectSearchPaths=.\reshade-shaders\Shaders\**
@@ -85,13 +97,27 @@ Enabled=0
 [HudFix]
 Mode=0
 INI
+    if [[ "$motion" == lumenite ]]; then
+        python3 - "$out" <<'PY'
+from pathlib import Path
+import sys
+root = Path(sys.argv[1])
+p = root / 'ReShadePreset.ini'
+s = p.read_text().replace('DLSS5_MV_PROVIDER=2', 'DLSS5_MV_PROVIDER=3')
+s = s.replace('vort_MotionEffects@vort_Motion.fx', 'Lumenite_Kernel@lumenite_Kernel.fx')
+p.write_text(s)
+p = root / 'dlssnr-amd.ini'
+p.write_text(p.read_text().replace('[DlssNr]\n', '[DlssNr]\nMotionVectors=lumenite\n'))
+PY
+    fi
 fi
 args=()
 [[ "$mode" == baseline ]] && args+=(--baseline)
 [[ "$mode" == reshade ]] && args+=(--reshade)
+[[ "${NR_OPTIFG_10BIT:-0}" == 1 ]] && args+=(--10bit)
 cd -- "$out"
 echo "Standalone $mode probe: $out (private prefix: $prefix)"
-env WINEPREFIX="$prefix" WINEDEBUG=-all WINEDLLPATH="$vkd3d:$wine_lib" \
+env WINEPREFIX="$prefix" WINEDEBUG=-all DISABLE_LSFGVK=1 WINEDLLPATH="$vkd3d:$wine_lib" \
     LD_LIBRARY_PATH="$proton/files/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
     WINEDLLOVERRIDES='dxgi,d3d10core,d3d11,d3d12,d3d12core=n;mscoree,mshtml=' \
     "$proton/files/bin/wine" "./$exe" "${args[@]}" --frames "${2:-600}" > probe.log 2>&1

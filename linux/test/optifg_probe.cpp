@@ -62,13 +62,14 @@ Output PS(float4 position : SV_Position) {
 
 int main(int argc, char** argv) {
     try {
-        bool baseline = false, reshade = false;
+        bool baseline = false, reshade = false, tenBit = false;
         unsigned frames = 600;
         for (int i = 1; i < argc; ++i) {
             if (!std::strcmp(argv[i], "--baseline")) baseline = true;
             else if (!std::strcmp(argv[i], "--reshade")) reshade = true;
+            else if (!std::strcmp(argv[i], "--10bit")) tenBit = true;
             else if (!std::strcmp(argv[i], "--frames") && i + 1 < argc) frames = unsigned(std::stoul(argv[++i]));
-            else throw std::runtime_error("usage: optifg_probe.exe [--baseline | --reshade] [--frames N]");
+            else throw std::runtime_error("usage: optifg_probe.exe [--baseline | --reshade] [--10bit] [--frames N]");
         }
         const OptiReShadeBridge* api = nullptr;
         if (!baseline) {
@@ -93,7 +94,7 @@ int main(int argc, char** argv) {
         check(adapter->GetParent(__uuidof(IDXGIFactory), reinterpret_cast<void**>(factory.put())), "GetFactory");
         DXGI_SWAP_CHAIN_DESC desc {};
         desc.BufferDesc.Width = 1280; desc.BufferDesc.Height = 720;
-        desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        desc.BufferDesc.Format = tenBit ? DXGI_FORMAT_R10G10B10A2_UNORM : DXGI_FORMAT_R8G8B8A8_UNORM;
         desc.SampleDesc.Count = 1; desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
         desc.BufferCount = 2; desc.OutputWindow = hwnd; desc.Windowed = TRUE;
         desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
