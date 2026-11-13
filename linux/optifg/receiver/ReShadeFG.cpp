@@ -22,7 +22,7 @@ ComPtr<ID3D12Fence> copiedFence;
 uint64_t copySerial = 0, slotSerial[BUFFER_COUNT] {};
 opti_bridge::Timeline timeline;
 OptiBridgeStats stats { sizeof(OptiBridgeStats), OPTI_BRIDGE_VERSION };
-uint64_t token = 0, nextToken = 0;
+uint64_t token = 0, nextToken = 0, startedSerial = 0;
 
 bool SameObject(IUnknown* a, IUnknown* b) {
     if (!a || !b) return false;
@@ -41,6 +41,7 @@ bool Selected() { return State::Instance().activeFgInput == FGInput::ReShade; }
 void DropStream() {
     token = 0;
     timeline = {};
+    startedSerial = 0;
     sourceDevice.Reset();
     // DeferredRelease holds the D3D12 allocations until outstanding work completes.
     Dx11WithDx12::ResetUpscalerResourceCache(cache);
@@ -76,7 +77,7 @@ uint32_t OPTI_BRIDGE_CALL Register(void* object, uint64_t hwnd, uint64_t* out) {
     token = ++nextToken;
     timeline = {};
     *out = token;
-    LOG_INFO("ReShade FG stream {} registered (estimated display-resolution pixel flow)", token);
+    LOG_INFO("ReShade FG stream {} registered (display-resolution pixel guides)", token);
     return Result(OPTI_BRIDGE_OK);
 }
 
@@ -152,6 +153,8 @@ uint32_t SubmitImpl(uint64_t stream, const OptiBridgeFrame* frame) {
     // after it returns; wrapping that call would recursively lock a shared_mutex.
     OwnedLockGuard fgLock(fg->Mutex, 4);
     fg->StartNewFrame();
+    startedSerial = timeline.serial + 1;
+    if (fg->IsPaused() || !fg->IsActive()) return Result(OPTI_BRIDGE_WARMING_UP);
     const bool reset = timeline.needs_reset(*frame);
     float nearPlane = frame->camera_near;
     float farPlane = (frame->flags & OPTI_BRIDGE_INFINITE_DEPTH) ? FLT_MAX : frame->camera_far;
@@ -248,7 +251,12 @@ void ReShadeFG_BeforePresent(ID3D11Device* device) {
     else if (auto* fg = State::Instance().currentFG) {
         OwnedLockGuard fgLock(fg->Mutex, 4);
         // An absent capture must never dispatch the previous real frame's guides.
-        fg->StartNewFrame(); fg->SetReset(1);
+        if (startedSerial != timeline.serial) fg->StartNewFrame();
+        fg->SetReset(1);
+        // Disable this present explicitly: a backend may otherwise choose an
+        // older queued frame even though the newest slot has no valid guides.
+        // EvaluateState reactivates the existing context on the next good frame.
+        fg->Deactivate();
     }
 }
 void ReShadeFG_Destroy(ID3D11Device* device) {

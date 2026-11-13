@@ -31,7 +31,13 @@ static LRESULT CALLBACK windowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 static const char* shader = R"(
 cbuffer Frame : register(b0) { float x; float previousX; float width; float height; };
 float4 VS(uint id : SV_VertexID) : SV_Position {
-    return float4(id == 2 ? 3 : -1, id == 1 ? 3 : -1, 0.5, 1);
+    // A tessellated scene, rather than a three-vertex postprocess triangle:
+    // Generic Depth intentionally excludes common fullscreen postprocess draws.
+    const uint corners[6] = { 0, 1, 2, 2, 1, 3 };
+    uint vertex = corners[id % 6];
+    uint cell = id / 6;
+    float2 xy = (float2(cell % 16, cell / 16) + float2(vertex & 1, vertex >> 1)) / float2(16, 9);
+    return float4(xy * 2 - 1, 0.5, 1);
 }
 struct Output {
     float4 color : SV_Target0;
@@ -160,7 +166,7 @@ int main(int argc, char** argv) {
             context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             context->VSSetShader(vs.p, nullptr, 0); context->PSSetShader(ps.p, nullptr, 0);
             context->PSSetConstantBuffers(0, 1, &constants.p);
-            context->Draw(3, 0);
+            context->Draw(16 * 9 * 6, 0);
             context->OMSetRenderTargets(0, nullptr, nullptr);
             LARGE_INTEGER now; QueryPerformanceCounter(&now);
             if (stream) {

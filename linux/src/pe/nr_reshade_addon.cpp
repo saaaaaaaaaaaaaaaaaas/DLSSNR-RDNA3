@@ -4034,20 +4034,20 @@ void publish_optifg(effect_runtime* rt, command_list* cl, resource_view rtv, boo
     optifg_at = presents;
     device* dev = rt->get_device();
     if (dev->get_api() != device_api::d3d11 && dev->get_api() != device_api::d3d10) {
-        optifg_client.reset(); return;
+        optifg_client.reject("only DX10/DX11 through DXVK is supported"); return;
     }
     const int provider = feed_provider(rt);
     const auto source = provider == 2 ? rs::call(rt, &effect_runtime::find_technique, kVortEffect, kVortTechnique)
                       : provider == 3 ? rs::call(rt, &effect_runtime::find_technique, kLumeniteEffect, kLumeniteTechnique)
                       : effect_technique{};
-    if (!source.handle || !rt->get_technique_state(source)) { optifg_client.reset(); return; }
+    if (!source.handle || !rt->get_technique_state(source)) { optifg_client.reject("VORT/Lumenite technique is inactive"); return; }
     // RawDepth in the pinned Feeder does not decode these conventions. Reject
     // rather than labelling logarithmic/scaled/mirrored samples as device depth.
     for (const char* name : {"RESHADE_DEPTH_INPUT_IS_LOGARITHMIC", "RESHADE_DEPTH_INPUT_IS_MIRRORED", "RESHADE_DEPTH_MULTIPLIER"}) {
         char value[32] {};
         if (rt->get_preprocessor_definition_for_effect(kEffect, name, value) || rt->get_preprocessor_definition(name, value)) {
             const float expected = std::string(name) == "RESHADE_DEPTH_MULTIPLIER" ? 1.f : 0.f;
-            if (std::strtof(value, nullptr) != expected) { optifg_client.reset(); return; }
+            if (std::strtof(value, nullptr) != expected) { optifg_client.reject("logarithmic, mirrored or multiplied depth is unsupported"); return; }
         }
     }
     auto image = [&](effect_texture_variable var) {
@@ -4061,18 +4061,18 @@ void publish_optifg(effect_runtime* rt, command_list* cl, resource_view rtv, boo
         if (raw.handle) break;
     }
     // ReShade binds a small fallback texture when no game depth was detected.
-    if (!raw.handle) { optifg_client.reset(); return; }
+    if (!raw.handle) { optifg_client.reject("ReShade game depth is not bound"); return; }
     const auto rawDesc = rs::call(dev, &device::get_resource_desc, raw);
-    if (rawDesc.texture.width < 16 || rawDesc.texture.height < 16) { optifg_client.reset(); return; }
+    if (rawDesc.texture.width < 16 || rawDesc.texture.height < 16) { optifg_client.reject("ReShade fallback depth texture is bound"); return; }
     const resource color = rs::call(dev, &device::get_resource_from_view, rtv);
     const resource motion = image(mv_var), depth = image(depth_var);
-    if (!color.handle || !motion.handle || !depth.handle) { optifg_client.reset(); return; }
+    if (!color.handle || !motion.handle || !depth.handle) { optifg_client.reject("color, motion or depth guide is missing"); return; }
     const auto cd = rs::call(dev, &device::get_resource_desc, color);
     const auto md = rs::call(dev, &device::get_resource_desc, motion);
     const auto dd = rs::call(dev, &device::get_resource_desc, depth);
     if (md.texture.width != cd.texture.width || md.texture.height != cd.texture.height ||
         dd.texture.width != cd.texture.width || dd.texture.height != cd.texture.height) {
-        optifg_client.reset(); return;
+        optifg_client.reject("guides and color must have the same extent"); return;
     }
     resource hudless {};
     // Reuse the proven same-frame capture verdict independently of NR. NR can
@@ -4101,11 +4101,11 @@ void on_render_technique(effect_runtime* rt, effect_technique t, command_list* c
     optifg_client.poll(std::string(nr::pe::module_folder()) + "\\optifg-bridge.ini");
     const bool nr_requested = controls.enabled || renodx_on || layered;
     // With the RenoDX-style option NR's switch is [RenoDX] NeuralUplift ([DlssNr]'s does not apply).
-    if (!nr_requested && !optifg_client.enabled()) {
+    if (!nr_requested) {
         view.nr_on = 0;
         view_layers({1});
         note_layer(1, true, 3, "[DlssNr] Enabled is off", 0, 0, 0, config.white_point);
-        return;
+        if (!optifg_client.enabled()) return;
     }
     if (!bound) { bound = rt; resolve(rt); }
     if (rt != bound) return;

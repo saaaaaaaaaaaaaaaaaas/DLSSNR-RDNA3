@@ -24,17 +24,24 @@ inline uint32_t validate(const OptiBridgeFrame* f) {
 struct Timeline {
     uint64_t serial = 0, pending_serial = 0, last_frame = 0;
     uint32_t width = 0, height = 0;
+    uint32_t depth_flags = 0;
+    float camera_near = 0, camera_far = 0, fov = 0;
     bool reset = true;
     uint32_t check(const OptiBridgeFrame& f) const {
         return f.frame_id <= last_frame || pending_serial == serial + 1
             ? OPTI_BRIDGE_DUPLICATE : OPTI_BRIDGE_OK;
     }
     bool needs_reset(const OptiBridgeFrame& f) const {
+        constexpr auto depthMask = OPTI_BRIDGE_REVERSED_DEPTH | OPTI_BRIDGE_INFINITE_DEPTH;
         return reset || f.width != width || f.height != height ||
+            (f.flags & depthMask) != depth_flags || f.camera_near != camera_near ||
+            f.camera_far != camera_far || f.vertical_fov_radians != fov ||
             (last_frame && f.frame_id != last_frame + 1) || (f.flags & OPTI_BRIDGE_RESET);
     }
     void accept(const OptiBridgeFrame& f) {
         last_frame = f.frame_id; width = f.width; height = f.height;
+        depth_flags = f.flags & (OPTI_BRIDGE_REVERSED_DEPTH | OPTI_BRIDGE_INFINITE_DEPTH);
+        camera_near = f.camera_near; camera_far = f.camera_far; fov = f.vertical_fov_radians;
         pending_serial = serial + 1; reset = false;
     }
     bool present() {

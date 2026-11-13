@@ -45,5 +45,11 @@ int main() {
     t.accept(f); assert(t.present());
     f.frame_id += 2;
     assert(t.needs_reset(f));
+    t.accept(f); assert(t.present());
+    ++f.frame_id; f.flags |= OPTI_BRIDGE_REVERSED_DEPTH;
+    assert(t.needs_reset(f));
+    t.accept(f); assert(t.present());
+    ++f.frame_id; f.vertical_fov_radians += 0.1f;
+    assert(t.needs_reset(f));
     std::cout << "OptiFG ABI, validation, duplicate, stale, gap and resize checks passed\n";
 }

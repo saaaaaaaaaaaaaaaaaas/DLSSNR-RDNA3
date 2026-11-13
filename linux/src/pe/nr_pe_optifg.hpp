@@ -16,6 +16,7 @@ class Client {
     uint32_t status_ = ~0u;
     bool enabled_ = false, reset_ = true, key_down_ = false, infinite_ = false;
     float near_ = 0, far_ = 0, fov_ = 0;
+    std::string rejection_;
     LARGE_INTEGER last_ {}, frequency_ {};
 
     void status(uint32_t value) {
@@ -70,6 +71,10 @@ public:
         if (!enabled_ && stream_) close();
     }
     bool enabled() const { return enabled_; }
+    void reject(const char* reason) {
+        if (rejection_ != reason) { log("[optifg] no guides: %s", reason); rejection_ = reason; }
+        reset();
+    }
     void reset() {
         reset_ = true; last_.QuadPart = 0;
         if (api_ && stream_) api_->Reset(stream_);
@@ -109,7 +114,7 @@ public:
         }
         result = api_->Submit(stream_, &frame);
         status(result);
-        if (result == OPTI_BRIDGE_OK) reset_ = false;
+        if (result == OPTI_BRIDGE_OK) { reset_ = false; rejection_.clear(); }
         else {
             reset_ = true;
             if (result == OPTI_BRIDGE_NOT_READY || result == OPTI_BRIDGE_WRONG_DEVICE) close();
