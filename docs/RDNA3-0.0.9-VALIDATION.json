@@ -1,0 +1,160 @@
+{
+  "upstream_target": "9503f6b180df45305b38fbd21cd9f705164f2ab1",
+  "fork_before": "88d8c9c39279c888d9e17509703f9778574990fd",
+  "production_source": "fc18bed8ecd1bdd45056e04b40d58b06ce3efd6c",
+  "device": "AMD Ryzen Z1 Extreme (RADV PHOENIX)",
+  "driver": "Mesa 26.2.6-arch3.1",
+  "baseline_frames": {
+    "silver": {
+      "1080p": {
+        "before_after_exact": true,
+        "sha256": "f2f845e83bba073cf1f3fb16878524c84b48e973288e55a257b7e591748a6170",
+        "existing_golden_exact": false
+      },
+      "1440p": {
+        "before_after_exact": true,
+        "sha256": "5900c16caf4f721e25929d965e4942bf7afa99a9c69752ab9ae18ddf6b43c1a3",
+        "existing_golden_exact": false
+      },
+      "4k": {
+        "before_after_exact": true,
+        "sha256": "1065d74b419117833cb3266560a4fea65062a378027f624f24559eef5520b419",
+        "existing_golden_exact": false
+      }
+    },
+    "small": {
+      "1080p": {
+        "before_after_exact": true,
+        "sha256": "d52cfab95df3a49bcb0805874621ad6446e079709993aa59640c1d59c3aef37a",
+        "existing_golden_exact": false
+      },
+      "1440p": {
+        "before_after_exact": true,
+        "sha256": "0143cf81263ecb74bd90b7ce4229bd69a509852afe0ea0870fad65f5863509a8",
+        "existing_golden_exact": false
+      },
+      "4k": {
+        "before_after_exact": true,
+        "sha256": "9e24fa136a5816490d6b011d4ecf06429fb9be7fab7330ed0113d255bb197cd8",
+        "existing_golden_exact": false
+      }
+    }
+  },
+  "variants_1080p": {
+    "source": "fc18bed8ecd1bdd45056e04b40d58b06ce3efd6c",
+    "status": "UNVERIFIED (no approved reference)",
+    "cases": {
+      "small-1080p": {
+        "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+        "sha256": "d52cfab95df3a49bcb0805874621ad6446e079709993aa59640c1d59c3aef37a",
+        "deterministic": true,
+        "reference_exact": false
+      },
+      "silver-1080p": {
+        "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+        "sha256": "f2f845e83bba073cf1f3fb16878524c84b48e973288e55a257b7e591748a6170",
+        "deterministic": true,
+        "reference_exact": false
+      },
+      "experimental-1080p": {
+        "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+        "sha256": "c4d4d175b63f4597ea5d4dfa77954e7390155f78093ec7c321804ac5bd560eae",
+        "deterministic": true,
+        "reference_exact": false
+      },
+      "quality-1080p": {
+        "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+        "sha256": "84d7951b60a4ced5ec6f0c5acfd90050da09ddf3dcfb73bf09fd3877e027f5f8",
+        "deterministic": true,
+        "reference_exact": false
+      },
+      "balanced-1080p": {
+        "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+        "sha256": "af2a33caa8cd60180c08ba080221f10267e7e0516fcae44141bbf7ef9fafe2e3",
+        "deterministic": true,
+        "reference_exact": false
+      },
+      "performance-1080p": {
+        "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+        "sha256": "d962d84c4b14cf20b9a1d0c3cbd00806c8429b01fedc4cde5c39246d692baac0",
+        "deterministic": true,
+        "reference_exact": false
+      },
+      "ultra-1080p": {
+        "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+        "sha256": "1d6d657e9f68a6be103111ca7e42db58a997d27fc48f95944d446ad08837c4ac",
+        "deterministic": true,
+        "reference_exact": false
+      }
+    },
+    "models": {
+      "CC_SILVER_AARDWOLD.bin": "2b41c888cf4155b8958c665ba64018ab0bd25c85fc71a2b6db86d0d04d1f7fbd",
+      "CC_SMALL_FP8.bin": "7e966e2639dbec6596aa0bac3b8761137d2c40ca8cb4aca30df7ca10043c6e33",
+      "CC_SMALL_FP8_EXPERIMENTAL.bin": "8bf68796d0994b543e539ce239b2914459c0d4a53fb48dbc1bfc392b08050755",
+      "CC_SILVER_AARDWOLD_OPTIMIZED.bin": "6503c904f37f3081186078df68ccca766b5dc73fbab47771414af7f4ce6fba6e",
+      "CC_SILVER_AARDWOLD_OPTIMIZED_INT4.bin": "af75dec162690b4b173317e56a28e35771c1c7247a06722dfbc0f39df424273f"
+    }
+  },
+  "strict_historical_golden_status": "FAIL: unchanged before/after differences; goldens retained",
+  "quantiser_mismatches": {
+    "fp16_inputs": 0,
+    "e4m3_decodes": 0,
+    "all_fp32_patterns": 0,
+    "all_fp16_pairs": 0,
+    "wmma_lane_halves": 0
+  },
+  "game_validation": "UNRUN",
+  "frame_time_qualification": "UNRUN",
+  "ultra_plain_1080p": {
+    "source": "da2024156f165e63cbe4cef3bf86f74fb8063f11",
+    "status": "UNVERIFIED (no approved reference)",
+    "cases": {
+      "ultra-1080p": {
+        "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+        "sha256": "1e52d6bba51e89c2ef1cd39a089b2fcdbc024e544de3a5ddc6b9a04bece5f34a",
+        "deterministic": true,
+        "reference_exact": false
+      }
+    },
+    "models": {
+      "CC_SILVER_AARDWOLD.bin": "2b41c888cf4155b8958c665ba64018ab0bd25c85fc71a2b6db86d0d04d1f7fbd",
+      "CC_SMALL_FP8.bin": "7e966e2639dbec6596aa0bac3b8761137d2c40ca8cb4aca30df7ca10043c6e33",
+      "CC_SMALL_FP8_EXPERIMENTAL.bin": "8bf68796d0994b543e539ce239b2914459c0d4a53fb48dbc1bfc392b08050755",
+      "CC_SILVER_AARDWOLD_OPTIMIZED.bin": "6503c904f37f3081186078df68ccca766b5dc73fbab47771414af7f4ce6fba6e",
+      "CC_SILVER_AARDWOLD_OPTIMIZED_INT4.bin": "af75dec162690b4b173317e56a28e35771c1c7247a06722dfbc0f39df424273f"
+    }
+  },
+  "ultra_persistent_plain_rgb_psnr_db": 48.47,
+  "legacy_before_after": {
+    "1080p": {
+      "exact": true,
+      "sha256": "5d58880a26e55a694c004b21164673f77f2189c01945452d13a7e9f1be0e6ca1"
+    },
+    "1440p": {
+      "exact": true,
+      "sha256": "f9d6dfb50fc70a6ca91d369b5e889d50bd5a478f6b852043f1b19916f1c97ba2"
+    },
+    "4k": {
+      "exact": true,
+      "sha256": "8d93460f74f14e07756fd3dead27da1b0206589bf70195202df621951dede960"
+    }
+  },
+  "ultra_pipeline_creation": {
+    "pipelines": 16,
+    "failed": 0,
+    "fswin256q_wmma_rewrites": 704
+  },
+  "legacy_pipeline_creation": {
+    "pipelines": 17,
+    "failed": 0
+  },
+  "cpu_spirv_validation": {
+    "files": 539,
+    "failed": 0
+  },
+  "baseline_spirv_before_after": {
+    "files": 72,
+    "exact": true
+  },
+  "legacy_weights_sha256_match": true
+}

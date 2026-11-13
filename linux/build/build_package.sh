@@ -393,6 +393,7 @@ cp -- linux/package/install.sh linux/package/README.txt linux/package/lumenite.p
 cp -- LICENSE "$pkg/DLSSNR-AMD-LICENSE.txt"
 if [[ "$gpu" == rdna3 ]]; then
     cp -- docs/RDNA3-TARGET-TESTING.md docs/RDNA3-TARGET-TESTING-0.0.9.md docs/RDNA3-PORT-0.0.9.md "$pkg/"
+    [[ ! -f docs/RDNA3-0.0.9-VALIDATION.json ]] || cp -- docs/RDNA3-0.0.9-VALIDATION.json "$pkg/"
 fi
 chmod +x "$pkg/install.sh" "$mt/extract_model.sh"
 

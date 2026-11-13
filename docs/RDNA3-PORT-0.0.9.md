@@ -110,3 +110,81 @@ installation, rollback, model inputs, numerical commands and game scenarios.
 Full model numerical and game acceptance results are recorded separately below.
 In particular this port does not establish a fix for the historical Z1
 Extreme/DD2 green output or FG flicker without reproducing those game scenarios.
+
+## Hardware numerical results
+
+The Z1 Extreme tests use the owner's existing checksum-verified models, copied
+only to ignored test installs. No game files, installed models, global Vulkan
+settings or drivers were modified. Test subprocesses can disable implicit
+overlays with `VK_LOADER_LAYERS_DISABLE='~implicit~'`.
+
+- `da20241` fixes the existing probe harness's discrete-only GPU selection. On
+  an APU-only host it previously passed a null physical device and crashed.
+  The harness now prefers discrete and falls back to the first device.
+- FP8 emulation: **0/65,536** quantisation and **0/256** decode mismatches.
+  Rounding: **0 mismatches over all 2^32 FP32 patterns** and **all 2^32 FP16
+  pairs**. WMMA operand lane halves: **0/1,024** mismatches.
+- Silver and Small: **EXACT before/after `88d8c9c` at 1080p, 1440p and 4K**.
+  Each source runs each frame twice; all four outputs per case match. The old
+  runtime is independently compiled from an archived source snapshot under
+  this worktree's ignored build directory, using the same host and pinned shader compiler.
+- The checked-in historical frame goldens do **not** match either source on
+  this host. Existing strict checks therefore return **FAIL**, deliberately
+  retained: Silver is 59.0 / 60.6 / 65.8 dB from its golden; Small is 66.4 /
+  65.3 / 70.7 dB. Both sources produce the same differences. This is not an
+  established 0.0.9 regression and is not resolved by changing the goldens.
+- Silver scores 45.62 / 47.93 / 49.11 dB against NVIDIA's supplied outputs;
+  Small scores 49.43 / 49.55 / 50.62 dB. These are single-frame scores on this
+  host, not moving-sequence or game acceptance. Silver's engine/in-place path
+  scores 50.42 dB against its plain path and passes that check's floor.
+
+Raw logs and per-case hashes are in `build/port-0.0.9/`, including
+`before-after.json`, `gpu-silver-final.log`, `gpu-baseline-silver.log`,
+`gpu-small.log`, `gpu-baseline-small.log`, `gpu-quantiser.log` and
+`dittosr-gpu.log`. All existing tracked goldens remain unchanged.
+
+- All seven installed network choices run twice at 1080p with the intended
+  network/level, no fallback and deterministic output. The variant harness
+  correctly exits **2**, `UNVERIFIED (no approved reference)`. Determinism is
+  not independent numerical acceptance for the fitted networks.
+- Ultra also runs twice with `NR_NO_PERSIST=1`. Its plain encoder route executes
+  seven dispatches on `fswin256q`; the QKV guard reports four pipelines and eight
+  calibrated layers, consistent. Actual gfx11 pipeline creation/WMMA rewriting
+  passes for all **16 Ultra INT4 pipelines**, including 704 rewrites in the new
+  plain encoder pipeline. The normal persistent route and plain route differ
+  by 48.47 dB RGB PSNR; this is recorded, not accepted as equivalence or
+  used to replace a golden. An independent matching Ultra reference is pending.
+- Legacy INT4 weights match the shipped checksum; all **17 legacy INT4 pipelines**
+  build with their WMMA rewrites. Legacy output is **EXACT before/after** at
+  1080p, 1440p and 4K, using the original runtime compiled with the legacy test
+  define and a separate private install. Its old golden comparison also retains
+  an inherited discrepancy (59.3 dB at 1080p, 61.0 dB at 1440p, 67.4 dB at 4K).
+
+[RDNA3-0.0.9-VALIDATION.json](RDNA3-0.0.9-VALIDATION.json) preserves per-case
+output/model hashes and the distinction between before/after equality,
+historical golden failures and unverified fitted-network references. It contains
+no model data. Additional logs: `gpu-legacy-int4.log`, `gpu-baseline-legacy.log`,
+`gpu-variants/`, `gpu-ultra-plain/`, `gpu-ultra-pipelines.log`.
+
+Remaining qualification: independent references for fitted/optimized modes,
+the inherited historical frame-golden differences, moving/temporal sequences,
+real Proton/game/FG/HUD/resize scenarios, VRAM and frame timings. The successful
+Ditto identity-network and standalone model tests do not establish game stability.
+
+## Candidate package
+
+Production code source: `fc18bed8ecd1bdd45056e04b40d58b06ce3efd6c`.
+Later commits add APU probe support, qualification evidence and Linux branch CI
+selection; they do not change the candidate's production runtime or shaders.
+The package includes the qualification report/JSON and target checklist.
+
+```sh
+NR_GPU=rdna3 NR_ARCH=x86_64 NR_VERSION=0.0.9-linux-preview-gfc18bed \
+    bash linux/build/build_package.sh
+```
+
+Archive: `linux/package/DLSSNR-AMD-Vulkan-Linux-0.0.9-linux-preview-gfc18bed-x86_64-rdna3.tar.gz`.
+Its adjacent `.sha256` file records the final checksum; artifact details are in
+`RDNA3-0.0.9-ARTIFACT.md`. Do not add the archive or test model installs to Git.
+This is a trial build, not an approved release: strict historical-golden checks
+retain their inherited failures, and fitted-network/game qualification is pending.

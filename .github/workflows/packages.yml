@@ -75,7 +75,9 @@ jobs:
           if-no-files-found: error
 
   windows:
-    if: ${{ vars.WINDOWS_PACKAGE != 'off' && !contains(github.ref_name, '-linux-') }}
+    if: >-
+      ${{ vars.WINDOWS_PACKAGE != 'off' && !contains(github.ref_name, '-linux-') &&
+          github.ref_name != 'rdna3' && !startsWith(github.ref_name, 'port/rdna3-') }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
