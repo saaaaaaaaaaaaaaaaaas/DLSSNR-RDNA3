@@ -70,7 +70,7 @@ of the source textures. Existing FG-only installations remain opt-in unchanged.
 | HUD | Same-frame HUDless SR when available, preserve HUD separately, publish display-resolution HUDless to FG | Analytic white HUD bar and full Lumenite pre-HUD capture inspected; all-scene quality pending |
 | Lifetime | Present allocator/fences protect SR output, inputs and provider changes; no reverse GPU wait | 9,000-frame run survives buffer recreation and guide gap; live FFX version change and normal teardown pass |
 | Controls | Explicit output size, off by default, provider selection through OptiScaler; native inputs keep their ownership | Insert menu verified, FSR 3.1.6 selection saved, End toggles FG while SR continues; native owner guarded in code |
-| Qualification | 720p -> 1080p analytic probe, ReShade/Lumenite probe, reset/change/resize, and Tekken 7 | Standalone probes pass; Tekken 7 SR qualification pending |
+| Qualification | 720p -> 1080p analytic probe, ReShade/Lumenite probe, reset/change/resize, and Tekken 7 | Standalone probes and Tekken 7 training pass; native 1080p screen presentation remains pending |
 
 ReShade optical flow is estimated and no engine jitter is injected or recovered.
 This post-render temporal reconstruction is not equivalent to an engine-integrated
@@ -88,6 +88,26 @@ version logging and an explicit FG reset on SR history changes follow in
 `65b0a2b`. The SR-disabled regression retains 589 accepted frames and 11 warmup
 frames out of 600. These are functional transport/reconstruction checks, not
 image-quality or performance comparisons between providers.
+
+The later `65b0a2b` FSR 3.1.6 probe completes 1,200 real frames: 1,110 accepted
+and consumed, zero rejected, a 90-frame guide gap and buffer recreation at frame
+500. Numeric version logs confirm SR 3.1.6 before and after recreation.
+
+Tekken 7 with matching `65b0a2b` producer/consumer reaches the offline training
+arena with LumeniteFX and HUD capture Mode=3. Logs confirm source 1280x720,
+presenter 1920x1080, SR 3.1.6 initialization and a live change to SR 4.1.2.
+At least 3,000 captures are accepted without rejection; later SR counters pass
+4,500 frames after the provider change. The training image and OptiScaler menu
+were inspected. Logs/settings/window capture are saved in
+`artifacts/optifg-evidence/tekken7-sr-training-65b0a2b/`.
+
+This game test uses a 1280x720 window: the 1920x1080 presenter is scaled back to
+that client area. It proves the reconstruction/FG chain, not native 1080p screen
+output. An initial `-fullscreen` launch instead selected a 4300x1800 source
+(the desktop extent), so the geometry guard correctly retained spatial fallback.
+Alt+Enter did not change the training window in this setup. Fullscreen output
+and a different actual render resolution need further game-specific qualification;
+do not describe that startup fallback as temporal 720p-to-1080p reconstruction.
 
 ## Observed GPU evidence
 
