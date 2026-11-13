@@ -49,6 +49,8 @@ frames from inherited strict-golden failures and unapproved fitted-network
 references. This is a **trial candidate**, with no release tag. Game/Proton/FG,
 temporal sequences, frame timings and memory qualification remain pending.
 
-[GitHub Actions for the implementation commit](https://github.com/saaaaaaaaaaaaaaaaaas/DLSSNR-RDNA3-0.0.8.3/actions/runs/43435661819)
-was still building the RDNA3/RDNA4 packages at handoff; it is not counted as a
-passed check here. Windows is deliberately skipped for this Linux port branch.
+[GitHub Actions for the implementation commit](https://github.com/saaaaaaaaaaaaaaaaaas/DLSSNR-RDNA3/actions/runs/43435661819)
+was initially in progress at artifact handoff and has now completed successfully
+for both RDNA3 and RDNA4 Linux package jobs, including the RDNA3 CPU regression.
+Windows and release jobs were skipped. The owner subsequently confirmed that
+the delivered build works and requested integration/push on 2026-11-13.

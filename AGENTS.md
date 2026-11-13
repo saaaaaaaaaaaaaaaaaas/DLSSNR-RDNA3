@@ -101,7 +101,7 @@ Measured facts worth knowing before changing kernels:
 
 - Canonical instructions are `AGENTS.md`; `CLAUDE.md` is a relative symlink to it. Preserve this arrangement
   when merging upstream changes, including any changes upstream makes to its own `CLAUDE.md`.
-- Owner's writable fork: `https://github.com/saaaaaaaaaaaaaaaaaas/DLSSNR-RDNA3-0.0.8.3`, default branch `rdna3`.
+- Owner's writable fork: `https://github.com/saaaaaaaaaaaaaaaaaas/DLSSNR-RDNA3`, default branch `rdna3`.
 - Main checkout in the current workspace: `/home/bozo/Projects/DLSSNR-RDNA3-0.0.8.3`.
   The 0.0.9 port worktree is `/home/bozo/Projects/DLSSNR-RDNA3-0.0.9`.
 - `origin` is the owner's writable fork. Original upstream is

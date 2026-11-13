@@ -5,7 +5,7 @@
 - Fork source: `88d8c9c` (`0.0.8.3-v.3`, branch `rdna3`).
 - Upstream base: `931c50fe2f6096e8ac8bf60d3536ffc70db4a846` (`v0.0.8.3`).
 - Upstream target: `9503f6b180df45305b38fbd21cd9f705164f2ab1` (`v0.0.9`).
-- Writable remote: `https://github.com/saaaaaaaaaaaaaaaaaas/DLSSNR-RDNA3-0.0.8.3`.
+- Writable remote: `https://github.com/saaaaaaaaaaaaaaaaaas/DLSSNR-RDNA3`.
 - Implementation branch: `port/rdna3-0.0.9`, in a separate worktree.
 - Linux/Proton and gfx11; preserve Ditto SR, NR Control cursor fixes, temporal
   reuse, FP16 twin arenas, raw descriptors, weight packing and WMMA rewrites.
@@ -188,3 +188,14 @@ Its adjacent `.sha256` file records the final checksum; artifact details are in
 `RDNA3-0.0.9-ARTIFACT.md`. Do not add the archive or test model installs to Git.
 This is a trial build, not an approved release: strict historical-golden checks
 retain their inherited failures, and fitted-network/game qualification is pending.
+
+## Owner acceptance and CI
+
+On 2026-11-13 the owner reported that the delivered build works and requested
+push/integration. Exact game builds and scenario coverage were not supplied;
+this records the owner's functional confirmation, separately from the automated
+numerical results and remaining independent-reference work above.
+
+[Implementation CI](https://github.com/saaaaaaaaaaaaaaaaaas/DLSSNR-RDNA3/actions/runs/43435661819)
+completed successfully for both RDNA3 and RDNA4 Linux package jobs, including
+the RDNA3 CPU regression checks. Windows and release jobs were skipped.
