@@ -198,6 +198,7 @@ bool Record(ID3D12GraphicsCommandList* cmd, ID3D12Resource* source, ID3D12Resour
         Retire(); reset = true;
     }
     if (!current) {
+        reset = true;
         current = std::make_unique<Context>();
         current->device = device; current->width = UINT(output.Width); current->height = output.Height;
         current->sourceWidth = UINT(input.Width); current->sourceHeight = input.Height;
@@ -234,7 +235,12 @@ bool Record(ID3D12GraphicsCommandList* cmd, ID3D12Resource* source, ID3D12Resour
         p.Set(NVSDK_NGX_Parameter_Jitter_Offset_X, 0.0f); p.Set(NVSDK_NGX_Parameter_Jitter_Offset_Y, 0.0f);
         p.Set(NVSDK_NGX_Parameter_MV_Scale_X, 1.0f); p.Set(NVSDK_NGX_Parameter_MV_Scale_Y, 1.0f);
         p.Set(NVSDK_NGX_Parameter_Sharpness, 0.0f);
-        p.Set(NVSDK_NGX_Parameter_Reset, UINT(reset || c.gap || c.hudless != useScene));
+        const bool temporalReset = reset || c.gap || c.hudless != useScene;
+        p.Set(NVSDK_NGX_Parameter_Reset, UINT(temporalReset));
+        if (temporalReset && state.currentFG && cfg.IsFGEnabled()) {
+            OwnedLockGuard fgLock(state.currentFG->Mutex, 4);
+            state.currentFG->SetReset(1);
+        }
         p.Set(NVSDK_NGX_Parameter_FrameTimeDeltaInMsec, frame->delta_ms);
         p.Set("FSR.frameTimeDelta", frame->delta_ms);
         float nearPlane = frame->camera_near;
@@ -258,8 +264,10 @@ bool Record(ID3D12GraphicsCommandList* cmd, ID3D12Resource* source, ID3D12Resour
                 c.custom = cfg.CustomUpscaler.value_or("");
                 state.currentFeature = c.feature.get();
                 state.changeBackend[c.feature->Handle()->Id] = false; state.newBackend = Upscaler::Reset;
-                LOG_INFO("ReShade SR initialized {} {}x{} -> {}x{}; estimated motion, no engine jitter",
-                         c.feature->Name(), input.Width, input.Height, output.Width, output.Height);
+                const auto version = c.feature->Version();
+                LOG_INFO("ReShade SR initialized {} version {}.{}.{} {}x{} -> {}x{}; estimated motion, no engine jitter",
+                         c.feature->Name(), version.major, version.minor, version.patch,
+                         input.Width, input.Height, output.Width, output.Height);
             } else {
                 // Keep a failed object alive until its recorded initialization work completes.
                 LOG_WARN("ReShade SR initialization failed; spatial fallback until another provider is selected");
