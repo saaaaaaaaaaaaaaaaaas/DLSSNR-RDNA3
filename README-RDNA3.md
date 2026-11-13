@@ -15,7 +15,24 @@ without warranty.
   frame for 3.5 to 5.4 dB less against NVIDIA's output. These historical measurements are retained below;
   this port installs the new optimized networks instead.
 
-## Port to 0.0.8.3
+## Port to 0.0.9
+
+The Linux/Proton implementation now includes upstream 0.0.9 (`9503f6b`):
+Interleaved fast passes with two presets, both processing styles, history rotation,
+the unified HUD FIX, HUD capture and diagnostic changes. Ditto SR and the NR
+Control cursor/FG improvements are retained. Ultra's plain C=256 decoder keeps
+FP16 QKV; INT4 QKV is routed only to encoder layers with calibration tables.
+
+See [the 0.0.9 port report](docs/RDNA3-PORT-0.0.9.md) for verification and remaining
+target checks. Native Windows D3D12 passthrough is outside this Linux port.
+
+Fast-method numbers changed: 0 Interleaved, 1 Extrapolation, 2 Feedback, 3 Hybrid,
+4 Edit strength. Review `NRFastMethod` / `FastMethod` in existing INIs, including
+each layer. On the OptiScaler route fast passes default to Interleaved preset 1;
+the ReShade route defaults to Extrapolation. These defaults apply when fast passes
+are selected; they do not turn that mode on automatically.
+
+## Previous port to 0.0.8.3
 
 The Linux runtime, menus and model installation have been ported to the pinned
 upstream 0.0.8.3, including experimental and all four optimized levels on gfx11.

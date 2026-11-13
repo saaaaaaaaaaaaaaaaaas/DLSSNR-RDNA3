@@ -97,15 +97,17 @@ Measured facts worth knowing before changing kernels:
 - No internal version tags or references to files that are not in this repository.
 - Package text (`*/package/README.txt`, installer messages) stays short and plain.
 
-## This fork in Fusion
+## This fork
 
 - Canonical instructions are `AGENTS.md`; `CLAUDE.md` is a relative symlink to it. Preserve this arrangement
   when merging upstream changes, including any changes upstream makes to its own `CLAUDE.md`.
-- Owner's fork: `https://github.com/hedonemaeda/DLSSNR-RDNA3`, default branch `rdna3`.
-- Main checkout: `/home/gedomada/projects/dlssnr-rdna3` on homeserver, executed as user `fusion`.
-- Remotes: `origin` is the owner's writable fork; `upstream-rdna3` is
-  `https://github.com/mauri870/DLSSNR-RDNA3.git`; `upstream` is
-  `https://gitlab.com/mochizuki0323/DLSSNR-AMD.git`. Push only to `origin`.
+- Owner's writable fork: `https://github.com/saaaaaaaaaaaaaaaaaas/DLSSNR-RDNA3-0.0.8.3`, default branch `rdna3`.
+- Main checkout in the current workspace: `/home/bozo/Projects/DLSSNR-RDNA3-0.0.8.3`.
+  The 0.0.9 port worktree is `/home/bozo/Projects/DLSSNR-RDNA3-0.0.9`.
+- `origin` is the owner's writable fork. Original upstream is
+  `https://gitlab.com/mochizuki0323/DLSSNR-AMD.git`; the original RDNA3 port is
+  `https://github.com/mauri870/DLSSNR-RDNA3.git`. Push only to `origin`.
+  Older Fusion checkout/remote details in existing delivery reports are historical.
 - This project's primary target is Linux / Proton on AMD RDNA3. Keep the upstream Linux and Windows
   separation and preserve RDNA4 behavior. Windows changes need an explicit reason.
 - Do not change neighboring projects, system services, drivers, network settings or global agent configuration.
@@ -126,6 +128,8 @@ Measured facts worth knowing before changing kernels:
 - Initial RDNA3 source: `a2b4edebcd236c8c6d189b340542ce0bf0c3d673`, based on upstream
   `v0.0.8-linux-preview` (`960038fd1cb892742548f408355e0f3b2fd30d6f`).
 - Initial target: upstream `v0.0.8.3` (`931c50fe2f6096e8ac8bf60d3536ffc70db4a846`).
+  The owner has requested the next port: fork source `88d8c9c`, upstream target
+  `v0.0.9` (`9503f6b180df45305b38fbd21cd9f705164f2ab1`). See `docs/RDNA3-PORT-0.0.9.md`.
   Record exact source/target commits before work. Later upstream versions are a separate scope decision.
 - Keep a written feature and acceptance matrix in project documentation before changing behavior.
   Update it with implementation and verification evidence. Separate common runtime fixes from new network kernels.

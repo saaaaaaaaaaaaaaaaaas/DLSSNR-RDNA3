@@ -1,5 +1,11 @@
 # DLSSNR-AMD
 
+This fork targets **Linux/Proton on RDNA3** and includes the Linux changes from
+upstream 0.0.9. Start with [README-RDNA3.md](README-RDNA3.md) and the
+[0.0.9 port report](docs/RDNA3-PORT-0.0.9.md). The upstream overview below describes
+the original RDNA4 project and its Windows implementation; this fork's Windows
+sources have not been updated to 0.0.9.
+
 > **This is a fork that ports DLSSNR-AMD to RDNA3 (Radeon RX 7000) on Linux.**, see
 > [README-RDNA3.md](README-RDNA3.md). The rest of this file describes the upstream project
 > ([mochizuki0323/DLSSNR-AMD](https://github.com/mochizuki0323/DLSSNR-AMD)) for RDNA4 (RX 9000).

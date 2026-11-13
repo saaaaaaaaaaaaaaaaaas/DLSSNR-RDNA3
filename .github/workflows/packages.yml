@@ -12,7 +12,7 @@ name: Packages
 
 on:
   push:
-    branches: [main]
+    branches: [main, rdna3, 'port/rdna3-*']
     tags: ['v*']
   pull_request:
   workflow_dispatch:
@@ -24,6 +24,11 @@ jobs:
   linux:
     if: ${{ !contains(github.ref_name, '-win-') }}
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        gpu: [rdna3, rdna4]
+    env:
+      NR_GPU: ${{ matrix.gpu }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,7 +37,7 @@ jobs:
       - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends cmake ninja-build mingw-w64 g++-multilib python3 p7zip-full
+          sudo apt-get install -y --no-install-recommends cmake ninja-build mingw-w64 g++-multilib python3 p7zip-full libvulkan-dev
 
       - name: Cache pinned dependencies
         uses: actions/cache@v4
@@ -59,9 +64,13 @@ jobs:
             python3 linux/build/check_package.py "$f"
           done
 
+      - name: Check RDNA3 descriptors, presentation and Ultra routing
+        if: matrix.gpu == 'rdna3'
+        run: bash linux/test/check_rdna3_port.sh
+
       - uses: actions/upload-artifact@v4
         with:
-          name: linux-packages
+          name: linux-packages-${{ matrix.gpu }}
           path: linux/package/*.tar.gz
           if-no-files-found: error
 

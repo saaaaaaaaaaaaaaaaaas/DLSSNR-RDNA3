@@ -391,7 +391,9 @@ cp -- linux/data/optimized/dlssnr-optimized.delta linux/build/experimental_weigh
 cp -- linux/data/optimized/dlssnr-optimized.sha256 "$pkg/optimized/CC_SILVER_AARDWOLD_OPTIMIZED.bin.sha256"
 cp -- linux/package/install.sh linux/package/README.txt linux/package/lumenite.py "$pkg/"
 cp -- LICENSE "$pkg/DLSSNR-AMD-LICENSE.txt"
-[[ "$gpu" != rdna3 ]] || cp -- docs/RDNA3-TARGET-TESTING.md "$pkg/"
+if [[ "$gpu" == rdna3 ]]; then
+    cp -- docs/RDNA3-TARGET-TESTING.md docs/RDNA3-TARGET-TESTING-0.0.9.md docs/RDNA3-PORT-0.0.9.md "$pkg/"
+fi
 chmod +x "$pkg/install.sh" "$mt/extract_model.sh"
 
 # NR_SIGN=1: every Windows binary without a signature of its own signed with a self-signed certificate made for this
