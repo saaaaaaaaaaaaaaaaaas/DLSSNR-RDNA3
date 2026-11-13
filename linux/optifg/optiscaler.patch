@@ -4,7 +4,7 @@ index 5b40cc7..a114c12 100644
 +++ b/OptiScaler/Config.cpp
 @@ -489,6 +489,9 @@ bool Config::Reload(std::filesystem::path iniPath)
                  MenuHeight.set_from_config(std::max(setting.value(), 300.0f));
-
+ 
              // Don't enable again if set false because of Linux issue
 +            ReShadeSREnabled.set_from_config(readBool("ReShadeSR", "Enabled"));
 +            ReShadeSRWidth.set_from_config(readInt("ReShadeSR", "OutputWidth"));
@@ -20,7 +20,7 @@ index 5b40cc7..a114c12 100644
 +        ini.SetValue("ReShadeSR", "OutputWidth", GetIntValue(Instance()->ReShadeSRWidth.value_for_config(), true).c_str());
 +        ini.SetValue("ReShadeSR", "OutputHeight", GetIntValue(Instance()->ReShadeSRHeight.value_for_config(), true).c_str());
          ini.SetValue("Menu", "OverlayMenu", GetBoolValue(Instance()->OverlayMenu.value_for_config()).c_str());
-
+ 
          auto setting = Instance()->ShortcutKey.value_for_config();
 diff --git a/OptiScaler/Config.h b/OptiScaler/Config.h
 index 4f7345e..d7da765 100644
@@ -62,11 +62,11 @@ index 4dd7ea8..e2d5510 100644
 +++ b/OptiScaler/State.h
 @@ -41,6 +41,7 @@ enum class FGInput : uint32_t
      XeFG,
-
+ 
      ForceXeLL, // Do not expose this option
 +    ReShade,  // External display-resolution guides, DX11/DXVK
  };
-
+ 
  template <> struct EnumConfig<FGInput>
 @@ -51,9 +52,15 @@ template <> struct EnumConfig<FGInput>
          { FGInput::NoFG, "NoFG" },       { FGInput::Upscaler, "Upscaler" },   { FGInput::DLSSG, "DLSSG" },
@@ -75,7 +75,7 @@ index 4dd7ea8..e2d5510 100644
 +        { FGInput::ReShade, "ReShade" },
      };
  };
-
+ 
 +inline bool IsOptiFGInput(FGInput input)
 +{
 +    return input == FGInput::Upscaler || input == FGInput::ReShade;
@@ -90,13 +90,13 @@ index dd4d433..bed406c 100644
 +++ b/OptiScaler/dllmain.cpp
 @@ -1817,7 +1817,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
          CheckMemoryForProxies();
-
+ 
          // OptiFG & Overlay Checks
 -        if ((Config::Instance()->FGInput.value_or_default() == FGInput::Upscaler) &&
 +        if ((IsOptiFGInput(Config::Instance()->FGInput.value_or_default())) &&
              !Config::Instance()->DisableOverlays.has_value())
              Config::Instance()->DisableOverlays.set_volatile_value(true);
-
+ 
 diff --git a/OptiScaler/framegen/IFGFeature_Dx12.h b/OptiScaler/framegen/IFGFeature_Dx12.h
 index 3f77821..55069d7 100644
 --- a/OptiScaler/framegen/IFGFeature_Dx12.h
@@ -104,18 +104,18 @@ index 3f77821..55069d7 100644
 @@ -131,6 +131,8 @@ class IFGFeature_Dx12 : public virtual IFGFeature
      virtual bool SetResource(Dx12Resource* inputResource) = 0;
      virtual void SetCommandQueue(FG_ResourceType type, ID3D12CommandQueue* queue) = 0;
-
+ 
 +    // External inputs must finish their private copies before a source ring slot can be reused.
 +    bool FinishExternalInputs() { return SubmitUICommandList(GetIndex()); }
      ID3D12GraphicsCommandList* GetUICommandList(int index = -1);
      ID3D12GraphicsCommandList* GetSCCommandList(int index = -1);
-
+ 
 diff --git a/OptiScaler/framegen/ffx/FSRFG_Dx12.cpp b/OptiScaler/framegen/ffx/FSRFG_Dx12.cpp
 index f9278e0..ff1039d 100644
 --- a/OptiScaler/framegen/ffx/FSRFG_Dx12.cpp
 +++ b/OptiScaler/framegen/ffx/FSRFG_Dx12.cpp
 @@ -894,7 +894,7 @@ ffxReturnCode_t FSRFG_Dx12::DispatchCallback(ffxDispatchDescFrameGeneration* par
-
+ 
      // If fg is active but upscaling paused
      if ((state.currentFeature == nullptr && state.activeFgInput == FGInput::Upscaler) || state.fgChanged ||
 -        fIndex < 0 || !IsActive() || (state.currentFeature && state.currentFeature->FrameCount() == 0))
@@ -126,7 +126,7 @@ index f9278e0..ff1039d 100644
 @@ -1539,7 +1539,7 @@ void FSRFG_Dx12::EvaluateState(ID3D12Device* device, FG_Constants& fgConstants)
                  DestroyFGContext();
          }
-
+ 
 -        if (_fgContext != nullptr && State::Instance().activeFgInput == FGInput::Upscaler && !IsPaused() && !IsActive())
 +        if (_fgContext != nullptr && IsOptiFGInput(State::Instance().activeFgInput) && !IsPaused() && !IsActive())
              Activate();
@@ -139,7 +139,7 @@ index 1227c70..e3c3c93 100644
 @@ -560,7 +560,7 @@ HRESULT DxgiFactoryHooks::CreateSwapChain(IDXGIFactory* realFactory, IUnknown* p
              D3D11Hooks::HookToDevice(device);
              State::Instance().currentD3D11Device = device;
-
+ 
 -            if (!_skipFGSwapChainCreation && State::Instance().activeFgInput == FGInput::Upscaler &&
 +            if (!_skipFGSwapChainCreation && IsOptiFGInput(State::Instance().activeFgInput) &&
                  State::Instance().activeFgOutput != FGOutput::NoFG &&
@@ -148,7 +148,7 @@ index 1227c70..e3c3c93 100644
 @@ -950,7 +950,7 @@ HRESULT DxgiFactoryHooks::CreateSwapChainForHwnd(IDXGIFactory2* realFactory, IUn
              D3D11Hooks::HookToDevice(device);
              State::Instance().currentD3D11Device = device;
-
+ 
 -            if (!_skipFGSwapChainCreation && State::Instance().activeFgInput == FGInput::Upscaler &&
 +            if (!_skipFGSwapChainCreation && IsOptiFGInput(State::Instance().activeFgInput) &&
                  State::Instance().activeFgOutput != FGOutput::NoFG &&
@@ -162,17 +162,17 @@ index 620960d..8158377 100644
  #include "pch.h"
 +#include <inputs/FG/reshade/ReShadeFG.h>
  #include "DxgiFactory_WrappedCalls.h"
-
+ 
  #include "FG_Hooks.h"
 @@ -25,12 +26,13 @@
-
+ 
  static bool ShouldCreateDx11wDx12Swapchain()
  {
 -    return State::Instance().activeFgInput == FGInput::Upscaler && State::Instance().activeFgOutput != FGOutput::NoFG &&
 +    return IsOptiFGInput(State::Instance().activeFgInput) && State::Instance().activeFgOutput != FGOutput::NoFG &&
             State::Instance().activeFgInput != FGInput::NvngxFG;
  }
-
+ 
  static bool PrepareDx12InteropDesc(DXGI_SWAP_CHAIN_DESC& desc)
  {
 +    ReShadeFG_DisplaySize(desc.BufferDesc.Width, desc.BufferDesc.Height);
@@ -180,13 +180,42 @@ index 620960d..8158377 100644
      {
          LOG_WARN("Dx11wDx12 interop does not support MSAA swapchains!");
 @@ -53,6 +55,7 @@ static bool PrepareDx12InteropDesc(DXGI_SWAP_CHAIN_DESC& desc)
-
+ 
  static bool PrepareDx12InteropDesc1(DXGI_SWAP_CHAIN_DESC1& desc)
  {
 +    ReShadeFG_DisplaySize(desc.Width, desc.Height);
      if (desc.SampleDesc.Count > 1)
      {
          LOG_ERROR("Dx11wDx12 interop does not support MSAA swapchains!");
+diff --git a/OptiScaler/hooks/FG_Hooks.cpp b/OptiScaler/hooks/FG_Hooks.cpp
+index a60e1bc..b58cb8a 100644
+--- a/OptiScaler/hooks/FG_Hooks.cpp
++++ b/OptiScaler/hooks/FG_Hooks.cpp
+@@ -1,6 +1,7 @@
+ #include "pch.h"
+ #include "FG_Hooks.h"
+ #include <Config.h>
++#include <with_dx12/with_dx12.h>
+ 
+ #include <framegen/ffx/FSRFG_Dx12.h>
+ #include <framegen/xefg/XeFG_Dx12.h>
+@@ -1207,7 +1208,15 @@ HRESULT FGHooks::FGPresent(IDXGISwapChain* This, UINT SyncInterval, UINT Flags,
+         {
+             std::optional<double> upscalerTimeOpt {};
+ 
+-            if (state.swapchainInteropApi == SwapchainInteropApi::Dx11wDx12 && state.currentD3D11Device != nullptr)
++            if (state.activeFgInput == FGInput::ReShade && currentFeature->Api() == API::DX12)
++            {
++                // ReShade's SR provider runs on DX12 even though the game is DX11.
++                // Passing its timer a DX11 context would invoke the wrong COM vtable.
++                auto queue = WithDx12::GetD3D12CommandQueue();
++                if (queue && (upscalerTimeOpt = currentFeature->ReadUpscalerTime(queue)).has_value())
++                    currentFeature->ReadDetailedGpuTimes(queue, state.detailedGpuTimes);
++            }
++            else if (state.swapchainInteropApi == SwapchainInteropApi::Dx11wDx12 && state.currentD3D11Device != nullptr)
+             {
+                 ID3D11DeviceContext* context = nullptr;
+                 state.currentD3D11Device->GetImmediateContext(&context);
 diff --git a/OptiScaler/menu/menu_common.cpp b/OptiScaler/menu/menu_common.cpp
 index d4e5bd4..0564027 100644
 --- a/OptiScaler/menu/menu_common.cpp
@@ -194,17 +223,17 @@ index d4e5bd4..0564027 100644
 @@ -3614,10 +3614,12 @@ void MenuCommon::RenderActiveUpscalerSettings(RenderMenuContext& ctx)
      auto& menuResScale = ctx.menuResScale;
      auto& primaryGpu = *ctx.primaryGpu;
-
+ 
 +    const API upscalerApi = state.activeFgInput == FGInput::ReShade ? API::DX12 : state.api;
 +
      // UPSCALERS -----------------------------
      SectionTitle("Upscalers");
-
+ 
 -    GetCurrentBackendInfo(state.api, currentBackend, &currentBackendName);
 +    GetCurrentBackendInfo(upscalerApi, currentBackend, &currentBackendName);
-
+ 
      ImGui::PushItemWidth(150.0f * menuResScale);
-
+ 
 @@ -3631,7 +3633,7 @@ void MenuCommon::RenderActiveUpscalerSettings(RenderMenuContext& ctx)
      }
      else
@@ -216,7 +245,7 @@ index d4e5bd4..0564027 100644
              AddDx11Backends(currentBackend);
 @@ -3681,7 +3683,7 @@ void MenuCommon::RenderActiveUpscalerSettings(RenderMenuContext& ctx)
      }
-
+ 
      // Dx11 with Dx12
 -    if (state.api == DX11 && currentFeature->IsWithDx12())
 +    if (upscalerApi == DX11 && currentFeature->IsWithDx12())
@@ -226,7 +255,7 @@ index d4e5bd4..0564027 100644
 @@ -3698,7 +3700,7 @@ void MenuCommon::RenderActiveUpscalerSettings(RenderMenuContext& ctx)
          }
      }
-
+ 
 -    if (state.api == Vulkan && currentFeature->IsWithDx12())
 +    if (upscalerApi == Vulkan && currentFeature->IsWithDx12())
      {
@@ -241,7 +270,7 @@ index d4e5bd4..0564027 100644
 +        const auto customName = SelectedCustom(currentBackend, upscalerApi);
 +        const auto customUpscaler = SelectedCustomFfx(customName, upscalerApi);
          auto& upscalerIndex = config->FfxUpscalerIndexFor(customName);
-
+ 
          // A custom upscaler only has a list once it got loaded
 -        if (auto versions = customName.empty()          ? GetFfxVersionList(currentBackend, state.api)
 +        if (auto versions = customName.empty()          ? GetFfxVersionList(currentBackend, upscalerApi)
@@ -266,7 +295,7 @@ index d4e5bd4..0564027 100644
 +        { FGInput::ReShade, "OptiFG (ReShade)",
 +            "Experimental DX11/DXVK input from DLSSNR ReShade add-on.\nFSR FG, SDR, 64-bit only. No in-game upscaler required. Restart after changing input." }
      };
-
+ 
      // clang-format on
 diff --git a/OptiScaler/with_dx12/dx11_with_dx12_sc.cpp b/OptiScaler/with_dx12/dx11_with_dx12_sc.cpp
 index 41f9c1b..13c1c66 100644
@@ -276,21 +305,21 @@ index 41f9c1b..13c1c66 100644
  #include "pch.h"
  #include "dx11_with_dx12_sc.h"
 +#include <inputs/FG/reshade/ReShadeFG.h>
-
+ 
  #include <with_dx12/with_dx12.h>
  #include <with_dx12/dx11_with_dx12_sync.h>
 @@ -200,6 +201,7 @@ Dx11wDx12SC::Dx11wDx12SC(IDXGISwapChain* real, IDXGISwapChain4* fgSC, ID3D11Devi
-
+ 
  Dx11wDx12SC::~Dx11wDx12SC()
  {
 +    ReShadeFG_Destroy(_dx11Device);
      MenuOverlayDx::CleanupRenderTarget(true, _handle);
      _ReleaseInteropObjects();
-
+ 
 @@ -367,6 +369,9 @@ HRESULT STDMETHODCALLTYPE Dx11wDx12SC::Present(UINT SyncInterval, UINT Flags)
      if ((Flags & DXGI_PRESENT_TEST) != 0)
          return _real->Present(SyncInterval, Flags);
-
+ 
 +    if (State::Instance().currentSwapchain == this)
 +        ReShadeFG_BeforePresent(_dx11Device);
 +
@@ -300,7 +329,7 @@ index 41f9c1b..13c1c66 100644
 @@ -515,6 +520,8 @@ HRESULT STDMETHODCALLTYPE Dx11wDx12SC::ResizeBuffers(UINT BufferCount, UINT Widt
      HRESULT realResult = _real != nullptr ? _real->ResizeBuffers(BufferCount, Width, Height, NewFormat, SwapChainFlags)
                                            : DXGI_ERROR_DEVICE_REMOVED;
-
+ 
 +    UINT fgWidth = Width, fgHeight = Height;
 +    ReShadeFG_DisplaySize(fgWidth, fgHeight);
      HRESULT fgResult = DXGI_ERROR_DEVICE_REMOVED;
@@ -314,11 +343,11 @@ index 41f9c1b..13c1c66 100644
 +            fgResult = _fgSwapChain->ResizeBuffers(BufferCount, fgWidth, fgHeight, NewFormat, SwapChainFlags);
          }
      }
-
+ 
 @@ -1190,6 +1197,18 @@ bool Dx11wDx12SC::_CopyDx11SharedToDx12FGBackBuffer(UINT dx11Index)
          return false;
      }
-
+ 
 +    const auto sourceDesc = _openedDx11BackBuffers[copySlot]->GetDesc();
 +    const auto targetDesc = fgBackBuffer->GetDesc();
 +    const bool useSR = Config::Instance()->ReShadeSREnabled.value_or_default() ||
@@ -332,21 +361,21 @@ index 41f9c1b..13c1c66 100644
 +        }
 +    } else {
      auto sourceBefore = _openedDx11BackBufferStates[copySlot];
-
+ 
      TransitionResource(_copyCommandLists[copySlot], _openedDx11BackBuffers[copySlot], sourceBefore,
 @@ -1205,6 +1224,7 @@ bool Dx11wDx12SC::_CopyDx11SharedToDx12FGBackBuffer(UINT dx11Index)
                         sourceBefore);
-
+ 
      _openedDx11BackBufferStates[copySlot] = D3D12_RESOURCE_STATE_COMMON;
 +    }
-
+ 
      fgBackBuffer->Release();
-
+ 
 @@ -1217,6 +1237,7 @@ bool Dx11wDx12SC::_CopyDx11SharedToDx12FGBackBuffer(UINT dx11Index)
-
+ 
      ID3D12CommandList* lists[] = { _copyCommandLists[copySlot] };
      _dx12CommandQueue->ExecuteCommandLists(1, lists);
 +    if (useSR) ReShadeFG_PresentationSubmitted(_dx12CommandQueue);
-
+ 
      const auto signalValue = ++_copyFenceValue;
-
+ 

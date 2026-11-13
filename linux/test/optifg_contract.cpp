@@ -1,10 +1,18 @@
 // SPDX-License-Identifier: MIT
 #include "../optifg/include/frame_contract.hpp"
+#include "../optifg/include/sr_contract.hpp"
 #include <cassert>
 #include <limits>
 #include <iostream>
 
 int main() {
+    assert(opti_bridge::temporal_extents(1280, 720, 1920, 1080));
+    assert(opti_bridge::temporal_extents(1280, 720, 1280, 720));
+    assert(opti_bridge::temporal_extents(960, 540, 1920, 1080));
+    assert(!opti_bridge::temporal_extents(1920, 1080, 1280, 720));
+    assert(!opti_bridge::temporal_extents(1280, 720, 1920, 1200));
+    assert(!opti_bridge::temporal_extents(0, 720, 1920, 1080));
+    assert(!opti_bridge::temporal_extents(1280, 720, 32768, 18432));
     OptiBridgeFrame f {};
     f.size = sizeof f; f.version = OPTI_BRIDGE_VERSION;
     f.frame_id = 1; f.color = f.motion = f.depth = reinterpret_cast<void*>(1);

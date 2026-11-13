@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "pch.h"
 #include "ReShadeSR.h"
+#include "sr_contract.hpp"
 #include <Config.h>
 #include <State.h>
 #include <NVNGX_Parameter.h>
@@ -209,6 +210,7 @@ bool Record(ID3D12GraphicsCommandList* cmd, ID3D12Resource* source, ID3D12Resour
     Transition(cmd, source, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
     if (hudless) Transition(cmd, hudless, D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
     if (frame && motion && depth && Enabled() && state.activeFgInput == FGInput::ReShade &&
+        opti_bridge::temporal_extents(UINT(input.Width), input.Height, UINT(output.Width), output.Height) &&
         (!state.currentFeature || state.currentFeature == c.feature.get())) {
         NVNGX_Parameters p(API::DX12, false);
         int flags = NVSDK_NGX_DLSS_Feature_Flags_MVLowRes | NVSDK_NGX_DLSS_Feature_Flags_AutoExposure;

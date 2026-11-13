@@ -63,13 +63,14 @@ Output PS(float4 position : SV_Position) {
 int main(int argc, char** argv) {
     try {
         bool baseline = false, reshade = false, tenBit = false;
-        unsigned frames = 600;
+        unsigned frames = 600, gapAt = 0;
         for (int i = 1; i < argc; ++i) {
             if (!std::strcmp(argv[i], "--baseline")) baseline = true;
             else if (!std::strcmp(argv[i], "--reshade")) reshade = true;
             else if (!std::strcmp(argv[i], "--10bit")) tenBit = true;
+            else if (!std::strcmp(argv[i], "--guide-gap") && i + 1 < argc) gapAt = unsigned(std::stoul(argv[++i]));
             else if (!std::strcmp(argv[i], "--frames") && i + 1 < argc) frames = unsigned(std::stoul(argv[++i]));
-            else throw std::runtime_error("usage: optifg_probe.exe [--baseline | --reshade] [--10bit] [--frames N]");
+            else throw std::runtime_error("usage: optifg_probe.exe [--baseline | --reshade] [--10bit] [--guide-gap FRAME] [--frames N]");
         }
         const OptiReShadeBridge* api = nullptr;
         if (!baseline) {
@@ -179,7 +180,7 @@ int main(int argc, char** argv) {
             for (int draw = 0; draw < 9; ++draw) context->Draw(16 * 9 * 6, 0);
             context->OMSetRenderTargets(0, nullptr, nullptr);
             LARGE_INTEGER now; QueryPerformanceCounter(&now);
-            if (stream) {
+            if (stream && !(gapAt && frame >= gapAt && frame < gapAt + 90)) {
                 OptiBridgeFrame input {};
                 input.size = sizeof input; input.version = OPTI_BRIDGE_VERSION; input.frame_id = frame;
                 input.color = color.p; input.motion = motion.p; input.depth = depth.p;
