@@ -151,6 +151,8 @@ Measured facts worth knowing before changing kernels:
   changes and with a second pass, plus FG menu flicker. Exact Proton/game builds and GPU qualification remain pending.
   The port and target checklists are in `docs/RDNA3-PORT-0.0.8.3.md` and `docs/RDNA3-TARGET-TESTING.md`.
   The follow-up cursor/FG/footer trial and artifact are recorded in `docs/NR-CONTROL-FIX.md`; live validation is pending.
+- The current owner's local host does expose a Z1 Extreme with Mesa 26.2.6 outside the managed sandbox.
+  Sandbox-only `/dev/dri` checks are insufficient; distinguish device access restrictions from absent hardware.
 - Missing target hardware does not block source work, shader compilation, packaging and CPU/static checks.
   Record GPU-dependent checks as unrun and provide exact commands and required inputs for the target machine.
 - Report the implemented features, actual checks, artifact locations and remaining limitations precisely.

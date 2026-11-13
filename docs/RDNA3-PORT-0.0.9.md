@@ -29,9 +29,12 @@ Initial state: planned and unverified. Build checks do not prove GPU correctness
 
 ## Environment and pending target checks
 
-The current build environment has no `/dev/dri`. NVIDIA DLLs and extracted
-models have not been supplied. GPU execution, numerical EXACT checks, model
-extraction, frame timings and game compatibility must be recorded as unrun.
+The managed sandbox does not expose `/dev/dri`; checking outside it revealed the
+host's AMD Ryzen Z1 Extreme (RADV PHOENIX), Mesa 26.2.6-arch3.1, Vulkan 1.4.354.
+The owner's existing DD2 installation contains models matching the expected
+SHA-256 checksums. Tests use private copies under ignored `build/`; the game
+installation is read only and no model enters a distribution package.
+Frame timings and game compatibility remain unqualified.
 Existing goldens must remain unchanged. New processing modes need their own
 matching reference; they must not be compared to a different network's golden.
 
@@ -66,8 +69,11 @@ as the port progresses.
   `bash linux/test/check_rdna3_port.sh` also checks generated route defaults:
   OptiScaler method 0, ReShade method 1, preset 1 and preserved `[Reuse]`.
 - Shell/Python syntax and path/ImGui guards pass. The Ditto integration harness
-  compiles; it cannot execute here because no hardware or software Vulkan device
-  is available. No software Vulkan result is counted as target qualification.
+  compiles and passes on the host's real Z1 Extreme outside the sandbox: SDR/HDR,
+  preprocess, sRGB, detail/strength composition and independent pass histories.
+  Half-blend error is 0.000183105; two-pass history drift is 0.00146484 with 14
+  network callbacks. It uses a deterministic identity network and is not an NR
+  model quality test or a game test.
 - Linux RDNA4 network sources and all Windows sources remain unchanged.
   Windows continues to select its previous pinned Linux ACO source snapshot;
   it does not consume the new Linux RDNA3 pipeline, so no Windows ACO import is
@@ -101,5 +107,6 @@ a release tag. Keep the exact source commit in the build record.
 
 The packaged [0.0.9 target checklist](RDNA3-TARGET-TESTING-0.0.9.md) gives
 installation, rollback, model inputs, numerical commands and game scenarios.
-All GPU/model/game acceptance rows remain pending. In particular this port does
-not establish a fix for the historical Z1 Extreme/DD2 green output or FG flicker.
+Full model numerical and game acceptance results are recorded separately below.
+In particular this port does not establish a fix for the historical Z1
+Extreme/DD2 green output or FG flicker without reproducing those game scenarios.
