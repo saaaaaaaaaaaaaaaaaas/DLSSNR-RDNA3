@@ -8,7 +8,7 @@
 linux/test/sweep_defines.py times a few pipelines rebuilt with other defines, without the full check.
     python3 linux/test/check_rdna3.py --model dlssnr.bin --update-golden   # record the current state
 
-What it runs, on the first discrete GPU:
+What it runs, on a Vulkan GPU (discrete preferred, otherwise the first device):
   1. the e4m3 quantiser and decoder of linux/shaders/rdna3 against the host's reference over every f16
      input, the f32 and packed-f16 rounding forms against the bit-level rounding over every f32 bit
      pattern and every pair of f16 patterns (4 billion each), and the lane halves the WMMA reads its

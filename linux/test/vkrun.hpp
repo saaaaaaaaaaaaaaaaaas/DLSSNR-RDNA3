@@ -10,7 +10,11 @@ static Ctx mk(){
  Ctx c{}; VkApplicationInfo ai{VK_STRUCTURE_TYPE_APPLICATION_INFO}; ai.apiVersion=VK_API_VERSION_1_3;
  VkInstanceCreateInfo ic{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO}; ic.pApplicationInfo=&ai; vkCreateInstance(&ic,0,&c.inst);
  uint32_t n=0; vkEnumeratePhysicalDevices(c.inst,&n,0); std::vector<VkPhysicalDevice> pd(n); vkEnumeratePhysicalDevices(c.inst,&n,pd.data());
+ if(pd.empty()){std::fprintf(stderr,"no Vulkan GPU available\n");std::exit(2);}
+ // Z1 Extreme and other APUs expose only an integrated device. Keep the discrete preference, with a valid fallback.
+ c.gpu=pd.front();
  for(auto d:pd){VkPhysicalDeviceProperties p; vkGetPhysicalDeviceProperties(d,&p); if(p.deviceType==VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)c.gpu=d;}
+ VkPhysicalDeviceProperties chosen{};vkGetPhysicalDeviceProperties(c.gpu,&chosen);std::printf("GPU: %s\n",chosen.deviceName);
  float q=1; VkDeviceQueueCreateInfo qi{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO}; qi.queueCount=1;qi.pQueuePriorities=&q;
  uint32_t qn=0; vkGetPhysicalDeviceQueueFamilyProperties(c.gpu,&qn,0); std::vector<VkQueueFamilyProperties> qp(qn); vkGetPhysicalDeviceQueueFamilyProperties(c.gpu,&qn,qp.data());
  for(uint32_t i=0;i<qn;i++) if(qp[i].queueFlags&VK_QUEUE_COMPUTE_BIT){qi.queueFamilyIndex=i;break;} c.qf=qi.queueFamilyIndex;

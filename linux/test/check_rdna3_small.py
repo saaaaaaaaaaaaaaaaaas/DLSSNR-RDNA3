@@ -10,7 +10,7 @@ families and kernels as the 310.8.0 model). --model is the dlssnr-small.bin that
 `linux/package/model-tools/extract_model.sh <nvngx_dlssnr.dll 310.9.16> <folder>` writes beside dlssnr.bin; it is
 checked against the SHA-256 of the tested model first. The shaders are the default network's.
 
-What it runs, on the first discrete GPU: the three single frames of docs/ngx-verification (1080p, 1440p, 4K)
+What it runs, on a Vulkan GPU (discrete preferred, otherwise the first device): the three single frames of docs/ngx-verification (1080p, 1440p, 4K)
 through nr::Runtime, each twice, and every activation value of the 1080p network, hashed (nr_graph --value-stats).
 Verdicts are check_rdna3.py's (EXACT, CLOSE, FAIL). The golden is linux/test/golden/rdna3/frames-small.json,
 layers-small-1080.txt and the *_dlssnr-amd-rdna3.png files of docs/ngx-verification/310.9.16/single-frame-outputs.

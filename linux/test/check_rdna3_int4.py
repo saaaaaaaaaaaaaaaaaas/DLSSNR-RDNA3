@@ -5,7 +5,7 @@
     python3 linux/test/check_rdna3_int4.py --model dlssnr.bin --perf      # also the time per frame, int4 and default
     python3 linux/test/check_rdna3_int4.py --model dlssnr.bin --update-golden
 
-What it runs, on the first discrete GPU (the default network's checks are linux/test/check_rdna3.py):
+What it runs, on a Vulkan GPU (discrete preferred; integrated APUs supported) (the default network's checks are linux/test/check_rdna3.py):
   1. the install-time weights generator on the model: the file it writes has to be the one linux/data/int4/<tables>/
      dlssnr-int4.sha256 names (the tables are calibrated on the FP8 network, which this build reproduces);
   2. the three single frames of docs/ngx-verification (1080p, 1440p, 4K) through nr::Runtime with int4 mixed, each
