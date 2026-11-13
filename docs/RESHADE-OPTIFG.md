@@ -53,6 +53,30 @@ OptiScaler patch and preparation/build instructions alongside it. No downloaded
 NVIDIA DLLs or model data belong in the bundle. The normal 0.0.9 release stays
 independent of this opt-in experiment.
 
+## Additional upscaling pass: acceptance matrix
+
+Requested target: render 1280x720, reconstruct 1920x1080, then run FG. The
+existing ABI continues to describe the actual source color/depth/MV extent.
+Output dimensions belong to the consumer/presenter, not a resized declaration
+of the source textures. Existing FG-only installations remain opt-in unchanged.
+
+| Area | Required behavior | Evidence |
+| --- | --- | --- |
+| Real scaling | Separate low-resolution game buffers and high-resolution DX12 presenter; no downsample-then-upsample shortcut | Pending |
+| Upscaler | Reuse OptiScaler's DX12 providers and menu selection, initially FSR 3.1 on RDNA3 | Pending |
+| Ordering | ReShade guides -> SR on real frames -> FG; generated frames never enter SR history | Pending |
+| Guides | Preserve render-resolution depth/MV and their pixel scale for SR/FG | Pending |
+| Missing guides | Spatial fallback in menus/loading, reset SR/FG on recovery; no stale temporal input | Pending |
+| HUD | Same-frame HUDless SR when available, preserve HUD separately, publish display-resolution HUDless to FG | Pending |
+| Lifetime | Present allocator/fences protect SR output, inputs and provider changes; no reverse GPU wait | Pending |
+| Controls | Explicit output size, off by default, provider selection through OptiScaler; native inputs keep their ownership | Pending |
+| Qualification | 720p -> 1080p analytic probe, ReShade/Lumenite probe, reset/change/resize, and Tekken 7 | Pending |
+
+ReShade optical flow is estimated and no engine jitter is injected or recovered.
+This post-render temporal reconstruction is not equivalent to an engine-integrated
+upscaler with pre-TAA color, true motion, jitter and engine-provided reactive masks.
+Window/desktop presentation size and render-buffer size must be verified separately.
+
 ## Observed GPU evidence
 
 Host: AMD Ryzen Z1 Extreme, RADV Mesa 26.2.6, Wine 11.0 from Proton-CachyOS
