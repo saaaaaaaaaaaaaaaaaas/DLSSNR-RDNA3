@@ -7,7 +7,8 @@
   "attention (NR_FIXP, one fitted 64x64 probability table a layer) on the one-head C=32 layers of the pre block (block",
   "0) and the encoder's blocks 1, 3 and 4; block 2 keeps its real attention on fswin32e / fswin32nhe (\"routes\"). Its",
   "FP8 weights differ from Balanced's in the layers with the new fixed attention: the \"performance/\" entries of",
-  "CC_SILVER_AARDWOLD_OPTIMIZED.bin (as pipelines-performance.json). Format as pipelines-int4.json."
+  "CC_SILVER_AARDWOLD_OPTIMIZED.bin (as pipelines-performance.json). Format as pipelines-int4.json.",
+  "The plain encoder C=256 layers use fswin256q (blocks 15-22), the only plain pipeline with NR_SWQ4. Decoder fswin256 keeps FP16 QKV: its calibration has no QKV quantisers."
  ],
  "change": {
   "attn": {
@@ -25,7 +26,6 @@
    "add": [
     "NR_SWI4=1",
     "NR_I4=1",
-    "NR_SWQ4=1",
     "NR_SWI4_MASKQ=1",
     "NR_SACT=1",
     "NR_SWI4_ROT=8",
@@ -387,6 +387,22 @@
    "add": [
     "NR_SACT=1"
    ]
+  },
+  "fswin256q": {
+   "base": "fswin256",
+   "add": [
+    "NR_SWI4=1",
+    "NR_I4=1",
+    "NR_SWI4_MASKQ=1",
+    "NR_SWQ4=1",
+    "NR_SACT=1",
+    "NR_SWI4_ROT=8",
+    "NR_EXPAND_GROUP=1"
+   ],
+   "remove": [
+    "NR_EXPAND_GROUP=4",
+    "NR_EXPAND_GROUP=4"
+   ]
   }
  },
  "iu4": [
@@ -404,7 +420,8 @@
   "gemmprojw4s",
   "gemmvact4c",
   "gemmvqkvnorm4",
-  "gemmvqkvnorms4"
+  "gemmvqkvnorms4",
+  "fswin256q"
  ],
  "routes": [
   {
@@ -436,6 +453,22 @@
    ],
    "blocks": [
     2
+   ]
+  },
+  {
+   "suffix": "q",
+   "kernels": [
+    "fswin256"
+   ],
+   "blocks": [
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
    ]
   }
  ]
