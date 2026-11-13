@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "pch.h"
 #include "ReShadeFG.h"
+#include "ReShadeSR.h"
 #include "frame_contract.hpp"
 #include <Config.h>
 #include <State.h>
@@ -23,6 +24,9 @@ uint64_t copySerial = 0, slotSerial[BUFFER_COUNT] {};
 opti_bridge::Timeline timeline;
 OptiBridgeStats stats { sizeof(OptiBridgeStats), OPTI_BRIDGE_VERSION };
 uint64_t token = 0, nextToken = 0, startedSerial = 0;
+OptiBridgeFrame srFrame {};
+bool srReady = false, srReset = true, srHudless = false;
+UINT srSlot = 0;
 
 ComPtr<IUnknown> Unwrap(IUnknown* object) {
     ComPtr<IUnknown> current = object;
@@ -56,6 +60,8 @@ uint32_t Result(uint32_t status) {
 }
 bool Selected() { return State::Instance().activeFgInput == FGInput::ReShade; }
 void DropStream() {
+    ReShadeSR::Reset();
+    srReady = false; srReset = true;
     token = 0;
     timeline = {};
     startedSerial = 0;
@@ -89,7 +95,7 @@ uint32_t OPTI_BRIDGE_CALL Register(void* object, uint64_t hwnd, uint64_t* out) {
     if (token) return Result(OPTI_BRIDGE_DUPLICATE);
     sourceDevice = device;
     fenceDevice = WithDx12::GetD3D12Device();
-    if (FAILED(fenceDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&copiedFence)))) {
+    if (!copiedFence && FAILED(fenceDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&copiedFence)))) {
         DropStream(); return Result(OPTI_BRIDGE_GPU_ERROR);
     }
     token = ++nextToken;
@@ -120,7 +126,7 @@ uint32_t SubmitImpl(uint64_t stream, const OptiBridgeFrame* frame) {
     auto status = opti_bridge::validate(frame);
     if (status != OPTI_BRIDGE_OK) { timeline.reset = true; return Result(status); }
     auto& state = State::Instance();
-    if (!Selected() || !Config::Instance()->IsFGEnabled()) {
+    if (!Selected() || (!Config::Instance()->IsFGEnabled() && !ReShadeSR::Enabled())) {
         timeline.reset = true;
         return Result(OPTI_BRIDGE_DISABLED);
     }
@@ -162,31 +168,6 @@ uint32_t SubmitImpl(uint64_t stream, const OptiBridgeFrame* frame) {
     // No GPU-side reverse wait: DXVK and vkd3d-proton may share one VkQueue.
     // A busy ring slot drops this frame rather than creating a queue cycle.
     if (completed < slotSerial[slot]) { timeline.reset = true; return Result(OPTI_BRIDGE_BUSY); }
-    FG_Constants constants {};
-    constants.displayWidth = frame->width; constants.displayHeight = frame->height;
-    constants.flags |= FG_Flags::DisplayResolutionMVs;
-    if (frame->flags & OPTI_BRIDGE_REVERSED_DEPTH) constants.flags |= FG_Flags::InvertedDepth;
-    if (frame->flags & OPTI_BRIDGE_INFINITE_DEPTH) constants.flags |= FG_Flags::InfiniteDepth;
-    if (Config::Instance()->FGAsync.value_or_default()) constants.flags |= FG_Flags::Async;
-    fg->EvaluateState(device12, constants);
-    // EvaluateState owns the FG mutex itself. Only protect resource publication
-    // after it returns; wrapping that call would recursively lock a shared_mutex.
-    OwnedLockGuard fgLock(fg->Mutex, 4);
-    fg->StartNewFrame();
-    startedSerial = timeline.serial + 1;
-    if (fg->IsPaused() || !fg->IsActive()) return Result(OPTI_BRIDGE_WARMING_UP);
-    const bool reset = timeline.needs_reset(*frame);
-    float nearPlane = frame->camera_near;
-    float farPlane = (frame->flags & OPTI_BRIDGE_INFINITE_DEPTH) ? FLT_MAX : frame->camera_far;
-    if (frame->flags & OPTI_BRIDGE_REVERSED_DEPTH) std::swap(nearPlane, farPlane);
-    fg->SetCameraValues(nearPlane, farPlane, frame->vertical_fov_radians,
-                        float(frame->width) / float(frame->height), 1.0f);
-    fg->SetFrameTimeDelta(frame->delta_ms);
-    fg->SetMVScale(1.0f / float(frame->width), 1.0f / float(frame->height));
-    fg->SetJitter(0.0f, 0.0f);
-    fg->SetReset(reset ? 1 : 0);
-    fg->SetInterpolationRect(frame->width, frame->height);
-
     ComPtr<ID3D11DeviceContext> context;
     sourceDevice->GetImmediateContext(&context);
     Dx11WithDx12::Init(sourceDevice.Get(), context.Get(), device12, WithDx12::GetD3D12CommandQueue());
@@ -204,6 +185,43 @@ uint32_t SubmitImpl(uint64_t stream, const OptiBridgeFrame* frame) {
         timeline.reset = true;
         return Result(OPTI_BRIDGE_GPU_ERROR);
     }
+    const bool srEnabled = ReShadeSR::Enabled();
+    const bool reset = timeline.needs_reset(*frame);
+    srFrame = *frame; srFrame.color = srFrame.motion = srFrame.depth = srFrame.hudless = nullptr;
+    srReset = reset; srHudless = hudless != nullptr; srSlot = slot;
+    auto acceptSR = [&]() {
+        timeline.accept(*frame);
+        ++stats.submitted; stats.last_frame_id = frame->frame_id;
+        return Result(OPTI_BRIDGE_OK);
+    };
+    if (!Config::Instance()->IsFGEnabled()) return acceptSR();
+    UINT displayWidth = frame->width, displayHeight = frame->height;
+    ReShadeSR::DisplaySize(displayWidth, displayHeight);
+    FG_Constants constants {};
+    constants.displayWidth = displayWidth; constants.displayHeight = displayHeight;
+    if (!srEnabled) constants.flags |= FG_Flags::DisplayResolutionMVs;
+    if (frame->flags & OPTI_BRIDGE_REVERSED_DEPTH) constants.flags |= FG_Flags::InvertedDepth;
+    if (frame->flags & OPTI_BRIDGE_INFINITE_DEPTH) constants.flags |= FG_Flags::InfiniteDepth;
+    if (Config::Instance()->FGAsync.value_or_default()) constants.flags |= FG_Flags::Async;
+    fg->EvaluateState(device12, constants);
+    // EvaluateState owns the FG mutex itself. Only protect resource publication
+    // after it returns; wrapping that call would recursively lock a shared_mutex.
+    OwnedLockGuard fgLock(fg->Mutex, 4);
+    fg->StartNewFrame();
+    startedSerial = timeline.serial + 1;
+    if (fg->IsPaused() || !fg->IsActive())
+        return srEnabled ? acceptSR() : Result(OPTI_BRIDGE_WARMING_UP);
+    float nearPlane = frame->camera_near;
+    float farPlane = (frame->flags & OPTI_BRIDGE_INFINITE_DEPTH) ? FLT_MAX : frame->camera_far;
+    if (frame->flags & OPTI_BRIDGE_REVERSED_DEPTH) std::swap(nearPlane, farPlane);
+    fg->SetCameraValues(nearPlane, farPlane, frame->vertical_fov_radians,
+                        float(frame->width) / float(frame->height), 1.0f);
+    fg->SetFrameTimeDelta(frame->delta_ms);
+    fg->SetMVScale(1.0f / float(frame->width), 1.0f / float(frame->height));
+    fg->SetJitter(0.0f, 0.0f);
+    fg->SetReset(reset ? 1 : 0);
+    fg->SetInterpolationRect(displayWidth, displayHeight);
+
     auto* cmd = fg->GetUICommandList();
     bool copied = cmd != nullptr;
     auto set = [&](FG_ResourceType type, ID3D12Resource* resource) {
@@ -218,7 +236,7 @@ uint32_t SubmitImpl(uint64_t stream, const OptiBridgeFrame* frame) {
     // copies before returning. The next reuse of this ring slot checks their fence.
     copied = set(FG_ResourceType::Velocity, cache.CurrentMv().Dx12Resource) && copied;
     copied = set(FG_ResourceType::Depth, cache.CurrentDepth().Dx12Resource) && copied;
-    if (hudless) copied = set(FG_ResourceType::HudlessColor, hudlessCache[slot].Dx12Resource) && copied;
+    if (hudless && !srEnabled) copied = set(FG_ResourceType::HudlessColor, hudlessCache[slot].Dx12Resource) && copied;
     const bool submitted = fg->FinishExternalInputs();
     const auto copyValue = ++copySerial;
     const bool signalled = SUCCEEDED(WithDx12::GetD3D12CommandQueue()->Signal(copiedFence.Get(), copyValue));
@@ -267,6 +285,7 @@ void ReShadeFG_BeforePresent(ID3D11Device* device) {
     if (!Selected()) return;
     if (token && !SameObject(device, sourceDevice.Get())) return;
     const bool ready = timeline.present();
+    srReady = ready;
     if (ready) ++stats.presented;
     else if (auto* fg = State::Instance().currentFG) {
         OwnedLockGuard fgLock(fg->Mutex, 4);
@@ -282,4 +301,27 @@ void ReShadeFG_BeforePresent(ID3D11Device* device) {
 void ReShadeFG_Destroy(ID3D11Device* device) {
     std::lock_guard lock(bridgeMutex);
     if (token && SameObject(device, sourceDevice.Get())) DropStream();
+}
+
+void ReShadeFG_DisplaySize(UINT& width, UINT& height) { ReShadeSR::DisplaySize(width, height); }
+bool ReShadeFG_RecordPresentation(ID3D12GraphicsCommandList* cmd, ID3D12Resource* source,
+                                  ID3D12Resource* destination, UINT slot) {
+    std::lock_guard lock(bridgeMutex);
+    return ReShadeSR::Record(cmd, source, destination,
+        srReady ? cache.CurrentMv().Dx12Resource : nullptr,
+        srReady ? cache.CurrentDepth().Dx12Resource : nullptr,
+        srReady && srHudless ? hudlessCache[srSlot].Dx12Resource : nullptr,
+        srReady ? &srFrame : nullptr, srReset, slot);
+}
+void ReShadeFG_PresentationSubmitted(ID3D12CommandQueue* queue) {
+    std::lock_guard lock(bridgeMutex);
+    if (!copiedFence) {
+        if (FAILED(queue->GetDevice(IID_PPV_ARGS(&fenceDevice))) ||
+            FAILED(fenceDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&copiedFence)))) return;
+    }
+    const auto value = ++copySerial;
+    if (SUCCEEDED(queue->Signal(copiedFence.Get(), value))) {
+        slotSerial[srSlot] = value;
+        ReShadeSR::Submitted(copiedFence.Get(), value);
+    }
 }
