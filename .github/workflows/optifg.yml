@@ -34,6 +34,7 @@ jobs:
           Copy-Item build/optiscaler-source/LICENSE artifacts/optifg-consumer/COPYING.OptiScaler
           Copy-Item linux/optifg/optiscaler.patch artifacts/optifg-consumer/
           Copy-Item linux/optifg/include/opti_reshade_bridge.h artifacts/optifg-consumer/
+          Copy-Item -Recurse linux/optifg artifacts/optifg-consumer/bridge-source
           Set-Content artifacts/optifg-consumer/source.txt "OptiScaler e7e3872d410f704479d94d318d68d163b6b58947 + DLSSNR bridge ${{ github.sha }}"
       - uses: actions/upload-artifact@v4
         with:
@@ -70,11 +71,34 @@ jobs:
         run: NR_GPU=rdna3 NR_PROGRAMS_ONLY=1 bash linux/build/build_package.sh
       - name: Build standalone DX11 probe
         run: bash linux/build/build_optifg_probe.sh
+      - name: Stage producer artifact
+        run: |
+          mkdir -p artifacts/optifg-producer
+          cp artifacts/package-build/nr/dlssnr_amd.addon64 artifacts/optifg-probe/*.exe artifacts/optifg-producer/
+          printf '%s\n' 'OptiScaler e7e3872d410f704479d94d318d68d163b6b58947 + DLSSNR bridge ${{ github.sha }}' > artifacts/optifg-producer/source.txt
       - uses: actions/upload-artifact@v4
         with:
           name: optifg-producer-x86_64
+          path: artifacts/optifg-producer/
+          if-no-files-found: error
+  developer-bundle:
+    needs: [consumer, producer]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: optifg-consumer-x86_64
+          path: artifacts/consumer
+      - uses: actions/download-artifact@v4
+        with:
+          name: optifg-producer-x86_64
+          path: artifacts/producer
+      - run: python3 linux/optifg/package_dev.py --consumer artifacts/consumer --producer artifacts/producer --output artifacts/DLSSNR-RDNA3-OptiFG-dev.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: optifg-developer-bundle-x86_64
           path: |
-            artifacts/package-build/nr/dlssnr_amd.addon64
-            artifacts/optifg-probe/optifg_probe.exe
-            artifacts/optifg-probe/optifg_probe_dx10.exe
+            artifacts/DLSSNR-RDNA3-OptiFG-dev.zip
+            artifacts/DLSSNR-RDNA3-OptiFG-dev.zip.sha256
           if-no-files-found: error

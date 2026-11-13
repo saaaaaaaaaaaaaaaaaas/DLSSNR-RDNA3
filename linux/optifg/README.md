@@ -29,6 +29,18 @@ submodules, run `python linux/optifg/prepare_optiscaler.py PATH_TO_OPTISCALER`, 
 The binary is `x64/Release/a/OptiScaler.dll`. Keep the upstream licence and the
 patch/receiver/public headers with any experimental binary you distribute.
 
+The workflow also produces `optifg-developer-bundle-x86_64`: both DLLs, native
+DX11/DX10 probes, hashes, source/build instructions and licences. It contains no
+models, LumeniteFX or third-party runtimes. To assemble it locally from the two
+CI artifacts for the current clean commit:
+
+```sh
+python3 linux/optifg/package_dev.py --consumer artifacts/consumer \
+  --producer artifacts/producer --output artifacts/DLSSNR-RDNA3-OptiFG-dev.zip
+```
+
+The packager checks both artifacts' `source.txt` against the current commit.
+
 ## Standalone qualification
 
 Set `NR_PROTON` to a local Proton directory, and place the consumer artifact in
@@ -45,7 +57,11 @@ NR_PROTON='/path/to/Proton' bash linux/optifg/run_probe.sh reshade-dx10 1800
 
 `baseline` renders through DXVK. `direct` sends analytically known pixel motion
 and device depth through the bridge. `reshade` uses the actual ReShade add-on,
-VORT and DLSS5_Feed, with NR disabled. The probe has a real hardware depth buffer
+LumeniteFX Kernel and DLSS5_Feed, with NR disabled. Set `NR_OPTIFG_MOTION=vort`
+to compare VORT. LumeniteFX is downloaded directly from its author's pinned
+GitHub archive through the existing installer's interface/license checks; its
+files are not included in CI artifacts or redistributed bundles.
+The probe has a real hardware depth buffer
 so Generic Depth can select it. It uses normal Z, not reversed Z. Shader loading
 can take longer than a short probe; inspect `ReShade.log` and use a longer run.
 
@@ -53,6 +69,8 @@ The orange rectangle moves over a stationary grid. Source MV are current to
 previous in pixels; foreground depth is 0.3, background 0.95. The `-dx10` variants
 use actual D3D10 device/draw/resource entry points and shader model 4.
 Debug view is on.
+Set `NR_OPTIFG_10BIT=1` to test an SDR R10G10B10A2 swapchain, like Tekken 7.
+The producer tags SDR explicitly; the bit depth alone does not establish HDR.
 Bridge counters count captures and consumed **real** presents, not generated
 frames. Record the output to check intermediate frames, motion direction,
 occlusion edges, reset behavior and pacing before claiming successful FG.
@@ -67,6 +85,14 @@ Loading ReShade first traps its runtime on the hidden internal swapchain, which
 Linux does not present. A game needs its normal OptiScaler loading method (e.g. an imported
 proxy DLL); filename choice alone does not force an unreferenced DLL to load.
 Do not put two different DLLs under the same proxy filename.
+
+Tekken 7 was tested with OptiScaler named `winmm.dll`, ReShade named
+`ReShade64.dll`, `[Plugins] LoadReShade=true` in `OptiScaler.ini`, and
+`WINEDLLOVERRIDES="winmm=n,b" %command%` as the Steam launch option. Using
+OptiScaler as `dxgi.dll` in this game bound ReShade to an internal swapchain.
+Its SDR R10G10B10A2 backbuffer requires the matching SDR10-capable producer and
+consumer. LumeniteFX Kernel runs before DLSS5_Feed with provider 3 and reversed
+depth enabled. See the acceptance report for the tested build and limitations.
 
 The configuration examples here are for the probe. Set actual game near/far/FOV
 in `optifg-bridge.ini`, preserve the game's ReShade depth conventions and select
