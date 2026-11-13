@@ -28,7 +28,8 @@ struct Context {
     int ffxIndex = -1;
     std::string custom;
     bool hudless = false, gap = true;
-    UINT64 frames = 0, fallbacks = 0;
+    UINT64 frames = 0, fallbacks = 0, retiredAt = 0;
+    DXGI_FORMAT sourceFormat = DXGI_FORMAT_UNKNOWN, outputFormat = DXGI_FORMAT_UNKNOWN;
 };
 std::unique_ptr<Context> current;
 std::vector<std::unique_ptr<Context>> retired;
@@ -45,7 +46,8 @@ void Transition(ID3D12GraphicsCommandList* cmd, ID3D12Resource* resource,
 }
 void Collect() {
     std::erase_if(retired, [](const auto& p) {
-        return !p->fence || p->fence->GetCompletedValue() >= p->value;
+        return GetTickCount64() - p->retiredAt >= 1000 &&
+               (!p->fence || p->fence->GetCompletedValue() >= p->value);
     });
 }
 void Retire() {
@@ -57,6 +59,7 @@ void Retire() {
     }
     // Hold every descriptor/context/output until its final submitted list completes.
     // This also covers provider changes without a CPU or reverse GPU wait.
+    current->retiredAt = GetTickCount64();
     retired.push_back(std::move(current));
     Collect();
 }
@@ -189,6 +192,7 @@ bool Record(ID3D12GraphicsCommandList* cmd, ID3D12Resource* source, ID3D12Resour
     bool changed = current && current->feature && state.changeBackend[current->feature->Handle()->Id];
     if (current && (current->device != device || current->width != output.Width || current->height != output.Height ||
         current->sourceWidth != input.Width || current->sourceHeight != input.Height || changed ||
+        current->sourceFormat != input.Format || current->outputFormat != output.Format ||
         (frame && current->feature && current->flags != depthFlags))) {
         Retire(); reset = true;
     }
@@ -196,6 +200,7 @@ bool Record(ID3D12GraphicsCommandList* cmd, ID3D12Resource* source, ID3D12Resour
         current = std::make_unique<Context>();
         current->device = device; current->width = UINT(output.Width); current->height = output.Height;
         current->sourceWidth = UINT(input.Width); current->sourceHeight = input.Height;
+        current->sourceFormat = input.Format; current->outputFormat = output.Format;
         D3D12_HEAP_PROPERTIES heap {}; heap.Type = D3D12_HEAP_TYPE_DEFAULT;
         output.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
         if (FAILED(device->CreateCommittedResource(&heap, D3D12_HEAP_FLAG_NONE, &output,
@@ -217,6 +222,8 @@ bool Record(ID3D12GraphicsCommandList* cmd, ID3D12Resource* source, ID3D12Resour
         if (depthFlags & OPTI_BRIDGE_REVERSED_DEPTH) flags |= NVSDK_NGX_DLSS_Feature_Flags_DepthInverted;
         p.Set(NVSDK_NGX_Parameter_DLSS_Feature_Create_Flags, flags);
         p.Set(NVSDK_NGX_Parameter_Width, UINT(input.Width)); p.Set(NVSDK_NGX_Parameter_Height, input.Height);
+        p.Set(NVSDK_NGX_Parameter_DLSS_Render_Subrect_Dimensions_Width, UINT(input.Width));
+        p.Set(NVSDK_NGX_Parameter_DLSS_Render_Subrect_Dimensions_Height, input.Height);
         p.Set(NVSDK_NGX_Parameter_OutWidth, UINT(output.Width)); p.Set(NVSDK_NGX_Parameter_OutHeight, output.Height);
         p.Set(NVSDK_NGX_Parameter_PerfQualityValue, int(NVSDK_NGX_PerfQuality_Value_MaxQuality));
         p.Set(NVSDK_NGX_Parameter_Color, useScene ? hudless : source);

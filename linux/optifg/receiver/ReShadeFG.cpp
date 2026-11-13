@@ -301,6 +301,7 @@ void ReShadeFG_BeforePresent(ID3D11Device* device) {
 void ReShadeFG_Destroy(ID3D11Device* device) {
     std::lock_guard lock(bridgeMutex);
     if (token && SameObject(device, sourceDevice.Get())) DropStream();
+    else if (!token) ReShadeSR::Reset();
 }
 
 void ReShadeFG_DisplaySize(UINT& width, UINT& height) { ReShadeSR::DisplaySize(width, height); }
@@ -324,4 +325,12 @@ void ReShadeFG_PresentationSubmitted(ID3D12CommandQueue* queue) {
         slotSerial[srSlot] = value;
         ReShadeSR::Submitted(copiedFence.Get(), value);
     }
+}
+
+void ReShadeFG_Resize(ID3D11Device* device) {
+    std::lock_guard lock(bridgeMutex);
+    if (token && !SameObject(device, sourceDevice.Get())) return;
+    timeline.reset = true; timeline.pending_serial = 0;
+    srReady = false; srReset = true;
+    ReShadeSR::Reset();
 }

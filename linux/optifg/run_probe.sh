@@ -118,10 +118,34 @@ p.write_text(p.read_text().replace('[DlssNr]\n', '[DlssNr]\nMotionVectors=lumeni
 PY
     fi
 fi
+if [[ "${NR_OPTIFG_SR:-0}" == 1 && "$mode" != baseline ]]; then
+    sr_backend=${NR_OPTIFG_UPSCALER:-ffx}
+    case "$sr_backend" in ffx|fsr21|fsr22|xess) ;; *) echo 'Unsupported SR probe backend' >&2; exit 2;; esac
+    if [[ "$sr_backend" == xess ]]; then
+        7z x -y -o"$out" artifacts/ref/downloads/OptiScaler_v10.0.0-pre1_20261030.7z \
+            'OptiScaler/libxess.dll' 'Licenses/XeSS_LICENSE.txt' > "$out/extract-xess.log"
+    fi
+    python3 - "$out/OptiScaler.ini" "$sr_backend" "${NR_OPTIFG_OUTPUT_WIDTH:-1920}" "${NR_OPTIFG_OUTPUT_HEIGHT:-1080}" <<'PY'
+from pathlib import Path
+import sys
+p = Path(sys.argv[1])
+w, h = int(sys.argv[3]), int(sys.argv[4])
+assert 64 <= w <= 16384 and 64 <= h <= 16384
+s = p.read_text().replace('OverlayMenu=false', 'OverlayMenu=true\nShortcutKey=45').replace('DebugView=true', 'DebugView=false')
+s += f'\n[ReShadeSR]\nEnabled=true\nOutputWidth={w}\nOutputHeight={h}\n\n[Upscalers]\nDx12Upscaler={sys.argv[2]}\n'
+p.write_text(s)
+PY
+fi
 args=()
 [[ "$mode" == baseline ]] && args+=(--baseline)
 [[ "$mode" == reshade ]] && args+=(--reshade)
 [[ "${NR_OPTIFG_10BIT:-0}" == 1 ]] && args+=(--10bit)
+[[ "${NR_OPTIFG_HUD:-0}" == 1 ]] && args+=(--hud)
+if [[ "${NR_OPTIFG_HUD:-0}" == 1 && "$mode" == reshade ]]; then
+    sed -i 's/Mode=0/Mode=3/' "$out/dlssnr-amd.ini"
+fi
+[[ -n "${NR_OPTIFG_RECREATE:-}" ]] && args+=(--recreate "$NR_OPTIFG_RECREATE")
+[[ -n "${NR_OPTIFG_GUIDE_GAP:-}" ]] && args+=(--guide-gap "$NR_OPTIFG_GUIDE_GAP")
 cd -- "$out"
 rm -f -- dlssnr-amd.log ReShade.log OptiScaler.log
 echo "Standalone $mode probe: $out (private prefix: $prefix)"
@@ -135,4 +159,7 @@ if [[ "$mode" == reshade ]]; then
         echo 'ReShade did not prove a consumed bridge frame; inspect ReShade.log and dlssnr-amd.log' >&2
         exit 4
     fi
+fi
+if [[ "${NR_OPTIFG_SR:-0}" == 1 ]]; then
+    rg -q 'ReShade SR reconstructed [1-9]' OptiScaler.log || { echo 'No temporal SR reconstruction proved' >&2; exit 5; }
 fi

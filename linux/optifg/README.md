@@ -119,6 +119,59 @@ valid match for post-NR color and is deliberately omitted.
 
 ## Synchronization
 
+## Additional upscaling before FG
+
+The patched consumer can reconstruct a real low-resolution game backbuffer into
+a separate high-resolution DX12 presenter before generating intermediate frames.
+For 1280x720 input and 1920x1080 output, add to `OptiScaler.ini`:
+
+```ini
+[ReShadeSR]
+Enabled=true
+OutputWidth=1920
+OutputHeight=1080
+[Upscalers]
+Dx12Upscaler=ffx
+[Menu]
+OverlayMenu=true
+ShortcutKey=45
+```
+
+Restart after changing output dimensions or enabling SR. Set the actual game's
+render resolution to 1280x720. This pass does not lower the engine's render
+resolution by itself. The output presenter is 1920x1080; the window/desktop must
+also display that resolution to see the full result. Window scaling is separate
+from the render-buffer size. Source and target aspect ratios must match for
+temporal reconstruction. The default is SR off.
+
+Press Insert and use OptiScaler's Upscaling tab to select the DX12 provider.
+The first target is FSR 3.1; FSR 2.1/2.2 and XeSS use their existing providers.
+XeSS additionally needs the matching `OptiScaler/libxess.dll` and licence from
+the pinned nightly. Keep FG input `OptiFG (ReShade)` and output `FSR FG`; disable
+FG with its Enabled toggle to test reconstruction alone.
+
+Depth/MV remain at the actual input resolution. FSR SR takes pixel MV with scale
+1; FSR FG takes their normalized scale 1/input extent. No engine jitter or
+reactive mask is invented. This is post-render reconstruction using estimated
+flow; quality must be assessed separately from engine-integrated temporal SR.
+Menus/loading without guides use a spatial pass and reset temporal history on
+recovery. Confirmed HUDless input is reconstructed before adding the same-frame
+HUD color delta; the pre-HUD display-resolution image is supplied to FG. This
+color delta is an approximation, not recovered HUD alpha.
+
+Qualification commands (after downloading the matching consumer):
+
+```sh
+NR_OPTIFG_SR=1 NR_OPTIFG_HUD=1 NR_OPTIFG_GUIDE_GAP=300 NR_OPTIFG_RECREATE=500 \
+  NR_PROTON='/path/to/Proton' bash linux/optifg/run_probe.sh direct 1200
+NR_OPTIFG_SR=1 NR_OPTIFG_10BIT=1 NR_OPTIFG_HUD=1 \
+  NR_PROTON='/path/to/Proton' bash linux/optifg/run_probe.sh reshade 2400
+```
+
+Set `NR_OPTIFG_UPSCALER=fsr21`, `fsr22` or `xess` to qualify another provider.
+
+## Synchronization details
+
 The source lends COM objects for one call. OptiScaler copies the guides through
 its DX11/DX12 shared cache and makes private FSRFG `ValidNow` copies. A D3D12
 fence protects every source ring slot; a busy slot drops FG for that real frame.

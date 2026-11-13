@@ -10,3 +10,5 @@ void ReShadeFG_DisplaySize(UINT& width, UINT& height);
 bool ReShadeFG_RecordPresentation(ID3D12GraphicsCommandList* cmd, ID3D12Resource* source,
                                   ID3D12Resource* destination, UINT slot);
 void ReShadeFG_PresentationSubmitted(ID3D12CommandQueue* queue);
+
+void ReShadeFG_Resize(ID3D11Device* device);

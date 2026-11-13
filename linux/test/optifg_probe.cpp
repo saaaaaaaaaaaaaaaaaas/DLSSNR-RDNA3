@@ -58,19 +58,26 @@ Output PS(float4 position : SV_Position) {
     o.depth = o.z = object ? 0.3 : 0.95;
     return o;
 }
+float4 PSHud(float4 position : SV_Position) : SV_Target {
+    float2 uv = position.xy / float2(width, height);
+    clip(uv.x > 0.06 && uv.x < 0.30 && uv.y > 0.08 && uv.y < 0.13 ? 1 : -1);
+    return float4(0.95, 0.95, 0.95, 1);
+}
 )";
 
 int main(int argc, char** argv) {
     try {
-        bool baseline = false, reshade = false, tenBit = false;
-        unsigned frames = 600, gapAt = 0;
+        bool baseline = false, reshade = false, tenBit = false, hud = false;
+        unsigned frames = 600, gapAt = 0, recreateAt = 0;
         for (int i = 1; i < argc; ++i) {
             if (!std::strcmp(argv[i], "--baseline")) baseline = true;
             else if (!std::strcmp(argv[i], "--reshade")) reshade = true;
             else if (!std::strcmp(argv[i], "--10bit")) tenBit = true;
+            else if (!std::strcmp(argv[i], "--hud")) hud = true;
+            else if (!std::strcmp(argv[i], "--recreate") && i + 1 < argc) recreateAt = unsigned(std::stoul(argv[++i]));
             else if (!std::strcmp(argv[i], "--guide-gap") && i + 1 < argc) gapAt = unsigned(std::stoul(argv[++i]));
             else if (!std::strcmp(argv[i], "--frames") && i + 1 < argc) frames = unsigned(std::stoul(argv[++i]));
-            else throw std::runtime_error("usage: optifg_probe.exe [--baseline | --reshade] [--10bit] [--guide-gap FRAME] [--frames N]");
+            else throw std::runtime_error("usage: optifg_probe.exe [--baseline | --reshade] [--10bit] [--hud] [--guide-gap FRAME] [--recreate FRAME] [--frames N]");
         }
         const OptiReShadeBridge* api = nullptr;
         if (!baseline) {
@@ -116,7 +123,8 @@ int main(int argc, char** argv) {
             d.MipLevels = d.ArraySize = d.SampleDesc.Count = 1; d.Format = format; d.BindFlags = bind;
             check(device->CreateTexture2D(&d, nullptr, out.put()), "CreateTexture2D");
         };
-        Com<Texture> motion, depth, gameDepth;
+        Com<Texture> motion, depth, gameDepth, scene;
+        if (hud) texture(desc.BufferDesc.Format, bindRender | bindShader, scene);
         texture(DXGI_FORMAT_R16G16_FLOAT, bindRender | bindShader, motion);
         texture(DXGI_FORMAT_R32_FLOAT, bindRender | bindShader, depth);
         texture(DXGI_FORMAT_R32_TYPELESS, bindDepth | bindShader, gameDepth);
@@ -133,6 +141,11 @@ int main(int argc, char** argv) {
         check(device->CreateDepthStencilState(&ds, depthState.put()), "Depth state");
         RasterDesc rd {}; rd.FillMode = fillSolid; rd.CullMode = cullNone;
         rd.DepthClipEnable = TRUE;
+        Com<DepthState> hudDepthState;
+        if (hud) {
+            DepthDesc off {}; off.DepthEnable = FALSE; off.DepthFunc = depthAlways;
+            check(device->CreateDepthStencilState(&off, hudDepthState.put()), "HUD depth state");
+        }
         Com<RasterState> rasterizer;
         check(device->CreateRasterizerState(&rd, rasterizer.put()), "Rasterizer");
         Com<ID3DBlob> vsCode, psCode, error;
@@ -143,6 +156,13 @@ int main(int argc, char** argv) {
         Com<VertexShader> vs; Com<PixelShader> ps;
         check(createVS(device.p, vsCode.p, vs.put()), "Create VS");
         check(createPS(device.p, psCode.p, ps.put()), "Create PS");
+        Com<PixelShader> hudShader;
+        if (hud) {
+            Com<ID3DBlob> code;
+            check(D3DCompile(shader, std::strlen(shader), nullptr, nullptr, nullptr, "PSHud", psTarget, 0, 0,
+                            code.put(), nullptr), "Compile HUD PS");
+            check(createPS(device.p, code.p, hudShader.put()), "Create HUD PS");
+        }
         BufferDesc bd {}; bd.ByteWidth = 16; bd.BindFlags = bindConstant;
         Com<Buffer> constants;
         check(device->CreateBuffer(&bd, nullptr, constants.put()), "Constants");
@@ -163,6 +183,15 @@ int main(int argc, char** argv) {
                 TranslateMessage(&msg); DispatchMessageW(&msg);
             }
             if (frame > frames) break;
+            if (recreateAt && frame == recreateAt) {
+                context->OMSetRenderTargets(0, nullptr, nullptr);
+                colorView.p->Release(); colorView.p = nullptr;
+                color.p->Release(); color.p = nullptr;
+                check(swapchain->ResizeBuffers(2, 1280, 720, desc.BufferDesc.Format, 0), "Recreate buffers");
+                check(swapchain->GetBuffer(0, __uuidof(Texture), reinterpret_cast<void**>(color.put())), "Recreated buffer");
+                check(device->CreateRenderTargetView(color.p, nullptr, colorView.put()), "Recreated RTV");
+                std::printf("Recreated game buffers at frame %u\n", frame);
+            }
             const auto position = [](unsigned n) { return 0.5f + 0.3f * std::sin(float(n) * 0.025f); };
             float values[] = {position(frame), position(frame - 1), 1280, 720};
             context->UpdateSubresource(constants.p, 0, nullptr, values, 0, 0);
@@ -179,11 +208,20 @@ int main(int argc, char** argv) {
             // emulator's repeated present and omits its selection update.
             for (int draw = 0; draw < 9; ++draw) context->Draw(16 * 9 * 6, 0);
             context->OMSetRenderTargets(0, nullptr, nullptr);
+            if (hud) {
+                context->CopyResource(scene.p, color.p);
+                context->OMSetRenderTargets(1, &colorView.p, nullptr);
+                context->OMSetDepthStencilState(hudDepthState.p, 0);
+                bindShaders(context.p, vs.p, hudShader.p);
+                context->Draw(16 * 9 * 6, 0);
+                context->OMSetRenderTargets(0, nullptr, nullptr);
+            }
             LARGE_INTEGER now; QueryPerformanceCounter(&now);
             if (stream && !(gapAt && frame >= gapAt && frame < gapAt + 90)) {
                 OptiBridgeFrame input {};
                 input.size = sizeof input; input.version = OPTI_BRIDGE_VERSION; input.frame_id = frame;
                 input.color = color.p; input.motion = motion.p; input.depth = depth.p;
+                input.hudless = scene.p;
                 input.width = 1280; input.height = 720;
                 input.flags = OPTI_BRIDGE_SDR | (frame == 1 ? OPTI_BRIDGE_RESET : 0);
                 input.delta_ms = float(double(now.QuadPart - previous.QuadPart) * 1000 / frequency.QuadPart);
