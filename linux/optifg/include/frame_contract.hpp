@@ -8,7 +8,7 @@ inline uint32_t validate(const OptiBridgeFrame* f) {
     if (!f || f->size < sizeof(OptiBridgeFrame) || f->version != OPTI_BRIDGE_VERSION)
         return OPTI_BRIDGE_BAD_VERSION;
     constexpr uint32_t known = OPTI_BRIDGE_RESET | OPTI_BRIDGE_REVERSED_DEPTH |
-        OPTI_BRIDGE_INFINITE_DEPTH | OPTI_BRIDGE_ESTIMATED_MOTION | OPTI_BRIDGE_MANUAL_CAMERA;
+        OPTI_BRIDGE_INFINITE_DEPTH | OPTI_BRIDGE_ESTIMATED_MOTION | OPTI_BRIDGE_MANUAL_CAMERA | OPTI_BRIDGE_SDR;
     if (!f->frame_id || !f->color || !f->motion || !f->depth || f->reserved || (f->flags & ~known) ||
         !f->width || !f->height || f->width > 16384 || f->height > 16384 ||
         !std::isfinite(f->delta_ms) || f->delta_ms <= 0 || f->delta_ms > 1000 ||

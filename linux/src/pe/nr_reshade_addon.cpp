@@ -4036,6 +4036,9 @@ void publish_optifg(effect_runtime* rt, command_list* cl, resource_view rtv, boo
     if (dev->get_api() != device_api::d3d11 && dev->get_api() != device_api::d3d10) {
         optifg_client.reject("only DX10/DX11 through DXVK is supported"); return;
     }
+    if (back_buffer_space != color_space::srgb_nonlinear) {
+        optifg_client.reject("HDR is not qualified; an SDR swapchain is required"); return;
+    }
     const int provider = feed_provider(rt);
     const auto source = provider == 2 ? rs::call(rt, &effect_runtime::find_technique, kVortEffect, kVortTechnique)
                       : provider == 3 ? rs::call(rt, &effect_runtime::find_technique, kLumeniteEffect, kLumeniteTechnique)
@@ -4088,6 +4091,7 @@ void publish_optifg(effect_runtime* rt, command_list* cl, resource_view rtv, boo
     frame.depth = reinterpret_cast<void*>(depth.handle);
     frame.hudless = reinterpret_cast<void*>(hudless.handle);
     frame.width = cd.texture.width; frame.height = cd.texture.height;
+    frame.flags |= OPTI_BRIDGE_SDR;
     if (depth_is_reversed(rt)) frame.flags |= OPTI_BRIDGE_REVERSED_DEPTH;
     optifg_client.submit(reinterpret_cast<void*>(dev->get_native()),
                         uint64_t(reinterpret_cast<uintptr_t>(rt->get_hwnd())), frame);

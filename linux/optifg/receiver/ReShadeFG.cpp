@@ -144,7 +144,8 @@ uint32_t SubmitImpl(uint64_t stream, const OptiBridgeFrame* frame) {
     color->GetDesc(&colorDesc);
     // Initial qualification is SDR; HDR requires matching transfer functions,
     // white level and FG context flags on both sides of the presentation bridge.
-    if (colorDesc.Format != DXGI_FORMAT_R8G8B8A8_UNORM && colorDesc.Format != DXGI_FORMAT_B8G8R8A8_UNORM &&
+    const bool sdr10 = colorDesc.Format == DXGI_FORMAT_R10G10B10A2_UNORM && (frame->flags & OPTI_BRIDGE_SDR);
+    if (!sdr10 && colorDesc.Format != DXGI_FORMAT_R8G8B8A8_UNORM && colorDesc.Format != DXGI_FORMAT_B8G8R8A8_UNORM &&
         colorDesc.Format != DXGI_FORMAT_R8G8B8A8_UNORM_SRGB && colorDesc.Format != DXGI_FORMAT_B8G8R8A8_UNORM_SRGB)
         return Result(OPTI_BRIDGE_UNSUPPORTED);
     if (hudless) {

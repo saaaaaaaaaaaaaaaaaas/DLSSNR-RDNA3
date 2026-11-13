@@ -176,7 +176,8 @@ int main(int argc, char** argv) {
                 OptiBridgeFrame input {};
                 input.size = sizeof input; input.version = OPTI_BRIDGE_VERSION; input.frame_id = frame;
                 input.color = color.p; input.motion = motion.p; input.depth = depth.p;
-                input.width = 1280; input.height = 720; input.flags = frame == 1 ? OPTI_BRIDGE_RESET : 0;
+                input.width = 1280; input.height = 720;
+                input.flags = OPTI_BRIDGE_SDR | (frame == 1 ? OPTI_BRIDGE_RESET : 0);
                 input.delta_ms = float(double(now.QuadPart - previous.QuadPart) * 1000 / frequency.QuadPart);
                 if (input.delta_ms < 0.01f) input.delta_ms = 0.01f;
                 input.camera_near = 0.1f; input.camera_far = 1000; input.vertical_fov_radians = 1.04719755f;

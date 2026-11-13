@@ -10,6 +10,7 @@ int main() {
     f.frame_id = 1; f.color = f.motion = f.depth = reinterpret_cast<void*>(1);
     f.width = 1920; f.height = 1080; f.delta_ms = 16.6667f;
     f.camera_near = 0.1f; f.camera_far = 1000.f; f.vertical_fov_radians = 1.2f;
+    f.flags = OPTI_BRIDGE_SDR;
     assert(opti_bridge::validate(&f) == OPTI_BRIDGE_OK);
     auto invalid = f; invalid.size -= 8;
     assert(opti_bridge::validate(&invalid) == OPTI_BRIDGE_BAD_VERSION);
