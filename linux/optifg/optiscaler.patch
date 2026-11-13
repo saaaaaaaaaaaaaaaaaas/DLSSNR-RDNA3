@@ -1,0 +1,173 @@
+diff --git a/OptiScaler/OptiScaler.vcxproj b/OptiScaler/OptiScaler.vcxproj
+index e55161a..55af479 100644
+--- a/OptiScaler/OptiScaler.vcxproj
++++ b/OptiScaler/OptiScaler.vcxproj
+@@ -1,4 +1,4 @@
+-﻿<?xml version="1.0" encoding="utf-8"?>
++<?xml version="1.0" encoding="utf-8"?>
+ <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+   <ItemGroup Label="ProjectConfigurations">
+     <ProjectConfiguration Include="ReleaseDebug|x64">
+@@ -597,6 +597,7 @@ copy NUL "$(SolutionDir)x64\Release\a\!! EXTRACT ALL FILES TO GAME FOLDER !!" /Y
+     <ClCompile Include="inputs\FG\Streamline_Inputs_Sl1_Dx12.cpp" />
+     <ClCompile Include="include\device_info\device_info.cpp" />
+     <ClCompile Include="inputs\FG\Upscaler_Inputs_Dx11wDx12.cpp" />
++    <ClCompile Include="inputs\FG\reshade\ReShadeFG.cpp" />
+     <ClCompile Include="low_latency\input\input_common.cpp" />
+     <ClCompile Include="low_latency\input\input_reflex.cpp" />
+     <ClCompile Include="low_latency\input\input_reflex_vk.cpp" />
+diff --git a/OptiScaler/State.h b/OptiScaler/State.h
+index 4dd7ea8..e2d5510 100644
+--- a/OptiScaler/State.h
++++ b/OptiScaler/State.h
+@@ -41,6 +41,7 @@ enum class FGInput : uint32_t
+     XeFG,
+ 
+     ForceXeLL, // Do not expose this option
++    ReShade,  // External display-resolution guides, DX11/DXVK
+ };
+ 
+ template <> struct EnumConfig<FGInput>
+@@ -51,9 +52,15 @@ template <> struct EnumConfig<FGInput>
+         { FGInput::NoFG, "NoFG" },       { FGInput::Upscaler, "Upscaler" },   { FGInput::DLSSG, "DLSSG" },
+         { FGInput::NvngxFG, "NvngxFG" }, { FGInput::FSRFG, "FSRFG" },         { FGInput::FSRFG30, "FSRFG30" },
+         { FGInput::XeFG, "XeFG" },       { FGInput::ForceXeLL, "ForceXeLL" },
++        { FGInput::ReShade, "ReShade" },
+     };
+ };
+ 
++inline bool IsOptiFGInput(FGInput input)
++{
++    return input == FGInput::Upscaler || input == FGInput::ReShade;
++}
++
+ enum class FGOutput : uint32_t
+ {
+     NoFG,
+diff --git a/OptiScaler/dllmain.cpp b/OptiScaler/dllmain.cpp
+index dd4d433..bed406c 100644
+--- a/OptiScaler/dllmain.cpp
++++ b/OptiScaler/dllmain.cpp
+@@ -1817,7 +1817,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
+         CheckMemoryForProxies();
+ 
+         // OptiFG & Overlay Checks
+-        if ((Config::Instance()->FGInput.value_or_default() == FGInput::Upscaler) &&
++        if ((IsOptiFGInput(Config::Instance()->FGInput.value_or_default())) &&
+             !Config::Instance()->DisableOverlays.has_value())
+             Config::Instance()->DisableOverlays.set_volatile_value(true);
+ 
+diff --git a/OptiScaler/framegen/IFGFeature_Dx12.h b/OptiScaler/framegen/IFGFeature_Dx12.h
+index 3f77821..55069d7 100644
+--- a/OptiScaler/framegen/IFGFeature_Dx12.h
++++ b/OptiScaler/framegen/IFGFeature_Dx12.h
+@@ -131,6 +131,8 @@ class IFGFeature_Dx12 : public virtual IFGFeature
+     virtual bool SetResource(Dx12Resource* inputResource) = 0;
+     virtual void SetCommandQueue(FG_ResourceType type, ID3D12CommandQueue* queue) = 0;
+ 
++    // External inputs must finish their private copies before a source ring slot can be reused.
++    bool FinishExternalInputs() { return SubmitUICommandList(GetIndex()); }
+     ID3D12GraphicsCommandList* GetUICommandList(int index = -1);
+     ID3D12GraphicsCommandList* GetSCCommandList(int index = -1);
+ 
+diff --git a/OptiScaler/framegen/ffx/FSRFG_Dx12.cpp b/OptiScaler/framegen/ffx/FSRFG_Dx12.cpp
+index f9278e0..ff1039d 100644
+--- a/OptiScaler/framegen/ffx/FSRFG_Dx12.cpp
++++ b/OptiScaler/framegen/ffx/FSRFG_Dx12.cpp
+@@ -894,7 +894,7 @@ ffxReturnCode_t FSRFG_Dx12::DispatchCallback(ffxDispatchDescFrameGeneration* par
+ 
+     // If fg is active but upscaling paused
+     if ((state.currentFeature == nullptr && state.activeFgInput == FGInput::Upscaler) || state.fgChanged ||
+-        fIndex < 0 || !IsActive() || (state.currentFeature && state.currentFeature->FrameCount() == 0))
++        fIndex < 0 || !IsActive() || (state.activeFgInput == FGInput::Upscaler && state.currentFeature && state.currentFeature->FrameCount() == 0))
+     {
+         LOG_WARN("Upscaling paused! frameID: {}", params->frameID);
+         params->numGeneratedFrames = 0;
+@@ -1539,7 +1539,7 @@ void FSRFG_Dx12::EvaluateState(ID3D12Device* device, FG_Constants& fgConstants)
+                 DestroyFGContext();
+         }
+ 
+-        if (_fgContext != nullptr && State::Instance().activeFgInput == FGInput::Upscaler && !IsPaused() && !IsActive())
++        if (_fgContext != nullptr && IsOptiFGInput(State::Instance().activeFgInput) && !IsPaused() && !IsActive())
+             Activate();
+     }
+     else
+diff --git a/OptiScaler/hooks/DxgiFactory_Hooks.cpp b/OptiScaler/hooks/DxgiFactory_Hooks.cpp
+index 1227c70..e3c3c93 100644
+--- a/OptiScaler/hooks/DxgiFactory_Hooks.cpp
++++ b/OptiScaler/hooks/DxgiFactory_Hooks.cpp
+@@ -560,7 +560,7 @@ HRESULT DxgiFactoryHooks::CreateSwapChain(IDXGIFactory* realFactory, IUnknown* p
+             D3D11Hooks::HookToDevice(device);
+             State::Instance().currentD3D11Device = device;
+ 
+-            if (!_skipFGSwapChainCreation && State::Instance().activeFgInput == FGInput::Upscaler &&
++            if (!_skipFGSwapChainCreation && IsOptiFGInput(State::Instance().activeFgInput) &&
+                 State::Instance().activeFgOutput != FGOutput::NoFG &&
+                 State::Instance().activeFgInput != FGInput::NvngxFG)
+             {
+@@ -950,7 +950,7 @@ HRESULT DxgiFactoryHooks::CreateSwapChainForHwnd(IDXGIFactory2* realFactory, IUn
+             D3D11Hooks::HookToDevice(device);
+             State::Instance().currentD3D11Device = device;
+ 
+-            if (!_skipFGSwapChainCreation && State::Instance().activeFgInput == FGInput::Upscaler &&
++            if (!_skipFGSwapChainCreation && IsOptiFGInput(State::Instance().activeFgInput) &&
+                 State::Instance().activeFgOutput != FGOutput::NoFG &&
+                 State::Instance().activeFgInput != FGInput::NvngxFG)
+             {
+diff --git a/OptiScaler/hooks/DxgiFactory_WrappedCalls.cpp b/OptiScaler/hooks/DxgiFactory_WrappedCalls.cpp
+index 620960d..8262fc3 100644
+--- a/OptiScaler/hooks/DxgiFactory_WrappedCalls.cpp
++++ b/OptiScaler/hooks/DxgiFactory_WrappedCalls.cpp
+@@ -25,7 +25,7 @@
+ 
+ static bool ShouldCreateDx11wDx12Swapchain()
+ {
+-    return State::Instance().activeFgInput == FGInput::Upscaler && State::Instance().activeFgOutput != FGOutput::NoFG &&
++    return IsOptiFGInput(State::Instance().activeFgInput) && State::Instance().activeFgOutput != FGOutput::NoFG &&
+            State::Instance().activeFgInput != FGInput::NvngxFG;
+ }
+ 
+diff --git a/OptiScaler/menu/menu_common.cpp b/OptiScaler/menu/menu_common.cpp
+index d4e5bd4..d1841a5 100644
+--- a/OptiScaler/menu/menu_common.cpp
++++ b/OptiScaler/menu/menu_common.cpp
+@@ -4401,7 +4401,9 @@ void MenuCommon::RenderFrameGenerationSelection(RenderMenuContext& ctx)
+         { FGInput::FSRFG30, "FSR 3.0 FG",
+             "Can be used with any FG Output\n\nRequires enabling FSR-FG in game settings\nSupports HUDless out of the box" },
+         { FGInput::XeFG, "XeFG",
+-            "Can be used with any FG Output\n\nRequires enabling XeSS-FG in game settings\nSupports HUDless out of the box" }
++            "Can be used with any FG Output\n\nRequires enabling XeSS-FG in game settings\nSupports HUDless out of the box" },
++        { FGInput::ReShade, "OptiFG (ReShade)",
++            "Experimental DX11/DXVK input from DLSSNR ReShade add-on.\nFSR FG, SDR, 64-bit only. No in-game upscaler required. Restart after changing input." }
+     };
+ 
+     // clang-format on
+diff --git a/OptiScaler/with_dx12/dx11_with_dx12_sc.cpp b/OptiScaler/with_dx12/dx11_with_dx12_sc.cpp
+index 41f9c1b..57f57a4 100644
+--- a/OptiScaler/with_dx12/dx11_with_dx12_sc.cpp
++++ b/OptiScaler/with_dx12/dx11_with_dx12_sc.cpp
+@@ -1,5 +1,6 @@
+ #include "pch.h"
+ #include "dx11_with_dx12_sc.h"
++#include <inputs/FG/reshade/ReShadeFG.h>
+ 
+ #include <with_dx12/with_dx12.h>
+ #include <with_dx12/dx11_with_dx12_sync.h>
+@@ -200,6 +201,7 @@ Dx11wDx12SC::Dx11wDx12SC(IDXGISwapChain* real, IDXGISwapChain4* fgSC, ID3D11Devi
+ 
+ Dx11wDx12SC::~Dx11wDx12SC()
+ {
++    ReShadeFG_Destroy(_dx11Device);
+     MenuOverlayDx::CleanupRenderTarget(true, _handle);
+     _ReleaseInteropObjects();
+ 
+@@ -367,6 +369,9 @@ HRESULT STDMETHODCALLTYPE Dx11wDx12SC::Present(UINT SyncInterval, UINT Flags)
+     if ((Flags & DXGI_PRESENT_TEST) != 0)
+         return _real->Present(SyncInterval, Flags);
+ 
++    if (State::Instance().currentSwapchain == this)
++        ReShadeFG_BeforePresent(_dx11Device);
++
+     const bool dx11HudfixPresent = Config::Instance()->FGHUDFix.value_or_default() &&
+                                    State::Instance().activeFgInput == FGInput::Upscaler &&
+                                    State::Instance().swapchainInteropApi == SwapchainInteropApi::Dx11wDx12;

@@ -40,6 +40,7 @@
 #include "nr_pe_vkdevice.hpp"
 #include "nr_vram_ledger.hpp"
 #include "nr_pe_events.hpp"
+#include "nr_pe_optifg.hpp"
 
 #include <MinHook.h>
 #include <d3dcommon.h>
@@ -200,6 +201,8 @@ std::unique_ptr<nr::pe::Session> session{};
 device* session_device{};
 nr::pe::Config config{};
 std::string config_path;
+nr::pe::optifg::Client optifg_client;
+uint64_t optifg_at = ~0ull;
 nr::pe::PreprocessSwitch prep_switch;   // [Preprocess] Enabled and its hotkey
 bool vk_loaded = false;
 
@@ -2454,6 +2457,7 @@ void on_init_effect_runtime(effect_runtime* rt) {
 void on_reloaded_effects(effect_runtime* rt) {
     std::lock_guard<std::mutex> guard(lock);
     if (bound && rt != bound) return;
+    optifg_client.reset();
     bound = rt;
     resolve(rt);
     // A reload recompiles the provider, which writes zero vectors until its
@@ -2464,6 +2468,8 @@ void on_reloaded_effects(effect_runtime* rt) {
 void on_destroy_effect_runtime(effect_runtime* rt) {
     std::lock_guard<std::mutex> guard(lock);
     if (rt != bound) return;
+    optifg_client.close();
+    optifg_at = ~0ull;
     bound = nullptr;
     technique = {}; mv_var = {}; depth_var = {};
 }
@@ -4023,13 +4029,79 @@ void on_reshade_overlay(effect_runtime*) {
     nr::control_ui::osd_window("##nr-preprocess", 1, [] { ImGui::Text(tr("NR Preprocess: %s"), prep_switch.on() ? "ON" : "OFF"); });
 }
 
+void publish_optifg(effect_runtime* rt, command_list* cl, resource_view rtv, bool nr_requested) {
+    if (!optifg_client.enabled() || optifg_at == presents) return;
+    optifg_at = presents;
+    device* dev = rt->get_device();
+    if (dev->get_api() != device_api::d3d11 && dev->get_api() != device_api::d3d10) {
+        optifg_client.reset(); return;
+    }
+    const int provider = feed_provider(rt);
+    const auto source = provider == 2 ? rs::call(rt, &effect_runtime::find_technique, kVortEffect, kVortTechnique)
+                      : provider == 3 ? rs::call(rt, &effect_runtime::find_technique, kLumeniteEffect, kLumeniteTechnique)
+                      : effect_technique{};
+    if (!source.handle || !rt->get_technique_state(source)) { optifg_client.reset(); return; }
+    // RawDepth in the pinned Feeder does not decode these conventions. Reject
+    // rather than labelling logarithmic/scaled/mirrored samples as device depth.
+    for (const char* name : {"RESHADE_DEPTH_INPUT_IS_LOGARITHMIC", "RESHADE_DEPTH_INPUT_IS_MIRRORED", "RESHADE_DEPTH_MULTIPLIER"}) {
+        char value[32] {};
+        if (rt->get_preprocessor_definition_for_effect(kEffect, name, value) || rt->get_preprocessor_definition(name, value)) {
+            const float expected = std::string(name) == "RESHADE_DEPTH_MULTIPLIER" ? 1.f : 0.f;
+            if (std::strtof(value, nullptr) != expected) { optifg_client.reset(); return; }
+        }
+    }
+    auto image = [&](effect_texture_variable var) {
+        resource_view srv {}, srgb {};
+        if (var.handle) rt->get_texture_binding(var, &srv, &srgb);
+        return srv.handle ? rs::call(dev, &device::get_resource_from_view, srv) : resource{};
+    };
+    resource raw {};
+    for (const char* name : {"V__ReShade__DepthBufferTex", "ReShade::DepthBufferTex", "DepthBufferTex"}) {
+        raw = image(rs::call(rt, &effect_runtime::find_texture_variable, kEffect, name));
+        if (raw.handle) break;
+    }
+    // ReShade binds a small fallback texture when no game depth was detected.
+    if (!raw.handle) { optifg_client.reset(); return; }
+    const auto rawDesc = rs::call(dev, &device::get_resource_desc, raw);
+    if (rawDesc.texture.width < 16 || rawDesc.texture.height < 16) { optifg_client.reset(); return; }
+    const resource color = rs::call(dev, &device::get_resource_from_view, rtv);
+    const resource motion = image(mv_var), depth = image(depth_var);
+    if (!color.handle || !motion.handle || !depth.handle) { optifg_client.reset(); return; }
+    const auto cd = rs::call(dev, &device::get_resource_desc, color);
+    const auto md = rs::call(dev, &device::get_resource_desc, motion);
+    const auto dd = rs::call(dev, &device::get_resource_desc, depth);
+    if (md.texture.width != cd.texture.width || md.texture.height != cd.texture.height ||
+        dd.texture.width != cd.texture.width || dd.texture.height != cd.texture.height) {
+        optifg_client.reset(); return;
+    }
+    resource hudless {};
+    // Reuse the proven same-frame capture verdict independently of NR. NR can
+    // change scene color, so its pre-NR copy is not advertised as post-NR HUDless.
+    if (!nr_requested && (chain.hud.mode == 1 || chain.hud.mode == 3)) {
+        const auto plan = hudfix_plan(dev, cl, color.handle);
+        if (hudfix_ensure(dev, cd.texture.width, cd.texture.height, cd.texture.format) && plan.captured)
+            hudless = hudfix.hudless;
+    }
+    OptiBridgeFrame frame {};
+    frame.color = reinterpret_cast<void*>(color.handle);
+    frame.motion = reinterpret_cast<void*>(motion.handle);
+    frame.depth = reinterpret_cast<void*>(depth.handle);
+    frame.hudless = reinterpret_cast<void*>(hudless.handle);
+    frame.width = cd.texture.width; frame.height = cd.texture.height;
+    if (depth_is_reversed(rt)) frame.flags |= OPTI_BRIDGE_REVERSED_DEPTH;
+    optifg_client.submit(reinterpret_cast<void*>(dev->get_native()),
+                        uint64_t(reinterpret_cast<uintptr_t>(rt->get_hwnd())), frame);
+}
+
 void on_render_technique(effect_runtime* rt, effect_technique t, command_list* cl,
                          resource_view rtv, resource_view /*rtv_srgb*/) {
     nr::pe::watchdog::Phase phase("ReShade technique DLSS5_Feed (NR)");
     std::lock_guard<std::mutex> guard(lock);
     const nr::Controls& controls = settings();
+    optifg_client.poll(std::string(nr::pe::module_folder()) + "\\optifg-bridge.ini");
+    const bool nr_requested = controls.enabled || renodx_on || layered;
     // With the RenoDX-style option NR's switch is [RenoDX] NeuralUplift ([DlssNr]'s does not apply).
-    if (!controls.enabled && !renodx_on && !layered) {
+    if (!nr_requested && !optifg_client.enabled()) {
         view.nr_on = 0;
         view_layers({1});
         note_layer(1, true, 3, "[DlssNr] Enabled is off", 0, 0, 0, config.white_point);
@@ -4070,7 +4142,8 @@ void on_render_technique(effect_runtime* rt, effect_technique t, command_list* c
         nr::pe::watchdog::Phase probe("motion-vector data check");
         motion_probe(rt, cl, rtv);
     }
-    feed(rt, cl, rtv);
+    if (nr_requested) feed(rt, cl, rtv);
+    publish_optifg(rt, cl, rtv, nr_requested);
 }
 
 }  // namespace

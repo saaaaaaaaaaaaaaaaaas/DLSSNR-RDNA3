@@ -1,0 +1,75 @@
+name: Experimental ReShade OptiFG
+on:
+  push:
+    branches: ['feature/reshade-optifg']
+  pull_request:
+    paths: ['linux/optifg/**', 'linux/src/pe/nr_pe_optifg.hpp', 'linux/src/pe/nr_reshade_addon.cpp', '.github/workflows/optifg.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  consumer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: optiscaler/OptiScaler
+          ref: e7e3872d410f704479d94d318d68d163b6b58947
+          submodules: true
+          path: build/optiscaler-source
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Apply pinned OptiScaler bridge
+        run: python linux/optifg/prepare_optiscaler.py build/optiscaler-source
+      - uses: microsoft/setup-msbuild@v2
+      - name: Compile patched consumer
+        shell: pwsh
+        run: |
+          msbuild build/optiscaler-source/OptiScaler.sln /m /p:Configuration=Release /p:Platform=x64 /verbosity:minimal /bl:build/optiscaler-bridge.binlog
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          New-Item -ItemType Directory -Force artifacts/optifg-consumer | Out-Null
+          Copy-Item build/optiscaler-source/x64/Release/a/OptiScaler.dll artifacts/optifg-consumer/
+          Copy-Item build/optiscaler-source/LICENSE artifacts/optifg-consumer/COPYING.OptiScaler
+          Copy-Item linux/optifg/optiscaler.patch artifacts/optifg-consumer/
+          Copy-Item linux/optifg/include/opti_reshade_bridge.h artifacts/optifg-consumer/
+          Set-Content artifacts/optifg-consumer/source.txt "OptiScaler e7e3872d410f704479d94d318d68d163b6b58947 + DLSSNR bridge ${{ github.sha }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: optifg-consumer-x86_64
+          path: artifacts/optifg-consumer/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: optifg-consumer-build-log
+          path: build/optiscaler-bridge.binlog
+  producer:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends mingw-w64 g++ python3
+      - uses: actions/cache@v4
+        with:
+          path: |
+            toolchain
+            artifacts/ref/downloads
+            artifacts/ref/DLSS5-Feeder
+            artifacts/ref/reshade-shaders
+            artifacts/ref/vort_Shaders
+            artifacts/ref/reshade-6.8.0
+            artifacts/ref/optiscaler-nightly-20261030
+          key: optifg-deps-${{ hashFiles('fetch_deps.sh') }}
+      - run: bash fetch_deps.sh
+      - run: bash linux/test/check_optifg.sh
+      - name: Build ReShade producer
+        run: NR_GPU=rdna3 NR_PROGRAMS_ONLY=1 bash linux/build/build_package.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: optifg-producer-x86_64
+          path: artifacts/package-build/nr/dlssnr_amd.addon64
+          if-no-files-found: error
