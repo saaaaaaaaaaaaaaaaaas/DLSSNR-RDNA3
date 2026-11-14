@@ -139,6 +139,52 @@ s += f'\n[ReShadeSR]\nEnabled=true\nOutputWidth={w}\nOutputHeight={h}\n\n[Upscal
 p.write_text(s)
 PY
 fi
+if [[ "$mode" != baseline ]]; then
+    fg_output=${NR_OPTIFG_FG_OUTPUT:-fsrfg}
+    case "$fg_output" in fsrfg|xefg) ;; *) echo 'NR_OPTIFG_FG_OUTPUT must be fsrfg or xefg' >&2; exit 2;; esac
+    if [[ "$fg_output" == xefg ]]; then
+        7z x -y -o"$out" artifacts/ref/downloads/OptiScaler_v10.0.0-pre1_20261030.7z \
+            'OptiScaler/libxess_fg.dll' 'OptiScaler/libxell.dll' 'Licenses/XeSS_LICENSE.txt' > "$out/extract-xefg.log"
+    fi
+    python3 - "$out" "$fg_output" "${NR_OPTIFG_MULTIPLIER:-3}" "${NR_OPTIFG_ASI:-}" <<'PY'
+from pathlib import Path
+import configparser, shutil, sys
+root = Path(sys.argv[1]); multiplier = int(sys.argv[3])
+assert 2 <= multiplier <= 6
+p = root / 'OptiScaler.ini'
+c = configparser.ConfigParser(interpolation=None); c.optionxform = str; c.read(p)
+c['FrameGen']['FGOutput'] = sys.argv[2]
+if sys.argv[2] == 'xefg':
+    c['XeFG'] = dict(InterpolationCount=str(multiplier-1), DepthInverted='false',
+                     JitteredMV='false', HighResMV='false', UIComposition='false')
+    c['Menu'] = dict(OverlayMenu='true', ShortcutKey='45')
+    if not c.has_section('Plugins'): c.add_section('Plugins')
+    c['Plugins']['LoadAsiPlugins'] = 'true' if sys.argv[4] else 'false'
+    c['Plugins']['Path'] = r'.\OptiScaler\plugins'
+    if sys.argv[4]:
+        source = Path(sys.argv[4]).resolve(strict=True)
+        assert source.suffix.lower() == '.asi'
+        target = root / 'OptiScaler/plugins/MFGUnlocker.asi'; target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+with p.open('w') as f: c.write(f, space_around_delimiters=False)
+PY
+fi
+if [[ "${NR_OPTIFG_NR:-0}" == 1 ]]; then
+    [[ "$mode" == reshade ]] || { echo 'NR requires the full reshade probe' >&2; exit 2; }
+    : "${NR_OPTIFG_NR_DATA:?Set NR_OPTIFG_NR_DATA to your private model/shaders folder}"
+    python3 - "$out" "$NR_OPTIFG_NR_DATA" <<'PY'
+from pathlib import Path
+import configparser, shutil, sys
+root, data = Path(sys.argv[1]), Path(sys.argv[2]).resolve(strict=True)
+assert (data / 'CC_SMALL_FP8.bin').is_file() and (data / 'shaders/shader-constants.txt').is_file()
+shutil.copytree(data, root / 'dlssnr-amd', dirs_exist_ok=True)
+p = root / 'dlssnr-amd.ini'
+c = configparser.ConfigParser(interpolation=None); c.optionxform = str; c.read(p)
+c['DlssNr']['Enabled'] = '1'
+c['Network'] = dict(Model='CC_SMALL_FP8')
+with p.open('w') as f: c.write(f, space_around_delimiters=False)
+PY
+fi
 args=()
 [[ "$mode" == baseline ]] && args+=(--baseline)
 [[ "$mode" == reshade ]] && args+=(--reshade)

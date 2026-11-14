@@ -202,7 +202,8 @@ device* session_device{};
 nr::pe::Config config{};
 std::string config_path;
 nr::pe::optifg::Client optifg_client;
-uint64_t optifg_at = ~0ull;
+uint64_t optifg_at = ~0ull, optifg_nr_at = ~0ull;
+int optifg_color_stage = -1;
 nr::pe::PreprocessSwitch prep_switch;   // [Preprocess] Enabled and its hotkey
 bool vk_loaded = false;
 
@@ -1008,6 +1009,8 @@ struct HudFixState {
     resource back{};      // this frame before the layers
     resource out{}, stats{};
     resource hudless{};   // the capture's copy
+    resource post_nr{};   // same-frame processed scene, before HUD composition
+    uint64_t post_nr_at = ~0ull;
     unsigned w = 0, h = 0;
     format fmt{};
     bool failed = false;
@@ -1475,13 +1478,14 @@ CapVerdict cap_verdict(uint64_t colour, std::string& why) {
 void hudfix_release(bool keep_stage, bool final = false) {
     HudFixState& H = hudfix;
     const bool any = H.back.handle || H.out.handle || H.stats.handle ||
-                     H.hudless.handle || (!keep_stage && H.stage);
+                     H.hudless.handle || H.post_nr.handle || (!keep_stage && H.stage);
+    H.post_nr_at = ~0ull;
     if (any && session && !session->wait_idle()) {
         // NR's GPU work did not finish in time: nothing it may still use is freed (kept for the run; said once)
         static bool said = false;
         if (!said) { said = true; log("[nr] HUD FIX: NR's GPU work did not finish in time; its images are kept, not freed"); }
         cap.hudless.store(0);
-        for (resource* r : {&H.back, &H.out, &H.stats, &H.hudless}) *r = {};
+        for (resource* r : {&H.back, &H.out, &H.stats, &H.hudless, &H.post_nr}) *r = {};
         if (!keep_stage) (void)H.stage.release();
         H.dev = nullptr;
         H.w = H.h = 0;
@@ -1494,14 +1498,14 @@ void hudfix_release(bool keep_stage, bool final = false) {
         H.hudless = {};
     }
     if (H.dev)
-        for (resource* r : {&H.back, &H.out, &H.stats, &H.hudless})
+        for (resource* r : {&H.back, &H.out, &H.stats, &H.hudless, &H.post_nr})
             if (r->handle) retire_effect_resource(H.dev, *r);
     if (H.dev && final) {
         std::lock_guard<std::mutex> g(cap.m);
         for (const resource& r : cap.retired) retire_effect_resource(H.dev, r);
         cap.retired.clear();
     }
-    for (resource* r : {&H.back, &H.out, &H.stats, &H.hudless}) *r = {};
+    for (resource* r : {&H.back, &H.out, &H.stats, &H.hudless, &H.post_nr}) *r = {};
     if (!keep_stage) { H.stage.reset(); H.stage_failed = false; }
     H.dev = nullptr;
     H.w = H.h = 0;
@@ -1522,9 +1526,9 @@ bool hudfix_ensure(device* dev, unsigned w, unsigned h, format f) {
     };
     if (!make(w, h, typed, &H.back) || !make(w, h, typed, &H.out) || !make(w, h, typed, &H.hudless) ||
         !make(kHudfixStatsW, kHudfixStatsH, format::r32_uint, &H.stats)) {
-        for (resource* r : {&H.back, &H.out, &H.stats, &H.hudless})
+        for (resource* r : {&H.back, &H.out, &H.stats, &H.hudless, &H.post_nr})
             if (r->handle) retire_effect_resource(dev, *r);
-        for (resource* r : {&H.back, &H.out, &H.stats, &H.hudless}) *r = {};
+        for (resource* r : {&H.back, &H.out, &H.stats, &H.hudless, &H.post_nr}) *r = {};
         H.failed = true;
         H.w = w; H.h = h; H.fmt = typed;
         hudfix_say("its images (format " + std::to_string(unsigned(typed)) + ", storage) could not be made; it does not run");
@@ -1661,10 +1665,20 @@ bool hudfix_record(VkCommandBuffer vk, const nr::HostDevice& host, const ImageOf
 }
 
 // After the layers: their answer (the back buffer) composed over the kept frame and put back.
-void hudfix_end(device* dev, command_list* cl, resource colour, const HudPlan& p) {
+bool hudfix_end(device* dev, command_list* cl, resource colour, const HudPlan& p) {
     HudFixState& H = hudfix;
-    if (!H.back.handle || !session) return;
+    if (!H.back.handle || !session) return false;
     const resource_usage rt = resource_usage::render_target, ua = resource_usage::unordered_access;
+    H.post_nr_at = ~0ull;
+    if (optifg_client.enabled() && p.captured) {
+        if (!H.post_nr.handle) {
+            const resource_usage all = resource_usage::shader_resource | resource_usage::unordered_access |
+                                       resource_usage::copy_source | resource_usage::copy_dest;
+            make_resource(dev, resource_desc(H.w, H.h, 1, 1, H.fmt, 1, memory_heap::gpu_only, all),
+                          nullptr, ua, &H.post_nr);
+        }
+        if (H.post_nr.handle) hudfix_copy(cl, colour, rt, H.post_nr, ua);
+    }
     hudfix_copy(cl, colour, rt, H.out, ua);
     bool recorded = false;
     switch (dev->get_api()) {
@@ -1716,10 +1730,12 @@ void hudfix_end(device* dev, command_list* cl, resource colour, const HudPlan& p
         // game drew it goes back (its HUD with it), without NR this frame
         if (p.captured) hudfix_copy(cl, H.back, ua, colour, rt);
         hudfix_now(std::string("nothing this frame: its composition could not be recorded") + (H.said.empty() ? "" : " (" + H.said + ")"));
-        return;
+        return false;
     }
     hudfix_copy(cl, H.out, ua, colour, rt);
+    if (optifg_client.enabled() && p.captured && H.post_nr.handle) H.post_nr_at = presents;
     H.said.clear();
+    return true;
 }
 
 // One recording of our own passes as raw Vulkan through the session, on images made through ReShade (kept
@@ -2469,7 +2485,8 @@ void on_destroy_effect_runtime(effect_runtime* rt) {
     std::lock_guard<std::mutex> guard(lock);
     if (rt != bound) return;
     optifg_client.close();
-    optifg_at = ~0ull;
+    optifg_at = optifg_nr_at = ~0ull;
+    optifg_color_stage = -1;
     bound = nullptr;
     technique = {}; mv_var = {}; depth_var = {};
 }
@@ -3357,7 +3374,8 @@ void feed(effect_runtime* rt, command_list* cl, resource_view rtv) {
         ran = run_layers(rt, s, renodx_frame, controls, motion_image.handle != 0, static_cast<DXGI_FORMAT>(cd.texture.format), w, h_,
                          run_one, around, run_pq);
     }
-    if (hud_on) hudfix_end(dev, cl, colour, hud_plan);
+    const bool hud_composed = !hud_on || hudfix_end(dev, cl, colour, hud_plan);
+    optifg_nr_at = ran && hud_composed && !inspecting ? presents : ~0ull;
     hud_restore.active = false;
     if (shot_chain && ran) { shot_frame(true); shot_chain = false; }
     if (whole) inspect_show(cl, colour, rtv, ic, w, h_);
@@ -4032,6 +4050,14 @@ void on_reshade_overlay(effect_runtime*) {
 void publish_optifg(effect_runtime* rt, command_list* cl, resource_view rtv, bool nr_requested) {
     if (!optifg_client.enabled() || optifg_at == presents) return;
     optifg_at = presents;
+    const bool nr_applied = nr_requested && optifg_nr_at == presents;
+    const int color_stage = nr_applied ? 2 : nr_requested ? 1 : 0;
+    if (color_stage != optifg_color_stage) {
+        optifg_client.reset();
+        optifg_color_stage = color_stage;
+        log("[optifg] color stage: NR %s; SR/FG history reset",
+            nr_applied ? "applied" : nr_requested ? "pending/passthrough" : "off");
+    }
     device* dev = rt->get_device();
     if (dev->get_api() != device_api::d3d11 && dev->get_api() != device_api::d3d10) {
         optifg_client.reject("only DX10/DX11 through DXVK is supported"); return;
@@ -4101,8 +4127,9 @@ void publish_optifg(effect_runtime* rt, command_list* cl, resource_view rtv, boo
         optifg_client.reject("guides and color must have the same extent"); return;
     }
     resource hudless {};
-    // Reuse the proven same-frame capture verdict independently of NR. NR can
-    // change scene color, so its pre-NR copy is not advertised as post-NR HUDless.
+    // NR's processed scene is copied before HUD composition, on the same list.
+    // Never pair a pre-NR capture with post-NR final color.
+    if (nr_applied && hudfix.post_nr_at == presents) hudless = hudfix.post_nr;
     if (!nr_requested && (chain.hud.mode == 1 || chain.hud.mode == 3)) {
         const auto plan = hudfix_plan(dev, cl, color.handle);
         if (hudfix_ensure(dev, cd.texture.width, cd.texture.height, cd.texture.format) && plan.captured)

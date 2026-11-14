@@ -3,6 +3,7 @@
 #include "ReShadeFG.h"
 #include "ReShadeSR.h"
 #include "frame_contract.hpp"
+#include "fg_contract.hpp"
 #include <Config.h>
 #include <State.h>
 #include <NVNGX_Parameter.h>
@@ -59,6 +60,10 @@ uint32_t Result(uint32_t status) {
     return status;
 }
 bool Selected() { return State::Instance().activeFgInput == FGInput::ReShade; }
+bool SupportedOutput() {
+    const auto output = State::Instance().activeFgOutput;
+    return output == FGOutput::FSRFG || output == FGOutput::XeFG;
+}
 void DropStream() {
     ReShadeSR::Reset();
     srReady = false; srReset = true;
@@ -83,7 +88,7 @@ uint32_t OPTI_BRIDGE_CALL Register(void* object, uint64_t hwnd, uint64_t* out) {
     if (state.isShuttingDown || state.swapchainInteropApi != SwapchainInteropApi::Dx11wDx12 ||
         !state.currentFG || !state.currentSwapchain || !WithDx12::IsInited())
         return Result(OPTI_BRIDGE_NOT_READY);
-    if (state.activeFgOutput != FGOutput::FSRFG) return Result(OPTI_BRIDGE_UNSUPPORTED);
+    if (!SupportedOutput()) return Result(OPTI_BRIDGE_UNSUPPORTED);
     ComPtr<ID3D11Device> device;
     auto original = Unwrap(static_cast<IUnknown*>(object));
     if (!original || FAILED(original->QueryInterface(IID_PPV_ARGS(&device))) ||
@@ -130,7 +135,16 @@ uint32_t SubmitImpl(uint64_t stream, const OptiBridgeFrame* frame) {
         timeline.reset = true;
         return Result(OPTI_BRIDGE_DISABLED);
     }
-    if (state.activeFgOutput != FGOutput::FSRFG) return Result(OPTI_BRIDGE_UNSUPPORTED);
+    if (!SupportedOutput()) return Result(OPTI_BRIDGE_UNSUPPORTED);
+    const bool xe = state.activeFgOutput == FGOutput::XeFG;
+    if (xe && (Config::Instance()->FGXeFGDepthInverted.value_or_default() !=
+                  bool(frame->flags & OPTI_BRIDGE_REVERSED_DEPTH) ||
+               Config::Instance()->FGXeFGJitteredMV.value_or_default() ||
+               Config::Instance()->FGXeFGHighResMV.value_or_default())) {
+        if (stats.last_status != OPTI_BRIDGE_UNSUPPORTED)
+            LOG_WARN("ReShade XeFG requires matching [XeFG] DepthInverted, JitteredMV=false and HighResMV=false; restart after changing initialization flags");
+        return Result(OPTI_BRIDGE_UNSUPPORTED);
+    }
     auto* fg = state.currentFG;
     if (!fg || state.isShuttingDown || !WithDx12::IsInited() ||
         state.swapchainInteropApi != SwapchainInteropApi::Dx11wDx12 ||
@@ -199,7 +213,9 @@ uint32_t SubmitImpl(uint64_t stream, const OptiBridgeFrame* frame) {
     ReShadeSR::DisplaySize(displayWidth, displayHeight);
     FG_Constants constants {};
     constants.displayWidth = displayWidth; constants.displayHeight = displayHeight;
-    if (!srEnabled) constants.flags |= FG_Flags::DisplayResolutionMVs;
+    // XeFG's high-res path requires dilated guides, which optical flow does not
+    // provide. Its low-res path also accepts guides at a 1:1 input/output ratio.
+    if (!srEnabled && !xe) constants.flags |= FG_Flags::DisplayResolutionMVs;
     if (frame->flags & OPTI_BRIDGE_REVERSED_DEPTH) constants.flags |= FG_Flags::InvertedDepth;
     if (frame->flags & OPTI_BRIDGE_INFINITE_DEPTH) constants.flags |= FG_Flags::InfiniteDepth;
     if (Config::Instance()->FGAsync.value_or_default()) constants.flags |= FG_Flags::Async;
@@ -213,11 +229,12 @@ uint32_t SubmitImpl(uint64_t stream, const OptiBridgeFrame* frame) {
         return srEnabled ? acceptSR() : Result(OPTI_BRIDGE_WARMING_UP);
     float nearPlane = frame->camera_near;
     float farPlane = (frame->flags & OPTI_BRIDGE_INFINITE_DEPTH) ? FLT_MAX : frame->camera_far;
-    if (frame->flags & OPTI_BRIDGE_REVERSED_DEPTH) std::swap(nearPlane, farPlane);
+    if (!xe && (frame->flags & OPTI_BRIDGE_REVERSED_DEPTH)) std::swap(nearPlane, farPlane);
     fg->SetCameraValues(nearPlane, farPlane, frame->vertical_fov_radians,
                         float(frame->width) / float(frame->height), 1.0f);
     fg->SetFrameTimeDelta(frame->delta_ms);
-    fg->SetMVScale(1.0f / float(frame->width), 1.0f / float(frame->height));
+    const auto scale = opti_bridge::fg_motion_scale(xe, frame->width, frame->height);
+    fg->SetMVScale(scale.x, scale.y);
     fg->SetJitter(0.0f, 0.0f);
     fg->SetReset(reset ? 1 : 0);
     fg->SetInterpolationRect(displayWidth, displayHeight);
@@ -232,8 +249,8 @@ uint32_t SubmitImpl(uint64_t stream, const OptiBridgeFrame* frame) {
         input.validity = FG_ResourceValidity::ValidNow;
         return resource && cmd && fg->SetResource(&input);
     };
-    // FSRFG copies ValidNow inputs to its own per-frame buffers. Submit those
-    // copies before returning. The next reuse of this ring slot checks their fence.
+    // Both backends record their ValidNow copies on this list. Execute them
+    // before returning; the source ring checks their completion fence on reuse.
     copied = set(FG_ResourceType::Velocity, cache.CurrentMv().Dx12Resource) && copied;
     copied = set(FG_ResourceType::Depth, cache.CurrentDepth().Dx12Resource) && copied;
     if (hudless && !srEnabled) copied = set(FG_ResourceType::HudlessColor, hudlessCache[slot].Dx12Resource) && copied;

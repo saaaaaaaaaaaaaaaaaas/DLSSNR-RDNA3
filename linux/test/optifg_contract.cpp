@@ -1,11 +1,25 @@
 // SPDX-License-Identifier: MIT
 #include "../optifg/include/frame_contract.hpp"
 #include "../optifg/include/sr_contract.hpp"
+#include "../optifg/include/fg_contract.hpp"
 #include <cassert>
 #include <limits>
 #include <iostream>
 
 int main() {
+    const auto normalized = opti_bridge::fg_motion_scale(false, 1280, 720);
+    const auto pixels = opti_bridge::fg_motion_scale(true, 1280, 720);
+    assert(std::abs(320.f * normalized.x - .25f) < 1e-6f);
+    assert(std::abs(180.f * normalized.y - .25f) < 1e-6f);
+    assert(320.f * pixels.x == 320.f && 180.f * pixels.y == 180.f);
+    for (bool reversed : {false, true}) for (bool infinite : {false, true}) {
+        const auto p = opti_bridge::manual_projection(.1f, 1000.f, 1.2f, 16.f/9.f, reversed, infinite);
+        for (float v : p) assert(std::isfinite(v));
+        const auto z = [&](float distance) { return (distance*p[10]+p[14])/distance; };
+        assert(std::abs(z(.1f) - (reversed ? 1.f : 0.f)) < 1e-6f);
+        assert(std::abs(z(infinite ? 1e9f : 1000.f) - (reversed ? 0.f : 1.f)) < 1e-6f);
+        assert(p[0] > 0 && p[5] > 0 && p[11] == 1.f);
+    }
     assert(opti_bridge::temporal_extents(1280, 720, 1920, 1080));
     assert(opti_bridge::temporal_extents(1280, 720, 1280, 720));
     assert(opti_bridge::temporal_extents(960, 540, 1920, 1080));
