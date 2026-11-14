@@ -2597,6 +2597,13 @@ void on_destroy_device(device* dev) {
     // Everything the session made lives on this device's VkDevice.
     std::lock_guard<std::mutex> guard(lock);
     const bool sessions_device = !session_device || dev == session_device;
+    // Device destruction can precede effect-runtime destruction. Finish the
+    // receiver's copies before freeing NR/HUD images borrowed by the bridge.
+    if (dev == session_device || (bound && bound->get_device() == dev)) {
+        optifg_client.close();
+        optifg_at = optifg_nr_at = ~0ull;
+        optifg_color_stage = -1;
+    }
     // ReShade's Vulkan layer no longer knows the device here (its vkDestroyDevice drops it before this event): what NR
     // frees of it with Vulkan's own functions goes through the driver's, not through the loader into ReShade's hooks
     // (which crash on a device they no longer know). Where those cannot be found, nothing is freed that way.
