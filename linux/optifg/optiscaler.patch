@@ -512,7 +512,7 @@ index d4e5bd4..224badb 100644
  
      // clang-format on
 diff --git a/OptiScaler/with_dx12/dx11_with_dx12_sc.cpp b/OptiScaler/with_dx12/dx11_with_dx12_sc.cpp
-index 41f9c1b..775ffed 100644
+index 41f9c1b..8525947 100644
 --- a/OptiScaler/with_dx12/dx11_with_dx12_sc.cpp
 +++ b/OptiScaler/with_dx12/dx11_with_dx12_sc.cpp
 @@ -1,5 +1,6 @@
@@ -530,7 +530,23 @@ index 41f9c1b..775ffed 100644
      MenuOverlayDx::CleanupRenderTarget(true, _handle);
      _ReleaseInteropObjects();
  
-@@ -367,6 +369,9 @@ HRESULT STDMETHODCALLTYPE Dx11wDx12SC::Present(UINT SyncInterval, UINT Flags)
+@@ -320,6 +322,15 @@ ULONG STDMETHODCALLTYPE Dx11wDx12SC::Release()
+         if (fg != nullptr && fg->Mutex.getOwner() != 1 && fg->SwapchainContext() != nullptr)
+         {
+             fg->Deactivate();
++            if (State::Instance().activeFgInput == FGInput::ReShade &&
++                State::Instance().activeFgOutput == FGOutput::XeFG)
++            {
++                // XeFG requires all application proxy references released before
++                // destroying its context. This wrapper still owns one here.
++                MenuOverlayDx::CleanupRenderTarget(true, _handle);
++                _ReleaseInteropObjects();
++                SafeRelease(_fgSwapChain);
++            }
+             fg->ReleaseSwapchain(_handle);
+         }
+ 
+@@ -367,6 +378,9 @@ HRESULT STDMETHODCALLTYPE Dx11wDx12SC::Present(UINT SyncInterval, UINT Flags)
      if ((Flags & DXGI_PRESENT_TEST) != 0)
          return _real->Present(SyncInterval, Flags);
  
@@ -540,7 +556,7 @@ index 41f9c1b..775ffed 100644
      const bool dx11HudfixPresent = Config::Instance()->FGHUDFix.value_or_default() &&
                                     State::Instance().activeFgInput == FGInput::Upscaler &&
                                     State::Instance().swapchainInteropApi == SwapchainInteropApi::Dx11wDx12;
-@@ -509,12 +514,15 @@ HRESULT STDMETHODCALLTYPE Dx11wDx12SC::ResizeBuffers(UINT BufferCount, UINT Widt
+@@ -509,12 +523,15 @@ HRESULT STDMETHODCALLTYPE Dx11wDx12SC::ResizeBuffers(UINT BufferCount, UINT Widt
          LOG_WARN("continuing ResizeBuffers after FG/present queue wait failure");
      }
  
@@ -556,7 +572,7 @@ index 41f9c1b..775ffed 100644
      HRESULT fgResult = DXGI_ERROR_DEVICE_REMOVED;
      if (SUCCEEDED(realResult) && _fgSwapChain != nullptr)
      {
-@@ -525,7 +533,7 @@ HRESULT STDMETHODCALLTYPE Dx11wDx12SC::ResizeBuffers(UINT BufferCount, UINT Widt
+@@ -525,7 +542,7 @@ HRESULT STDMETHODCALLTYPE Dx11wDx12SC::ResizeBuffers(UINT BufferCount, UINT Widt
          }
          else
          {
@@ -565,7 +581,7 @@ index 41f9c1b..775ffed 100644
          }
      }
  
-@@ -559,6 +567,12 @@ HRESULT STDMETHODCALLTYPE Dx11wDx12SC::ResizeBuffers(UINT BufferCount, UINT Widt
+@@ -559,6 +576,12 @@ HRESULT STDMETHODCALLTYPE Dx11wDx12SC::ResizeBuffers(UINT BufferCount, UINT Widt
  
  HRESULT STDMETHODCALLTYPE Dx11wDx12SC::ResizeTarget(const DXGI_MODE_DESC* pNewTargetParameters)
  {
@@ -578,7 +594,7 @@ index 41f9c1b..775ffed 100644
      return _fgSwapChain != nullptr
                 ? _fgSwapChain->ResizeTarget(pNewTargetParameters)
                 : (_real != nullptr ? _real->ResizeTarget(pNewTargetParameters) : DXGI_ERROR_DEVICE_REMOVED);
-@@ -756,6 +770,7 @@ HRESULT STDMETHODCALLTYPE Dx11wDx12SC::ResizeBuffers1(UINT BufferCount, UINT Wid
+@@ -756,6 +779,7 @@ HRESULT STDMETHODCALLTYPE Dx11wDx12SC::ResizeBuffers1(UINT BufferCount, UINT Wid
          LOG_WARN("continuing ResizeBuffers1 after FG/present queue wait failure");
      }
  
@@ -586,7 +602,7 @@ index 41f9c1b..775ffed 100644
      MenuOverlayDx::CleanupRenderTarget(true, _handle);
      _ReleaseInteropBackBuffers();
  
-@@ -1190,6 +1205,18 @@ bool Dx11wDx12SC::_CopyDx11SharedToDx12FGBackBuffer(UINT dx11Index)
+@@ -1190,6 +1214,18 @@ bool Dx11wDx12SC::_CopyDx11SharedToDx12FGBackBuffer(UINT dx11Index)
          return false;
      }
  
@@ -605,7 +621,7 @@ index 41f9c1b..775ffed 100644
      auto sourceBefore = _openedDx11BackBufferStates[copySlot];
  
      TransitionResource(_copyCommandLists[copySlot], _openedDx11BackBuffers[copySlot], sourceBefore,
-@@ -1205,6 +1232,7 @@ bool Dx11wDx12SC::_CopyDx11SharedToDx12FGBackBuffer(UINT dx11Index)
+@@ -1205,6 +1241,7 @@ bool Dx11wDx12SC::_CopyDx11SharedToDx12FGBackBuffer(UINT dx11Index)
                         sourceBefore);
  
      _openedDx11BackBufferStates[copySlot] = D3D12_RESOURCE_STATE_COMMON;
@@ -613,7 +629,7 @@ index 41f9c1b..775ffed 100644
  
      fgBackBuffer->Release();
  
-@@ -1217,6 +1245,7 @@ bool Dx11wDx12SC::_CopyDx11SharedToDx12FGBackBuffer(UINT dx11Index)
+@@ -1217,6 +1254,7 @@ bool Dx11wDx12SC::_CopyDx11SharedToDx12FGBackBuffer(UINT dx11Index)
  
      ID3D12CommandList* lists[] = { _copyCommandLists[copySlot] };
      _dx12CommandQueue->ExecuteCommandLists(1, lists);

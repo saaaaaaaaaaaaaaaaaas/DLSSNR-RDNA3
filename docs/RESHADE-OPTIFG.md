@@ -142,6 +142,17 @@ The fix derives SR framebuffer scale from the owned fixed output configuration,
 without re-entering the SDK proxy. Normal splash/open-menu qualification follows.
 
 
+The owner selected `CC_SMALL_FP8_EXPERIMENTAL` for further qualification.
+The earlier plain FP8 run remains a control, not the final game profile.
+
+The combined plain-FP8/1:1 SR/XeMFG isolation run generated 2,342 frames over
+1,200 real presents and published more than 900 post-NR HUDless scenes. At
+shutdown the SDK reported `ERROR_POINTER_STILL_IN_USE`, followed by a GPU VM
+fault after the last frame. The DX11 wrapper still held the XeFG proxy when it
+asked to destroy its context. Its release path now drops its owned proxy and
+interop references before SDK context destruction; clean GPU shutdown must be
+qualified before installing this combination in the game.
+
 ## Earlier FG GPU evidence
 
 Host: AMD Ryzen Z1 Extreme, RADV Mesa 26.2.6, Wine 11.0 from Proton-CachyOS

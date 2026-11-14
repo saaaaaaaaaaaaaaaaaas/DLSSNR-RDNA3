@@ -56,7 +56,7 @@ if [[ "$mode" == reshade ]]; then
 [Plugins]
 LoadReShade=true
 INI
-    cp artifacts/package-build/nr/dlssnr_amd.addon64 "$out/"
+    cp "${NR_OPTIFG_PRODUCER:-artifacts/package-build/nr/dlssnr_amd.addon64}" "$out/"
     cp linux/optifg/optifg-bridge.ini "$out/"
     # Recreate this generated stage so reruns never mix shader revisions.
     rm -rf -- "$out/reshade-shaders"
@@ -172,16 +172,19 @@ fi
 if [[ "${NR_OPTIFG_NR:-0}" == 1 ]]; then
     [[ "$mode" == reshade ]] || { echo 'NR requires the full reshade probe' >&2; exit 2; }
     : "${NR_OPTIFG_NR_DATA:?Set NR_OPTIFG_NR_DATA to your private model/shaders folder}"
-    python3 - "$out" "$NR_OPTIFG_NR_DATA" <<'PY'
+    python3 - "$out" "$NR_OPTIFG_NR_DATA" "${NR_OPTIFG_NR_MODEL:-CC_SMALL_FP8_EXPERIMENTAL}" <<'PY'
 from pathlib import Path
 import configparser, shutil, sys
 root, data = Path(sys.argv[1]), Path(sys.argv[2]).resolve(strict=True)
-assert (data / 'CC_SMALL_FP8.bin').is_file() and (data / 'shaders/shader-constants.txt').is_file()
+model = sys.argv[3]
+assert model in ('CC_SMALL_FP8', 'CC_SMALL_FP8_EXPERIMENTAL')
+assert (data / (model + '.bin')).is_file() and (data / 'shaders/shader-constants.txt').is_file()
+if model.endswith('_EXPERIMENTAL'): assert (data / 'experimental/shaders/shader-constants.txt').is_file()
 shutil.copytree(data, root / 'dlssnr-amd', dirs_exist_ok=True)
 p = root / 'dlssnr-amd.ini'
 c = configparser.ConfigParser(interpolation=None); c.optionxform = str; c.read(p)
 c['DlssNr']['Enabled'] = '1'
-c['Network'] = dict(Model='CC_SMALL_FP8')
+c['Network'] = dict(Model=model)
 with p.open('w') as f: c.write(f, space_around_delimiters=False)
 PY
 fi

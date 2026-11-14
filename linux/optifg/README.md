@@ -222,8 +222,11 @@ NR_OPTIFG_NR=1 NR_OPTIFG_NR_DATA='/private/path/to/dlssnr-amd' \
   bash linux/optifg/run_probe.sh reshade 6000
 ```
 
-The private NR folder needs `CC_SMALL_FP8.bin` extracted from your DLL, matching
-RDNA3 network shaders and the HUD composition shaders in `shaders/wilsjo2/`.
+The private NR folder needs the selected model, matching RDNA3 network shaders
+and the HUD composition shaders in `shaders/wilsjo2/`. The runner defaults to
+`CC_SMALL_FP8_EXPERIMENTAL`, with its derived weights and
+`experimental/shaders/`; set `NR_OPTIFG_NR_MODEL=CC_SMALL_FP8` for the baseline.
+`NR_OPTIFG_PRODUCER` can select an exact matching CI add-on.
 First-time network/pipeline compilation can outlast a short probe. The runner
 requires an actually processed NR frame when NR is requested.
 
