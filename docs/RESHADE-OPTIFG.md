@@ -119,14 +119,14 @@ Load it only through OptiScaler's ASI plugin loader; do not redistribute it.
 | Area | Required behavior | Evidence |
 | --- | --- | --- |
 | NR ordering | Process each real source frame once, then SR and FG; generated frames do not enter NR history | NR/SR/FSR FG probe completes 2,719 real frames; over 1,356 enhanced, NR off/on resets history |
-| NR/HUD | Never label pre-NR color as post-NR HUDless; reset history on NR state changes | Pending |
-| XeFG routing | Permit explicit XeFG output with ReShade input; retain FSR FG behavior | Pending |
+| NR/HUD | Never label pre-NR color as post-NR HUDless; reset history on NR state changes | Post-NR scene copied before HUD composition; NR off/on probe resets SR/FG; more than 3,300 post-NR HUDless frames published in Tekken training |
+| XeFG routing | Permit explicit XeFG output with ReShade input; retain FSR FG behavior | DX11 and actual DX10 analytic probes pass; Tekken training runs ReShade -> NR -> SR -> XeFG |
 | XeFG guides | Pixel MV scale 1, matching depth/MV extents, valid view/projection and explicit manual camera provenance | CPU finite/reversed/infinite projection and MV-unit checks pass; initial SDK probe reports 276 generated frames from 300 real presents |
-| XeFG lifetime | Tag same-frame resources on executed command lists and retain them through SDK copies | Pending |
-| MFG plugin | Load the supplied file as an ASI, query supported multiplier, validate actual generated/presented frames | Pending |
-| Controls | Expose existing XeFG multiplier controls; test reset, missing guides and FG off/on | Pending |
-| Regression | NR disabled, FSR FG and SR-only retain qualified behavior | Pending |
-| Game | Tekken 7 training with NR, then XeFG/MFG; distinguish loading and presenter/screen extents | Pending |
+| XeFG lifetime | Tag same-frame resources on executed command lists and retain them through SDK copies | Completed-copy fence on unregister, device-destruction ordering and proxy release fixed; final NR/MFG and DX10 reset probes confirm SDK destruction success without GPU faults |
+| MFG plugin | Load the supplied file as an ASI, query supported multiplier, validate actual generated/presented frames | Supplied ASI loads; SDK reports five supported interpolations; 3x/6x analytic probes and 3x Tekken training pass |
+| Controls | Expose existing XeFG multiplier controls; test reset, missing guides and FG off/on | Menu/splash no longer re-enter the SDK; End off/on passes; Tekken live 3x -> 2x -> 4x changes recorded; DX10 guide gap and buffer recreation pass |
+| Regression | NR disabled, FSR FG and SR-only retain qualified behavior | CPU ABI/timeline/projection/MV-unit checks pass; Experimental 50% + FSR FG completes 1,200 real frames; NR-disabled XeFG UI/toggle run completes 3,000 |
+| Game | Tekken 7 training with NR, then XeFG/MFG; distinguish loading and presenter/screen extents | Experimental 50%, source 1280x720, SR presenter 1920x1080, XeMFG 3x; over 3,400 NR executions, 7,500 accepted bridge frames, no rejected frames; client remains 1280x720 |
 
 Contracts are checked against Intel's [XeSS-FG developer guide](https://github.com/intel/xess/blob/main/doc/xess_fg_developer_guide_english.md).
 The plugin uses the author's [OptiScaler ASI installation route](https://github.com/dashdogy/MFG-Unlocker/blob/main/docs/optiscaler.md).
@@ -139,7 +139,11 @@ callback while its lock was already held. The initial process raised a C++
 exception in `libxess_fg`. Disabling only the splash isolated it and allowed
 300 accepted real frames, 576 total SDK-presented frames and 276 generated frames.
 The fix derives SR framebuffer scale from the owned fixed output configuration,
-without re-entering the SDK proxy. Normal splash/open-menu qualification follows.
+without re-entering the SDK proxy. The normal splash, open menu and FG off/on
+then pass a 3,000-frame SDK run. XeFG also needed explicit stretch scaling for
+the larger SR presenter: unspecified legacy scaling became NONE and cropped
+the image to the smaller client area. The fixed window was inspected through
+the compositor; X11 GetImage sometimes returned an older redirected image.
 
 
 The owner selected `CC_SMALL_FP8_EXPERIMENTAL` at 50% model resolution
@@ -152,8 +156,50 @@ The combined plain-FP8/1:1 SR/XeMFG isolation run generated 2,342 frames over
 shutdown the SDK reported `ERROR_POINTER_STILL_IN_USE`, followed by a GPU VM
 fault after the last frame. The DX11 wrapper still held the XeFG proxy when it
 asked to destroy its context. Its release path now drops its owned proxy and
-interop references before SDK context destruction; clean GPU shutdown must be
-qualified before installing this combination in the game.
+interop references before SDK context destruction. The receiver also waits for
+its final input-copy fence on unregister, and the producer unregisters before
+freeing NR/HUD images even when device destruction precedes runtime destruction.
+The final 50% model-resolution run confirms SDK destruction success and no GPU
+fault. This qualifies the selected 50% profile, not full-resolution NR.
+
+## Final NR/MFG observations
+
+The selected profile is `CC_SMALL_FP8_EXPERIMENTAL`, `WorkingScale=0.5`,
+LumeniteFX, HUD capture Mode=3, FSR 3.1.6 SR and XeMFG 3x. Source guides stay
+1280x720, NR uses logical 640x360 (native padded extent 640x384), and SR writes
+1920x1080. This is still a 1280x720 game window; native 1080p screen output
+remains outside the qualified result.
+
+- The final combined standalone run completes 900 real frames, 439 NR
+  evaluations after 85 build/pass-through frames, and 1,898 SDK-presented frames
+  including 998 generated. XeFG context destruction succeeds, and the complete
+  execution/teardown log contains no GPU fault. The temporary consumer build is
+  `4e67c16`, producer `625578f`; consumer sources are unchanged between them.
+- A matching `625578f` DX10 direct run completes 600 real frames with 510
+  accepted/consumed inputs, a deliberate 90-frame guide gap and buffer recreation
+  at frame 350. XeMFG 6x reports 2,960 SDK-presented frames, including 2,360
+  generated; final SDK context destruction succeeds without a GPU fault.
+- Earlier DX11 analytic runs report 1,752 generated frames over 900 real frames
+  at 3x, and 8,880 over 1,800 at 6x. These precede the cleanup fixes; the later
+  DX10 run qualifies the fixed 6x lifecycle.
+- Tekken 7 Steam build 10546199 runs the matching `625578f` consumer/producer
+  in offline training. NR executes over 3,400 times, publishes over 3,300 post-NR
+  HUDless scenes and accepts at least 7,500 bridge inputs without rejection.
+  The SDK reports over 14,900 generated frames across the session, including
+  the initial period before NR finished building. Live multiplier changes from
+  3x to 2x and 4x are recorded; the saved initial profile remains 3x. The game
+  closes through its own window-close path without a GPU fault in the run log.
+- NR GPU timing in that training scene is approximately 12-13 ms at 50% model
+  resolution. This is NR's measured stage time, not total frame time or a
+  controlled performance comparison. First pipeline compilation took 150 seconds
+  in the game and frames passed through during it; it is not an NR execution.
+
+Evidence is in `artifacts/optifg-evidence/nr-experimental-half-xemfg-clean/`,
+`tekken7-experimental-half-xemfg-625578f/` and `xefg-6x-dx10-reset/`. The last
+DX10 probe uses analytic inputs; full ReShade/Lumenite XeFG on DX10 and other
+games, HDR, engine camera calibration, all-scene HUD quality and full-resolution
+NR/MFG memory behavior remain unqualified. The SDK present-status counter is
+reported as such; it is not a measurement of distinct scanouts or input latency.
 
 ## Earlier FG GPU evidence
 

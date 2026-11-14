@@ -1,6 +1,7 @@
-Experimental ReShade -> OptiScaler -> FSR3 FG bridge for Linux / Proton
+Experimental ReShade -> NR / SR -> OptiScaler frame generation for Linux / Proton
 
-Development payload for DX11/DX10 through DXVK, x86_64, SDR, 2x FG.
+Development payload for DX11/DX10 through DXVK, x86_64, SDR.
+FSR FG 2x or XeFG, with XeMFG through the user-provided ASI plugin.
 See manifest.json for the exact producer/consumer revision and file hashes.
 This payload contains no NVIDIA files, models, LumeniteFX or runtime dependencies.
 
@@ -15,6 +16,9 @@ and bin/dlssnr_amd.addon64 into artifacts/package-build/nr/ in that source tree.
 Set NR_PROTON and follow the baseline/direct/reshade commands in the README.
 The runner builds the probes locally; bin/ also carries the matching CI probes.
 Begin with NR disabled and explicit camera values for the test scene.
+The tested NR profile is FP8 Experimental at 50% model resolution. Private model
+weights, compiled network shaders, Intel/AMD runtimes and MFGUnlocker.asi must be
+installed separately; read the NR/XeFG sections of the README.
 
 The consumer is GPL-3.0-or-later. Its corresponding source is OptiScaler commit
 e7e3872d410f704479d94d318d68d163b6b58947 from
