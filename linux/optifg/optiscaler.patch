@@ -292,7 +292,7 @@ index 1227c70..e3c3c93 100644
                  State::Instance().activeFgInput != FGInput::NvngxFG)
              {
 diff --git a/OptiScaler/hooks/DxgiFactory_WrappedCalls.cpp b/OptiScaler/hooks/DxgiFactory_WrappedCalls.cpp
-index 620960d..8158377 100644
+index 620960d..e310a3f 100644
 --- a/OptiScaler/hooks/DxgiFactory_WrappedCalls.cpp
 +++ b/OptiScaler/hooks/DxgiFactory_WrappedCalls.cpp
 @@ -1,4 +1,5 @@
@@ -301,7 +301,7 @@ index 620960d..8158377 100644
  #include "DxgiFactory_WrappedCalls.h"
  
  #include "FG_Hooks.h"
-@@ -25,12 +26,13 @@
+@@ -25,12 +26,17 @@
  
  static bool ShouldCreateDx11wDx12Swapchain()
  {
@@ -313,14 +313,20 @@ index 620960d..8158377 100644
  static bool PrepareDx12InteropDesc(DXGI_SWAP_CHAIN_DESC& desc)
  {
 +    ReShadeFG_DisplaySize(desc.BufferDesc.Width, desc.BufferDesc.Height);
++    if (State::Instance().activeFgInput == FGInput::ReShade && Config::Instance()->ReShadeSREnabled.value_or_default())
++        // XeFG maps unspecified legacy scaling to NONE, which crops a larger
++        // SR presenter to the source-sized client instead of fitting the image.
++        desc.BufferDesc.Scaling = DXGI_MODE_SCALING_STRETCHED;
      if (desc.SampleDesc.Count > 1)
      {
          LOG_WARN("Dx11wDx12 interop does not support MSAA swapchains!");
-@@ -53,6 +55,7 @@ static bool PrepareDx12InteropDesc(DXGI_SWAP_CHAIN_DESC& desc)
+@@ -53,6 +59,9 @@ static bool PrepareDx12InteropDesc(DXGI_SWAP_CHAIN_DESC& desc)
  
  static bool PrepareDx12InteropDesc1(DXGI_SWAP_CHAIN_DESC1& desc)
  {
 +    ReShadeFG_DisplaySize(desc.Width, desc.Height);
++    if (State::Instance().activeFgInput == FGInput::ReShade && Config::Instance()->ReShadeSREnabled.value_or_default())
++        desc.Scaling = DXGI_SCALING_STRETCH;
      if (desc.SampleDesc.Count > 1)
      {
          LOG_ERROR("Dx11wDx12 interop does not support MSAA swapchains!");
