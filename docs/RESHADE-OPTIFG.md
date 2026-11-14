@@ -111,6 +111,32 @@ do not describe that startup fallback as temporal 720p-to-1080p reconstruction.
 
 ## Observed GPU evidence
 
+## NR and XeSS MFG extension: acceptance matrix
+
+Keep NR on real frames before SR/FG. The requested MFG test plugin is the
+owner-provided `MFGUnlocker.asi` (V1.6.1 build path, SHA-256
+`24e3e6a8c07639fd9cbd79274e4eb21cc65a13f0453e1157720620c3d6286b33`).
+Load it only through OptiScaler's ASI plugin loader; do not redistribute it.
+
+| Area | Required behavior | Evidence |
+| --- | --- | --- |
+| NR ordering | Process each real source frame once, then SR and FG; generated frames do not enter NR history | Pending |
+| NR/HUD | Never label pre-NR color as post-NR HUDless; reset history on NR state changes | Pending |
+| XeFG routing | Permit explicit XeFG output with ReShade input; retain FSR FG behavior | Pending |
+| XeFG guides | Pixel MV scale 1, matching depth/MV extents, valid view/projection and explicit manual camera provenance | Pending |
+| XeFG lifetime | Tag same-frame resources on executed command lists and retain them through SDK copies | Pending |
+| MFG plugin | Load the supplied file as an ASI, query supported multiplier, validate actual generated/presented frames | Pending |
+| Controls | Expose existing XeFG multiplier controls; test reset, missing guides and FG off/on | Pending |
+| Regression | NR disabled, FSR FG and SR-only retain qualified behavior | Pending |
+| Game | Tekken 7 training with NR, then XeFG/MFG; distinguish loading and presenter/screen extents | Pending |
+
+Contracts are checked against Intel's [XeSS-FG developer guide](https://github.com/intel/xess/blob/main/doc/xess_fg_developer_guide_english.md).
+The plugin uses the author's [OptiScaler ASI installation route](https://github.com/dashdogy/MFG-Unlocker/blob/main/docs/optiscaler.md).
+Its supplied V1.6.1 binary is tested as supplied; newer documentation does not
+establish that this older binary supports every newer feature.
+
+## Earlier FG GPU evidence
+
 Host: AMD Ryzen Z1 Extreme, RADV Mesa 26.2.6, Wine 11.0 from Proton-CachyOS
 Latest. Standalone observations below qualify the harness; the separate Tekken 7
 test qualifies the bridge in that game, not universal interpolation quality.
