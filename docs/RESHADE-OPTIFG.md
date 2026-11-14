@@ -109,8 +109,6 @@ Alt+Enter did not change the training window in this setup. Fullscreen output
 and a different actual render resolution need further game-specific qualification;
 do not describe that startup fallback as temporal 720p-to-1080p reconstruction.
 
-## Observed GPU evidence
-
 ## NR and XeSS MFG extension: acceptance matrix
 
 Keep NR on real frames before SR/FG. The requested MFG test plugin is the
@@ -120,10 +118,10 @@ Load it only through OptiScaler's ASI plugin loader; do not redistribute it.
 
 | Area | Required behavior | Evidence |
 | --- | --- | --- |
-| NR ordering | Process each real source frame once, then SR and FG; generated frames do not enter NR history | Pending |
+| NR ordering | Process each real source frame once, then SR and FG; generated frames do not enter NR history | NR/SR/FSR FG probe completes 2,719 real frames; over 1,356 enhanced, NR off/on resets history |
 | NR/HUD | Never label pre-NR color as post-NR HUDless; reset history on NR state changes | Pending |
 | XeFG routing | Permit explicit XeFG output with ReShade input; retain FSR FG behavior | Pending |
-| XeFG guides | Pixel MV scale 1, matching depth/MV extents, valid view/projection and explicit manual camera provenance | Pending |
+| XeFG guides | Pixel MV scale 1, matching depth/MV extents, valid view/projection and explicit manual camera provenance | CPU finite/reversed/infinite projection and MV-unit checks pass; initial SDK probe reports 276 generated frames from 300 real presents |
 | XeFG lifetime | Tag same-frame resources on executed command lists and retain them through SDK copies | Pending |
 | MFG plugin | Load the supplied file as an ASI, query supported multiplier, validate actual generated/presented frames | Pending |
 | Controls | Expose existing XeFG multiplier controls; test reset, missing guides and FG off/on | Pending |
@@ -134,6 +132,15 @@ Contracts are checked against Intel's [XeSS-FG developer guide](https://github.c
 The plugin uses the author's [OptiScaler ASI installation route](https://github.com/dashdogy/MFG-Unlocker/blob/main/docs/optiscaler.md).
 Its supplied V1.6.1 binary is tested as supplied; newer documentation does not
 establish that this older binary supports every newer feature.
+
+Initial XeFG qualification exposed a menu re-entry: the SR framebuffer-scale
+calculation queried the XeFG proxy's `GetDesc` from the SDK's native Present
+callback while its lock was already held. The initial process raised a C++
+exception in `libxess_fg`. Disabling only the splash isolated it and allowed
+300 accepted real frames, 576 total SDK-presented frames and 276 generated frames.
+The fix derives SR framebuffer scale from the owned fixed output configuration,
+without re-entering the SDK proxy. Normal splash/open-menu qualification follows.
+
 
 ## Earlier FG GPU evidence
 

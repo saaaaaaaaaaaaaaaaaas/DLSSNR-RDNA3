@@ -212,3 +212,13 @@ fi
 if [[ "${NR_OPTIFG_SR:-0}" == 1 ]]; then
     rg -q 'ReShade SR reconstructed [1-9]' OptiScaler.log || { echo 'No temporal SR reconstruction proved' >&2; exit 5; }
 fi
+if [[ "${NR_OPTIFG_NR:-0}" == 1 ]]; then
+    rg -q '\[nr\] frames: [1-9][0-9]* enhanced|color stage: NR applied' dlssnr-amd.log || {
+        echo 'NR never processed a frame; inspect the model/build log or use a longer run' >&2; exit 6;
+    }
+fi
+if [[ "${NR_OPTIFG_FG_OUTPUT:-fsrfg}" == xefg ]]; then
+    rg -q 'ReShade XeFG SDK status:.*[1-9][0-9]* generated' OptiScaler.log || {
+        echo 'XeFG did not report generated/presented frames; plugin loading alone is insufficient' >&2; exit 7;
+    }
+fi

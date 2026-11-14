@@ -4129,7 +4129,12 @@ void publish_optifg(effect_runtime* rt, command_list* cl, resource_view rtv, boo
     resource hudless {};
     // NR's processed scene is copied before HUD composition, on the same list.
     // Never pair a pre-NR capture with post-NR final color.
-    if (nr_applied && hudfix.post_nr_at == presents) hudless = hudfix.post_nr;
+    if (nr_applied && hudfix.post_nr_at == presents) {
+        hudless = hudfix.post_nr;
+        static uint64_t post_nr_frames = 0;
+        if (++post_nr_frames == 1 || post_nr_frames % 300 == 0)
+            log("[optifg] publishing post-NR HUDless scene, %llu real frames", (unsigned long long)post_nr_frames);
+    }
     if (!nr_requested && (chain.hud.mode == 1 || chain.hud.mode == 3)) {
         const auto plan = hudfix_plan(dev, cl, color.handle);
         if (hudfix_ensure(dev, cd.texture.width, cd.texture.height, cd.texture.format) && plan.captured)

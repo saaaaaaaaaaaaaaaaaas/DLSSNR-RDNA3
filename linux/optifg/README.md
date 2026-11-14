@@ -114,8 +114,10 @@ Logarithmic, mirrored or multiplied depth and HDR are rejected in this version.
 Optional HUDless input reuses the existing ReShade capture with `[HudFix] Mode=3`
 or `1`, set **before starting the process**. Only a confirmed same-frame capture
 is published, initially with NR off. The final image is never labelled HUDless.
-Automatic capture is game-dependent. With NR on, the pre-NR capture is not a
-valid match for post-NR color and is deliberately omitted.
+Automatic capture is game-dependent. With NR on and a confirmed capture, the
+producer copies the processed scene before HUD composition and supplies that
+post-NR image. It never supplies a pre-NR capture as post-NR HUDless. Changes
+between NR off, building/passthrough and applied reset SR/FG history.
 
 ## Additional upscaling before FG
 
@@ -149,7 +151,8 @@ With the pinned runtime, FFX index 1 selects FSR 3.1.6; index 0 selects FSR
 4.1.2. Confirm the selected version in the menu and consumer log. FSR 2.1/2.2
 and XeSS use their existing providers.
 XeSS additionally needs the matching `OptiScaler/libxess.dll` and licence from
-the pinned nightly. Keep FG input `OptiFG (ReShade)` and output `FSR FG`; disable
+the pinned nightly. Keep FG input `OptiFG (ReShade)` and output `FSR FG` or
+`XeFG` as described below; disable
 FG with its Enabled toggle to test reconstruction alone.
 
 Depth/MV remain at the actual input resolution. FSR SR takes pixel MV with scale
@@ -173,6 +176,56 @@ NR_OPTIFG_SR=1 NR_OPTIFG_10BIT=1 NR_OPTIFG_HUD=1 \
 Set `NR_OPTIFG_UPSCALER=fsr21`, `fsr22` or `xess` to qualify another provider.
 The runner selects FSR 3.1.6 by default; `NR_OPTIFG_FFX_INDEX=0` tests FSR 4.1.2
 with the pinned runtime. This index is independent of `[FSR] FGIndex`.
+
+## XeSS FG and MFG
+
+The receiver also accepts `FGOutput=XeFG`. Install `libxess_fg.dll`, `libxell.dll`
+and their licence from the pinned OptiScaler runtime in `OptiScaler/`. Set these
+initialization flags before starting the process:
+
+```ini
+[FrameGen]
+FGInput=reshade
+FGOutput=xefg
+[XeFG]
+DepthInverted=true
+JitteredMV=false
+HighResMV=false
+InterpolationCount=2
+[Plugins]
+LoadAsiPlugins=true
+Path=.\OptiScaler\plugins
+```
+
+`DepthInverted` must match the game's actual/ReShade depth convention (`false`
+for the analytic probe, `true` for the provisional Tekken profile). Mismatched
+flags are rejected; restart after changing them. Motion/depth use the source
+extent and pixel MV scale 1. The camera remains an explicit approximation: a
+fixed identity view and manual projection, including finite/reversed/infinite
+cases; no engine camera transform is recovered.
+
+For MFG on RDNA3, place the user's `MFGUnlocker.asi` in `OptiScaler/plugins/`.
+Use OptiScaler's existing XeFG controls to select the count; `InterpolationCount`
+is generated frames (2 means 3x total). Without the plugin, Intel's non-Intel
+path is normally limited to one generated frame. The plugin and private NR models
+are not included in this developer bundle. Follow the author's
+[ASI installation instructions](https://github.com/dashdogy/MFG-Unlocker/blob/main/docs/optiscaler.md).
+Loading the ASI or increasing the count is not proof of MFG: check the receiver's
+`ReShade XeFG SDK status` messages for actual generated/presented frames.
+
+```sh
+NR_OPTIFG_FG_OUTPUT=xefg NR_OPTIFG_MULTIPLIER=3 \
+  NR_OPTIFG_ASI='/path/to/MFGUnlocker.asi' NR_OPTIFG_SR=1 NR_OPTIFG_HUD=1 \
+  NR_PROTON='/path/to/Proton' bash linux/optifg/run_probe.sh direct 1200
+NR_OPTIFG_NR=1 NR_OPTIFG_NR_DATA='/private/path/to/dlssnr-amd' \
+  NR_OPTIFG_SR=1 NR_OPTIFG_HUD=1 NR_PROTON='/path/to/Proton' \
+  bash linux/optifg/run_probe.sh reshade 6000
+```
+
+The private NR folder needs `CC_SMALL_FP8.bin` extracted from your DLL, matching
+RDNA3 network shaders and the HUD composition shaders in `shaders/wilsjo2/`.
+First-time network/pipeline compilation can outlast a short probe. The runner
+requires an actually processed NR frame when NR is requested.
 
 ## Synchronization details
 
