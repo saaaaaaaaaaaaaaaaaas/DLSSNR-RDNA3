@@ -65,6 +65,18 @@ bool SupportedOutput() {
     return output == FGOutput::FSRFG || output == FGOutput::XeFG;
 }
 void DropStream() {
+    // The publisher may destroy its NR textures as soon as Unregister returns.
+    // ValidNow copies must finish on the GPU, not merely be submitted by then.
+    if (copiedFence && copiedFence->GetCompletedValue() < copySerial) {
+        HANDLE done = CreateEventW(nullptr, FALSE, FALSE, nullptr);
+        const bool drained = done && SUCCEEDED(copiedFence->SetEventOnCompletion(copySerial, done)) &&
+                             WaitForSingleObject(done, 5000) == WAIT_OBJECT_0;
+        if (done) CloseHandle(done);
+        if (!drained) {
+            LOG_ERROR("ReShade input copies did not finish during unregister; retaining the stream resources");
+            return;
+        }
+    }
     ReShadeSR::Reset();
     srReady = false; srReset = true;
     token = 0;

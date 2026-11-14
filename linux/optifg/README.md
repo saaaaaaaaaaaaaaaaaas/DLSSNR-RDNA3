@@ -227,6 +227,9 @@ and the HUD composition shaders in `shaders/wilsjo2/`. The runner defaults to
 `CC_SMALL_FP8_EXPERIMENTAL`, with its derived weights and
 `experimental/shaders/`; set `NR_OPTIFG_NR_MODEL=CC_SMALL_FP8` for the baseline.
 `NR_OPTIFG_PRODUCER` can select an exact matching CI add-on.
+NR model resolution defaults to 50% (`WorkingScale=0.5`,
+`NR_OPTIFG_NR_SCALE=0.5`); it changes NR work size, not the game or SR output
+extent. At 720p input this gives a logical 640x360 NR image.
 First-time network/pipeline compilation can outlast a short probe. The runner
 requires an actually processed NR frame when NR is requested.
 

@@ -172,7 +172,7 @@ fi
 if [[ "${NR_OPTIFG_NR:-0}" == 1 ]]; then
     [[ "$mode" == reshade ]] || { echo 'NR requires the full reshade probe' >&2; exit 2; }
     : "${NR_OPTIFG_NR_DATA:?Set NR_OPTIFG_NR_DATA to your private model/shaders folder}"
-    python3 - "$out" "$NR_OPTIFG_NR_DATA" "${NR_OPTIFG_NR_MODEL:-CC_SMALL_FP8_EXPERIMENTAL}" <<'PY'
+    python3 - "$out" "$NR_OPTIFG_NR_DATA" "${NR_OPTIFG_NR_MODEL:-CC_SMALL_FP8_EXPERIMENTAL}" "${NR_OPTIFG_NR_SCALE:-0.5}" <<'PY'
 from pathlib import Path
 import configparser, shutil, sys
 root, data = Path(sys.argv[1]), Path(sys.argv[2]).resolve(strict=True)
@@ -184,6 +184,8 @@ shutil.copytree(data, root / 'dlssnr-amd', dirs_exist_ok=True)
 p = root / 'dlssnr-amd.ini'
 c = configparser.ConfigParser(interpolation=None); c.optionxform = str; c.read(p)
 c['DlssNr']['Enabled'] = '1'
+scale = float(sys.argv[4]); assert 0.25 <= scale <= 2.0
+c['DlssNr']['WorkingScale'] = str(scale)
 c['Network'] = dict(Model=model)
 with p.open('w') as f: c.write(f, space_around_delimiters=False)
 PY
@@ -223,5 +225,14 @@ fi
 if [[ "${NR_OPTIFG_FG_OUTPUT:-fsrfg}" == xefg ]]; then
     rg -q 'ReShade XeFG SDK status:.*[1-9][0-9]* generated' OptiScaler.log || {
         echo 'XeFG did not report generated/presented frames; plugin loading alone is insufficient' >&2; exit 7;
+    }
+fi
+
+if rg -qi 'GPUVM fault|context is lost|PROTECTION_FAULT' probe.log; then
+    echo 'GPU fault during execution or teardown; qualification failed' >&2; exit 8
+fi
+if [[ "${NR_OPTIFG_FG_OUTPUT:-fsrfg}" == xefg ]]; then
+    rg -q 'Destroy result: XEFG_SWAPCHAIN_RESULT_SUCCESS' OptiScaler.log || {
+        echo 'XeFG context did not confirm clean destruction' >&2; exit 9;
     }
 fi

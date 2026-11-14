@@ -142,7 +142,9 @@ The fix derives SR framebuffer scale from the owned fixed output configuration,
 without re-entering the SDK proxy. Normal splash/open-menu qualification follows.
 
 
-The owner selected `CC_SMALL_FP8_EXPERIMENTAL` for further qualification.
+The owner selected `CC_SMALL_FP8_EXPERIMENTAL` at 50% model resolution
+(`WorkingScale=0.5`) for further qualification. The source remains 1280x720 and
+the SR presenter 1920x1080; only NR uses logical 640x360.
 The earlier plain FP8 run remains a control, not the final game profile.
 
 The combined plain-FP8/1:1 SR/XeMFG isolation run generated 2,342 frames over
