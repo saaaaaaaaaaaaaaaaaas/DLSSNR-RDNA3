@@ -51,7 +51,7 @@ Windows ACO change, driver change or automatic network/quality selection.
 Generic RDNA3 and RDNA4 build behavior is preserved. The profile's SPIR-V files
 are separate under `build/linux/rdna3/network[-<overlay>]-z1-extreme`; installed
 profile directories carry `gpu-profile.txt`. The package filename ends in
-`-rdna3-z1-extreme.tar.gz`. To roll back, reinstall the generic 0.0.9 package.
+`-Z1E-Optimized-RDNA-3.tar.gz` for x86_64. To roll back, reinstall the generic 0.0.9 package.
 Explicit package selection replaces the initial automatic-selection idea in
 the matrix: it keeps generic shaders untouched and makes the exact configuration
 reviewable. The profile is rejected for RDNA4 and the legacy INT4 harness.
@@ -185,10 +185,12 @@ No game installation, model or user INI was changed by this work.
 
 ```sh
 NR_GPU=rdna3 NR_ARCH=x86_64 NR_SHADER_PROFILE=z1-extreme \
-  NR_VERSION=0.0.9-z1-preview-g72a157f bash linux/build/build_package.sh
+  NR_VERSION=0.0.9 bash linux/build/build_package.sh
 ```
 
-Archive: `linux/package/DLSSNR-AMD-Vulkan-Linux-0.0.9-z1-preview-g72a157f-x86_64-rdna3-z1-extreme.tar.gz`.
+Archive: `linux/package/DLSS-NR-AMD-Vulcan-Linux-0.0.9-Z1E-Optimized-RDNA-3.tar.gz`.
+The delivered archive was renamed without rebuilding; its contents and checksum
+are unchanged, including its internal `0.0.9-z1-preview-g72a157f` version stamp.
 The checksum is distributed beside it in `.sha256`. Models stay outside Git
 and the distributed archive. This is a target trial package; no release tag
 or game-FPS claim is made.

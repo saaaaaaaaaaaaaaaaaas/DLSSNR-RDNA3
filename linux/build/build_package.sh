@@ -412,7 +412,11 @@ chmod +x "$pkg/install.sh" "$mt/extract_model.sh"
 # ---- archive ------------------------------------------------------------------
 version=$(bash linux/build/version.sh)
 profile_suffix=; [[ "$profile" == generic ]] || profile_suffix="-$profile"
-archive="DLSSNR-AMD-Vulkan-Linux-$version-$arch$([[ "$gpu" == rdna4 ]] || echo "-$gpu")$profile_suffix.tar.gz"
+if [[ "$profile" == z1-extreme && "$arch" == x86_64 ]]; then
+    archive="DLSS-NR-AMD-Vulcan-Linux-$version-Z1E-Optimized-RDNA-3.tar.gz"
+else
+    archive="DLSSNR-AMD-Vulkan-Linux-$version-$arch$([[ "$gpu" == rdna4 ]] || echo "-$gpu")$profile_suffix.tar.gz"
+fi
 tar --sort=name --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner -C "$pkg" -cf - . |
     gzip -n > "$out/$archive"
 # The finished package goes beside the installer sources in linux/package/ (not in git).

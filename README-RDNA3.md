@@ -39,10 +39,11 @@ operand staging for gfx1103/RADV without changing network precision or weights.
 Build a separate Linux/Proton package with:
 
 ```sh
-NR_GPU=rdna3 NR_ARCH=x86_64 NR_SHADER_PROFILE=z1-extreme bash linux/build/build_package.sh
+NR_GPU=rdna3 NR_ARCH=x86_64 NR_SHADER_PROFILE=z1-extreme NR_VERSION=0.0.9 bash linux/build/build_package.sh
 ```
 
-Its archive name ends in `-rdna3-z1-extreme.tar.gz`. The usual build stays generic;
+Its 64-bit archive is `DLSS-NR-AMD-Vulcan-Linux-0.0.9-Z1E-Optimized-RDNA-3.tar.gz`.
+The usual build stays generic;
 the Z1 profile is selected at build time, with no game launch variable required.
 See [target measurements, checks and rollback](docs/RDNA3-Z1-EXTREME.md).
 
