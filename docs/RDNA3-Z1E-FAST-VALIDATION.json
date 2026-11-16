@@ -1,6 +1,2458 @@
 {
+  "status": "opt-in approximate trials; GPU smoke checked, real-game qualification pending",
+  "date": "2026-11-16",
   "base_commit": "e7f7ac84b37b31c87cbbcbc321587a2f47f1f02c",
-  "status": "measurement in progress; not an approved reference",
-  "user_authorization": "image changes allowed; RDNA4 builds and package uploads prohibited",
-  "profiles": ["z1-extreme-fast", "z1-extreme-turbo"]
+  "implementation_commit": "1a1a481b4efb86e27489294f548dccca4a5d1942",
+  "user_authorization": "image changes allowed; main push allowed; RDNA4 compilation and archive/release uploads prohibited",
+  "gpu": "AMD Ryzen Z1 Extreme (RADV PHOENIX)",
+  "machine": "ASUSTeK ROG Ally RC71L",
+  "driver": "Mesa 26.2.6-arch3.1",
+  "conditions": "Automatic clocks/power unchanged; desktop applications running. Only test processes disable implicit Vulkan layers.",
+  "profiles": {
+    "z1-extreme-fast": {
+      "description": "Opt-in Z1 approximation: retain FP16 at C32 activation/context sites and throughout the post block; keep saturation.",
+      "inherit": "z1-extreme",
+      "change": {
+        "fswin32": [
+          "NR_RELAX_QUANT_MASK=5"
+        ],
+        "fswin32nh": [
+          "NR_RELAX_QUANT_MASK=5"
+        ],
+        "fswinds32": [
+          "NR_RELAX_QUANT_MASK=5"
+        ],
+        "fswindsp32": [
+          "NR_RELAX_QUANT_MASK=5"
+        ],
+        "fswindsp32nh": [
+          "NR_RELAX_QUANT_MASK=5"
+        ],
+        "fswinfusedup32": [
+          "NR_RELAX_QUANT_MASK=5"
+        ],
+        "fswinfusedup32nh": [
+          "NR_RELAX_QUANT_MASK=5"
+        ],
+        "fswinimagepost32": [
+          "NR_QUANT_F16_ONLY=1"
+        ],
+        "fswinimagepreds32": [
+          "NR_RELAX_QUANT_MASK=5"
+        ],
+        "fswinimagepreds32nh": [
+          "NR_RELAX_QUANT_MASK=5"
+        ]
+      }
+    },
+    "z1-extreme-turbo": {
+      "description": "Opt-in Z1 approximation: retain FP16 instead of rounding to e4m3 throughout C32 kernels; keep saturation. Does not change device power settings.",
+      "inherit": "z1-extreme",
+      "change": {
+        "fswin32": [
+          "NR_QUANT_F16_ONLY=1"
+        ],
+        "fswin32nh": [
+          "NR_QUANT_F16_ONLY=1"
+        ],
+        "fswinds32": [
+          "NR_QUANT_F16_ONLY=1"
+        ],
+        "fswindsp32": [
+          "NR_QUANT_F16_ONLY=1"
+        ],
+        "fswindsp32nh": [
+          "NR_QUANT_F16_ONLY=1"
+        ],
+        "fswinfusedup32": [
+          "NR_QUANT_F16_ONLY=1"
+        ],
+        "fswinfusedup32nh": [
+          "NR_QUANT_F16_ONLY=1"
+        ],
+        "fswinimagepost32": [
+          "NR_QUANT_F16_ONLY=1"
+        ],
+        "fswinimagepreds32": [
+          "NR_QUANT_F16_ONLY=1"
+        ],
+        "fswinimagepreds32nh": [
+          "NR_QUANT_F16_ONLY=1"
+        ]
+      }
+    }
+  },
+  "timing_method": {
+    "baseline": "already optimized exact z1-extreme",
+    "rounds": 4,
+    "warmup": 30,
+    "repeats_per_process": 40,
+    "order": "baseline/fast/turbo then turbo/fast/baseline, twice",
+    "metric": "median of four per-process mean GPU network times, with per-layer timestamps",
+    "warning": "One scene; not game FPS. Do not combine improvements with prior sessions. Automatic clock/thermal variation is present."
+  },
+  "benchmarks": {
+    "final-silver-1080p": {
+      "source": "1a1a481b4efb86e27489294f548dccca4a5d1942",
+      "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "started_utc": "2026-11-16T16:08:51.798405+00:00",
+      "model": "CC_SILVER_AARDWOLD.bin",
+      "model_sha256": "2b41c888cf4155b8958c665ba64018ab0bd25c85fc71a2b6db86d0d04d1f7fbd",
+      "extent": [
+        1920,
+        1080
+      ],
+      "input_sha256": "79150122cb6ce661a09f98ce5eeceecbaf1fc546554c528a157ecab14b72ce53",
+      "binaries": {
+        "baseline": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "6e5c912b22467cd539d692083bf0d2c71ff38dc0f82cda9e6fec345a4b2983a9"
+        },
+        "fast": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "02b86bbf155a79805f9fb79e10e956284511e998065a8d7854215169f6b2801e"
+        },
+        "turbo": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "5aae592fa7b013737c077b77bf75f893cce89e037c758903135125769160f414"
+        }
+      },
+      "environment": {
+        "VK_LOADER_LAYERS_DISABLE": "~implicit~"
+      },
+      "summary": {
+        "baseline": {
+          "median_ms": 151.4275,
+          "min_ms": 149.729,
+          "max_ms": 153.066,
+          "exact": true,
+          "deterministic": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "reduction_percent_vs_exact_z1": 0.0
+        },
+        "fast": {
+          "median_ms": 147.6995,
+          "min_ms": 147.064,
+          "max_ms": 150.39,
+          "exact": false,
+          "deterministic": true,
+          "quality": {
+            "rgb_rmse": 0.004168046084259648,
+            "rgb_max_abs": 0.053843140602111816,
+            "rgb_psnr_db": 47.60134975756304,
+            "display_psnr_db": 47.00469638560179
+          },
+          "reduction_percent_vs_exact_z1": 2.4619042115864076
+        },
+        "turbo": {
+          "median_ms": 145.26350000000002,
+          "min_ms": 144.907,
+          "max_ms": 147.988,
+          "exact": false,
+          "deterministic": true,
+          "quality": {
+            "rgb_rmse": 0.007309022725768311,
+            "rgb_max_abs": 0.0982353687286377,
+            "rgb_psnr_db": 42.72281375545112,
+            "display_psnr_db": 42.51767440789486
+          },
+          "reduction_percent_vs_exact_z1": 4.070594839114417
+        }
+      },
+      "runs": [
+        {
+          "round": 0,
+          "case": "baseline",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "62",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "19942000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "65000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "85",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz \n1: 1066Mhz *\n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25503000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "69000"
+          },
+          "ms": 149.729,
+          "gpu_mhz": 2200.0,
+          "gpu_mcycles": 329.40380000000005,
+          "telemetry": {
+            "min_mhz": 1926.0,
+            "max_mhz": 2445.0,
+            "power_w": 29.9,
+            "edge_c": 86.9
+          },
+          "sha256": "469073d3f69fa57b01812bfed7aa82558a7883b66dc18a8d3baca2edc3e6b503",
+          "exact": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "deterministic": true
+        },
+        {
+          "round": 0,
+          "case": "fast",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "79",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "23899000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "68000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "83",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24813000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "70000"
+          },
+          "ms": 147.064,
+          "gpu_mhz": 2188.0,
+          "gpu_mcycles": 321.776032,
+          "telemetry": {
+            "min_mhz": 1722.0,
+            "max_mhz": 2421.0,
+            "power_w": 29.9,
+            "edge_c": 88.1
+          },
+          "sha256": "0f7fba3251fd4c751b6bfe2bcadca177cf1131922986aed5f0154b3d3eed0093",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.004168046084259648,
+            "rgb_max_abs": 0.053843140602111816,
+            "rgb_psnr_db": 47.60134975756304,
+            "display_psnr_db": 47.00469638560179
+          },
+          "deterministic": true
+        },
+        {
+          "round": 0,
+          "case": "turbo",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "79",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "23599000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "70000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "81",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24505000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "69000"
+          },
+          "ms": 144.907,
+          "gpu_mhz": 2177.0,
+          "gpu_mcycles": 315.46253900000005,
+          "telemetry": {
+            "min_mhz": 1982.0,
+            "max_mhz": 2431.0,
+            "power_w": 29.9,
+            "edge_c": 88.5
+          },
+          "sha256": "ec85f356a3abd11b5b4b81dc842ce36794d8f343fd13dc9d1c4d8572069b68c0",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.007309022725768311,
+            "rgb_max_abs": 0.0982353687286377,
+            "rgb_psnr_db": 42.72281375545112,
+            "display_psnr_db": 42.51767440789486
+          },
+          "deterministic": true
+        },
+        {
+          "round": 1,
+          "case": "turbo",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "75",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "23055000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "69000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "82",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24452000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "70000"
+          },
+          "ms": 144.949,
+          "gpu_mhz": 2175.0,
+          "gpu_mcycles": 315.264075,
+          "telemetry": {
+            "min_mhz": 1979.0,
+            "max_mhz": 2402.0,
+            "power_w": 29.9,
+            "edge_c": 89.2
+          },
+          "sha256": "ec85f356a3abd11b5b4b81dc842ce36794d8f343fd13dc9d1c4d8572069b68c0",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.007309022725768311,
+            "rgb_max_abs": 0.0982353687286377,
+            "rgb_psnr_db": 42.72281375545112,
+            "display_psnr_db": 42.51767440789486
+          },
+          "deterministic": true
+        },
+        {
+          "round": 1,
+          "case": "fast",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "76",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "22998000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "70000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "83",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz \n1: 965Mhz *\n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24695000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "70000"
+          },
+          "ms": 147.573,
+          "gpu_mhz": 2178.0,
+          "gpu_mcycles": 321.413994,
+          "telemetry": {
+            "min_mhz": 1969.0,
+            "max_mhz": 2405.0,
+            "power_w": 29.9,
+            "edge_c": 89.5
+          },
+          "sha256": "0f7fba3251fd4c751b6bfe2bcadca177cf1131922986aed5f0154b3d3eed0093",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.004168046084259648,
+            "rgb_max_abs": 0.053843140602111816,
+            "rgb_psnr_db": 47.60134975756304,
+            "display_psnr_db": 47.00469638560179
+          },
+          "deterministic": true
+        },
+        {
+          "round": 1,
+          "case": "baseline",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "77",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "23145000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "70000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "82",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24731000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "70000"
+          },
+          "ms": 153.066,
+          "gpu_mhz": 2134.0,
+          "gpu_mcycles": 326.64284399999997,
+          "telemetry": {
+            "min_mhz": 1952.0,
+            "max_mhz": 2371.0,
+            "power_w": 29.9,
+            "edge_c": 89.7
+          },
+          "sha256": "469073d3f69fa57b01812bfed7aa82558a7883b66dc18a8d3baca2edc3e6b503",
+          "exact": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "deterministic": true
+        },
+        {
+          "round": 2,
+          "case": "baseline",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "77",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "23373000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "82",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24553000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "ms": 151.251,
+          "gpu_mhz": 2174.0,
+          "gpu_mcycles": 328.819674,
+          "telemetry": {
+            "min_mhz": 1916.0,
+            "max_mhz": 2426.0,
+            "power_w": 29.9,
+            "edge_c": 89.9
+          },
+          "sha256": "469073d3f69fa57b01812bfed7aa82558a7883b66dc18a8d3baca2edc3e6b503",
+          "exact": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "deterministic": true
+        },
+        {
+          "round": 2,
+          "case": "fast",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "76",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "23176000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "82",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24733000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "ms": 147.826,
+          "gpu_mhz": 2166.0,
+          "gpu_mcycles": 320.19111599999997,
+          "telemetry": {
+            "min_mhz": 1967.0,
+            "max_mhz": 2400.0,
+            "power_w": 29.9,
+            "edge_c": 90.2
+          },
+          "sha256": "0f7fba3251fd4c751b6bfe2bcadca177cf1131922986aed5f0154b3d3eed0093",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.004168046084259648,
+            "rgb_max_abs": 0.053843140602111816,
+            "rgb_psnr_db": 47.60134975756304,
+            "display_psnr_db": 47.00469638560179
+          },
+          "deterministic": true
+        },
+        {
+          "round": 2,
+          "case": "turbo",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "75",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "23162000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "86",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25356000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "72000"
+          },
+          "ms": 145.578,
+          "gpu_mhz": 2160.0,
+          "gpu_mcycles": 314.44847999999996,
+          "telemetry": {
+            "min_mhz": 1943.0,
+            "max_mhz": 2416.0,
+            "power_w": 29.9,
+            "edge_c": 90.3
+          },
+          "sha256": "ec85f356a3abd11b5b4b81dc842ce36794d8f343fd13dc9d1c4d8572069b68c0",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.007309022725768311,
+            "rgb_max_abs": 0.0982353687286377,
+            "rgb_psnr_db": 42.72281375545112,
+            "display_psnr_db": 42.51767440789486
+          },
+          "deterministic": true
+        },
+        {
+          "round": 3,
+          "case": "turbo",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "82",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24105000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "72000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "81",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24387000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "72000"
+          },
+          "ms": 147.988,
+          "gpu_mhz": 2112.0,
+          "gpu_mcycles": 312.550656,
+          "telemetry": {
+            "min_mhz": 1874.0,
+            "max_mhz": 2328.0,
+            "power_w": 29.9,
+            "edge_c": 90.5
+          },
+          "sha256": "ec85f356a3abd11b5b4b81dc842ce36794d8f343fd13dc9d1c4d8572069b68c0",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.007309022725768311,
+            "rgb_max_abs": 0.0982353687286377,
+            "rgb_psnr_db": 42.72281375545112,
+            "display_psnr_db": 42.51767440789486
+          },
+          "deterministic": true
+        },
+        {
+          "round": 3,
+          "case": "fast",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "73",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "22810000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "72000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "82",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz \n1: 930Mhz *\n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24645000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "72000"
+          },
+          "ms": 150.39,
+          "gpu_mhz": 2115.0,
+          "gpu_mcycles": 318.07484999999997,
+          "telemetry": {
+            "min_mhz": 1635.0,
+            "max_mhz": 2331.0,
+            "power_w": 29.9,
+            "edge_c": 90.9
+          },
+          "sha256": "0f7fba3251fd4c751b6bfe2bcadca177cf1131922986aed5f0154b3d3eed0093",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.004168046084259648,
+            "rgb_max_abs": 0.053843140602111816,
+            "rgb_psnr_db": 47.60134975756304,
+            "display_psnr_db": 47.00469638560179
+          },
+          "deterministic": true
+        },
+        {
+          "round": 3,
+          "case": "baseline",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "76",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "23238000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "72000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "83",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24887000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "72000"
+          },
+          "ms": 151.604,
+          "gpu_mhz": 2159.0,
+          "gpu_mcycles": 327.313036,
+          "telemetry": {
+            "min_mhz": 1968.0,
+            "max_mhz": 2379.0,
+            "power_w": 29.9,
+            "edge_c": 91.3
+          },
+          "sha256": "469073d3f69fa57b01812bfed7aa82558a7883b66dc18a8d3baca2edc3e6b503",
+          "exact": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "deterministic": true
+        }
+      ]
+    },
+    "final-silver-720p": {
+      "source": "1a1a481b4efb86e27489294f548dccca4a5d1942",
+      "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "started_utc": "2026-11-16T16:11:34.569634+00:00",
+      "model": "CC_SILVER_AARDWOLD.bin",
+      "model_sha256": "2b41c888cf4155b8958c665ba64018ab0bd25c85fc71a2b6db86d0d04d1f7fbd",
+      "extent": [
+        1280,
+        720
+      ],
+      "input_sha256": "ef5b1e8852382b6c8b0ab2bcdcb34bc264229557c0608b399314760c4d1c3ec8",
+      "binaries": {
+        "baseline": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "6e5c912b22467cd539d692083bf0d2c71ff38dc0f82cda9e6fec345a4b2983a9"
+        },
+        "fast": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "02b86bbf155a79805f9fb79e10e956284511e998065a8d7854215169f6b2801e"
+        },
+        "turbo": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "5aae592fa7b013737c077b77bf75f893cce89e037c758903135125769160f414"
+        }
+      },
+      "environment": {
+        "VK_LOADER_LAYERS_DISABLE": "~implicit~"
+      },
+      "summary": {
+        "baseline": {
+          "median_ms": 73.24199999999999,
+          "min_ms": 73.099,
+          "max_ms": 73.547,
+          "exact": true,
+          "deterministic": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "reduction_percent_vs_exact_z1": 0.0
+        },
+        "fast": {
+          "median_ms": 71.719,
+          "min_ms": 71.398,
+          "max_ms": 72.068,
+          "exact": false,
+          "deterministic": true,
+          "quality": {
+            "rgb_rmse": 0.004482512258298526,
+            "rgb_max_abs": 0.046853482723236084,
+            "rgb_psnr_db": 46.96957028203449,
+            "display_psnr_db": 46.44910822815609
+          },
+          "reduction_percent_vs_exact_z1": 2.079407989951121
+        },
+        "turbo": {
+          "median_ms": 70.9105,
+          "min_ms": 70.221,
+          "max_ms": 71.026,
+          "exact": false,
+          "deterministic": true,
+          "quality": {
+            "rgb_rmse": 0.008278553130645228,
+            "rgb_max_abs": 0.06744605302810669,
+            "rgb_psnr_db": 41.64091119252585,
+            "display_psnr_db": 41.48250508086515
+          },
+          "reduction_percent_vs_exact_z1": 3.1832828158706583
+        }
+      },
+      "runs": [
+        {
+          "round": 0,
+          "case": "baseline",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "55",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "17778000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "90",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "26841000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "ms": 73.547,
+          "gpu_mhz": 2157.0,
+          "gpu_mcycles": 158.64087899999998,
+          "telemetry": {
+            "min_mhz": 1507.0,
+            "max_mhz": 2312.0,
+            "power_w": 29.0,
+            "edge_c": 89.3
+          },
+          "sha256": "c9dda210221a48af8ccc57d41dbea7475c5e2793d6676a740ed33060bb21bc99",
+          "exact": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "deterministic": true
+        },
+        {
+          "round": 0,
+          "case": "fast",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "85",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25790000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "88",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "26452000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "ms": 71.502,
+          "gpu_mhz": 2167.0,
+          "gpu_mcycles": 154.94483400000001,
+          "telemetry": {
+            "min_mhz": 1991.0,
+            "max_mhz": 2317.0,
+            "power_w": 29.1,
+            "edge_c": 89.1
+          },
+          "sha256": "a712c53baa64897a2a7cbdea4c367da5ca5a622dd59e47a1b5d41a10b5ab980e",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.004482512258298526,
+            "rgb_max_abs": 0.046853482723236084,
+            "rgb_psnr_db": 46.96957028203449,
+            "display_psnr_db": 46.44910822815609
+          },
+          "deterministic": true
+        },
+        {
+          "round": 0,
+          "case": "turbo",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "84",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25627000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "92",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "28032000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "75000"
+          },
+          "ms": 70.943,
+          "gpu_mhz": 2138.0,
+          "gpu_mcycles": 151.676134,
+          "telemetry": {
+            "min_mhz": 1815.0,
+            "max_mhz": 2322.0,
+            "power_w": 29.0,
+            "edge_c": 88.3
+          },
+          "sha256": "1bc390ddadbed0ba9504b9233073015f20254b565417dd14566f78ed5ba3a120",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.008278553130645228,
+            "rgb_max_abs": 0.06744605302810669,
+            "rgb_psnr_db": 41.64091119252585,
+            "display_psnr_db": 41.48250508086515
+          },
+          "deterministic": true
+        },
+        {
+          "round": 1,
+          "case": "turbo",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "91",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz \n1: 1128Mhz *\n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "27543000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "74000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "92",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "27750000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "74000"
+          },
+          "ms": 70.878,
+          "gpu_mhz": 2138.0,
+          "gpu_mcycles": 151.537164,
+          "telemetry": {
+            "min_mhz": 1437.0,
+            "max_mhz": 2323.0,
+            "power_w": 29.3,
+            "edge_c": 89.1
+          },
+          "sha256": "1bc390ddadbed0ba9504b9233073015f20254b565417dd14566f78ed5ba3a120",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.008278553130645228,
+            "rgb_max_abs": 0.06744605302810669,
+            "rgb_psnr_db": 41.64091119252585,
+            "display_psnr_db": 41.48250508086515
+          },
+          "deterministic": true
+        },
+        {
+          "round": 1,
+          "case": "fast",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "91",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "27133000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "75000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "90",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "26946000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "72000"
+          },
+          "ms": 71.936,
+          "gpu_mhz": 2157.0,
+          "gpu_mcycles": 155.16595200000003,
+          "telemetry": {
+            "min_mhz": 1676.0,
+            "max_mhz": 2319.0,
+            "power_w": 29.2,
+            "edge_c": 89.4
+          },
+          "sha256": "a712c53baa64897a2a7cbdea4c367da5ca5a622dd59e47a1b5d41a10b5ab980e",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.004482512258298526,
+            "rgb_max_abs": 0.046853482723236084,
+            "rgb_psnr_db": 46.96957028203449,
+            "display_psnr_db": 46.44910822815609
+          },
+          "deterministic": true
+        },
+        {
+          "round": 1,
+          "case": "baseline",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "88",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "26248000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "72000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "88",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "26511000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "ms": 73.099,
+          "gpu_mhz": 2169.0,
+          "gpu_mcycles": 158.551731,
+          "telemetry": {
+            "min_mhz": 2022.0,
+            "max_mhz": 2317.0,
+            "power_w": 29.1,
+            "edge_c": 89.4
+          },
+          "sha256": "c9dda210221a48af8ccc57d41dbea7475c5e2793d6676a740ed33060bb21bc99",
+          "exact": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "deterministic": true
+        },
+        {
+          "round": 2,
+          "case": "baseline",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "85",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25642000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "87",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "26351000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "70000"
+          },
+          "ms": 73.252,
+          "gpu_mhz": 2164.0,
+          "gpu_mcycles": 158.517328,
+          "telemetry": {
+            "min_mhz": 1474.0,
+            "max_mhz": 2315.0,
+            "power_w": 29.1,
+            "edge_c": 89.0
+          },
+          "sha256": "c9dda210221a48af8ccc57d41dbea7475c5e2793d6676a740ed33060bb21bc99",
+          "exact": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "deterministic": true
+        },
+        {
+          "round": 2,
+          "case": "fast",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "84",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25501000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "88",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "26521000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "70000"
+          },
+          "ms": 71.398,
+          "gpu_mhz": 2170.0,
+          "gpu_mcycles": 154.93366,
+          "telemetry": {
+            "min_mhz": 1998.0,
+            "max_mhz": 2324.0,
+            "power_w": 29.1,
+            "edge_c": 88.9
+          },
+          "sha256": "a712c53baa64897a2a7cbdea4c367da5ca5a622dd59e47a1b5d41a10b5ab980e",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.004482512258298526,
+            "rgb_max_abs": 0.046853482723236084,
+            "rgb_psnr_db": 46.96957028203449,
+            "display_psnr_db": 46.44910822815609
+          },
+          "deterministic": true
+        },
+        {
+          "round": 2,
+          "case": "turbo",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "84",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25607000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "88",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "26620000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "70000"
+          },
+          "ms": 70.221,
+          "gpu_mhz": 2161.0,
+          "gpu_mcycles": 151.747581,
+          "telemetry": {
+            "min_mhz": 1963.0,
+            "max_mhz": 2319.0,
+            "power_w": 29.1,
+            "edge_c": 88.8
+          },
+          "sha256": "1bc390ddadbed0ba9504b9233073015f20254b565417dd14566f78ed5ba3a120",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.008278553130645228,
+            "rgb_max_abs": 0.06744605302810669,
+            "rgb_psnr_db": 41.64091119252585,
+            "display_psnr_db": 41.48250508086515
+          },
+          "deterministic": true
+        },
+        {
+          "round": 3,
+          "case": "turbo",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "84",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25698000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "90",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "27064000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "ms": 71.026,
+          "gpu_mhz": 2134.0,
+          "gpu_mcycles": 151.569484,
+          "telemetry": {
+            "min_mhz": 1429.0,
+            "max_mhz": 2340.0,
+            "power_w": 29.0,
+            "edge_c": 88.1
+          },
+          "sha256": "1bc390ddadbed0ba9504b9233073015f20254b565417dd14566f78ed5ba3a120",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.008278553130645228,
+            "rgb_max_abs": 0.06744605302810669,
+            "rgb_psnr_db": 41.64091119252585,
+            "display_psnr_db": 41.48250508086515
+          },
+          "deterministic": true
+        },
+        {
+          "round": 3,
+          "case": "fast",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "86",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "26168000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "88",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "26687000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "70000"
+          },
+          "ms": 72.068,
+          "gpu_mhz": 2153.0,
+          "gpu_mcycles": 155.162404,
+          "telemetry": {
+            "min_mhz": 1593.0,
+            "max_mhz": 2322.0,
+            "power_w": 29.2,
+            "edge_c": 88.6
+          },
+          "sha256": "a712c53baa64897a2a7cbdea4c367da5ca5a622dd59e47a1b5d41a10b5ab980e",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.004482512258298526,
+            "rgb_max_abs": 0.046853482723236084,
+            "rgb_psnr_db": 46.96957028203449,
+            "display_psnr_db": 46.44910822815609
+          },
+          "deterministic": true
+        },
+        {
+          "round": 3,
+          "case": "baseline",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "84",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25739000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "91",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz \n1: 847Mhz *\n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "27715000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "72000"
+          },
+          "ms": 73.232,
+          "gpu_mhz": 2164.0,
+          "gpu_mcycles": 158.474048,
+          "telemetry": {
+            "min_mhz": 1525.0,
+            "max_mhz": 2331.0,
+            "power_w": 29.1,
+            "edge_c": 88.7
+          },
+          "sha256": "c9dda210221a48af8ccc57d41dbea7475c5e2793d6676a740ed33060bb21bc99",
+          "exact": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "deterministic": true
+        }
+      ]
+    },
+    "final-small-1080p": {
+      "source": "1a1a481b4efb86e27489294f548dccca4a5d1942",
+      "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "started_utc": "2026-11-16T16:06:14.584814+00:00",
+      "model": "CC_SMALL_FP8.bin",
+      "model_sha256": "7e966e2639dbec6596aa0bac3b8761137d2c40ca8cb4aca30df7ca10043c6e33",
+      "extent": [
+        1920,
+        1080
+      ],
+      "input_sha256": "79150122cb6ce661a09f98ce5eeceecbaf1fc546554c528a157ecab14b72ce53",
+      "binaries": {
+        "baseline": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "6e5c912b22467cd539d692083bf0d2c71ff38dc0f82cda9e6fec345a4b2983a9"
+        },
+        "fast": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "02b86bbf155a79805f9fb79e10e956284511e998065a8d7854215169f6b2801e"
+        },
+        "turbo": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "5aae592fa7b013737c077b77bf75f893cce89e037c758903135125769160f414"
+        }
+      },
+      "environment": {
+        "VK_LOADER_LAYERS_DISABLE": "~implicit~"
+      },
+      "summary": {
+        "baseline": {
+          "median_ms": 87.09450000000001,
+          "min_ms": 82.861,
+          "max_ms": 88.968,
+          "exact": true,
+          "deterministic": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "reduction_percent_vs_exact_z1": 0.0
+        },
+        "fast": {
+          "median_ms": 84.1875,
+          "min_ms": 81.796,
+          "max_ms": 84.487,
+          "exact": false,
+          "deterministic": true,
+          "quality": {
+            "rgb_rmse": 0.00308617882367854,
+            "rgb_max_abs": 0.03906470537185669,
+            "rgb_psnr_db": 50.211578260941685,
+            "display_psnr_db": 49.18417169286232
+          },
+          "reduction_percent_vs_exact_z1": 3.337753819127509
+        },
+        "turbo": {
+          "median_ms": 82.38300000000001,
+          "min_ms": 81.155,
+          "max_ms": 83.519,
+          "exact": false,
+          "deterministic": true,
+          "quality": {
+            "rgb_rmse": 0.009329372014734664,
+            "rgb_max_abs": 0.09355008602142334,
+            "rgb_psnr_db": 40.602951776119,
+            "display_psnr_db": 40.4809108264831
+          },
+          "reduction_percent_vs_exact_z1": 5.409641251743791
+        }
+      },
+      "runs": [
+        {
+          "round": 0,
+          "case": "baseline",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "15",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "6889000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "44000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "81",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24401000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "56000"
+          },
+          "ms": 82.861,
+          "gpu_mhz": 2320.0,
+          "gpu_mcycles": 192.23752000000002,
+          "telemetry": {
+            "min_mhz": 2164.0,
+            "max_mhz": 2506.0,
+            "power_w": 29.2,
+            "edge_c": 72.1
+          },
+          "sha256": "70633242b61728c4e4043ad22d1528b0b2bc431b34b1d9a5002df8336edfe605",
+          "exact": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "deterministic": true
+        },
+        {
+          "round": 0,
+          "case": "fast",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "69",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "20738000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "56000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "87",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25573000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "63000"
+          },
+          "ms": 81.796,
+          "gpu_mhz": 2260.0,
+          "gpu_mcycles": 184.85896000000002,
+          "telemetry": {
+            "min_mhz": 2076.0,
+            "max_mhz": 2442.0,
+            "power_w": 29.3,
+            "edge_c": 79.3
+          },
+          "sha256": "36555ca20b15843f215bd3b50bc4c706d187af9a50908de4fa9516bc6ac5ef10",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.00308617882367854,
+            "rgb_max_abs": 0.03906470537185669,
+            "rgb_psnr_db": 50.211578260941685,
+            "display_psnr_db": 49.18417169286232
+          },
+          "deterministic": true
+        },
+        {
+          "round": 0,
+          "case": "turbo",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "77",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "22621000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "63000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "87",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25480000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "68000"
+          },
+          "ms": 81.155,
+          "gpu_mhz": 2211.0,
+          "gpu_mcycles": 179.433705,
+          "telemetry": {
+            "min_mhz": 1983.0,
+            "max_mhz": 2394.0,
+            "power_w": 29.3,
+            "edge_c": 84.0
+          },
+          "sha256": "37c2bf877fadc4b824a3d9325090ce1b7e4c31277d82962ec1dcb094503fefbf",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.009329372014734664,
+            "rgb_max_abs": 0.09355008602142334,
+            "rgb_psnr_db": 40.602951776119,
+            "display_psnr_db": 40.4809108264831
+          },
+          "deterministic": true
+        },
+        {
+          "round": 1,
+          "case": "turbo",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "77",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "23281000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "67000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "83",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24782000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "69000"
+          },
+          "ms": 82.129,
+          "gpu_mhz": 2177.0,
+          "gpu_mcycles": 178.794833,
+          "telemetry": {
+            "min_mhz": 1994.0,
+            "max_mhz": 2356.0,
+            "power_w": 29.3,
+            "edge_c": 87.4
+          },
+          "sha256": "37c2bf877fadc4b824a3d9325090ce1b7e4c31277d82962ec1dcb094503fefbf",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.009329372014734664,
+            "rgb_max_abs": 0.09355008602142334,
+            "rgb_psnr_db": 40.602951776119,
+            "display_psnr_db": 40.4809108264831
+          },
+          "deterministic": true
+        },
+        {
+          "round": 1,
+          "case": "fast",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "77",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "23444000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "70000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "82",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25260000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "ms": 84.203,
+          "gpu_mhz": 2173.0,
+          "gpu_mcycles": 182.973119,
+          "telemetry": {
+            "min_mhz": 1999.0,
+            "max_mhz": 2353.0,
+            "power_w": 29.4,
+            "edge_c": 89.5
+          },
+          "sha256": "36555ca20b15843f215bd3b50bc4c706d187af9a50908de4fa9516bc6ac5ef10",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.00308617882367854,
+            "rgb_max_abs": 0.03906470537185669,
+            "rgb_psnr_db": 50.211578260941685,
+            "display_psnr_db": 49.18417169286232
+          },
+          "deterministic": true
+        },
+        {
+          "round": 1,
+          "case": "baseline",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "73",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "23555000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "84",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25817000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "74000"
+          },
+          "ms": 87.262,
+          "gpu_mhz": 2159.0,
+          "gpu_mcycles": 188.39865799999998,
+          "telemetry": {
+            "min_mhz": 1991.0,
+            "max_mhz": 2350.0,
+            "power_w": 29.5,
+            "edge_c": 90.4
+          },
+          "sha256": "70633242b61728c4e4043ad22d1528b0b2bc431b34b1d9a5002df8336edfe605",
+          "exact": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "deterministic": true
+        },
+        {
+          "round": 2,
+          "case": "baseline",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "78",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24597000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "73000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "84",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz \n1: 809Mhz *\n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25306000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "72000"
+          },
+          "ms": 88.968,
+          "gpu_mhz": 2108.0,
+          "gpu_mcycles": 187.544544,
+          "telemetry": {
+            "min_mhz": 1608.0,
+            "max_mhz": 2292.0,
+            "power_w": 29.5,
+            "edge_c": 90.3
+          },
+          "sha256": "70633242b61728c4e4043ad22d1528b0b2bc431b34b1d9a5002df8336edfe605",
+          "exact": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "deterministic": true
+        },
+        {
+          "round": 2,
+          "case": "fast",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "78",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "23954000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "72000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "82",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24930000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "ms": 84.487,
+          "gpu_mhz": 2160.0,
+          "gpu_mcycles": 182.49192,
+          "telemetry": {
+            "min_mhz": 1995.0,
+            "max_mhz": 2346.0,
+            "power_w": 29.4,
+            "edge_c": 90.2
+          },
+          "sha256": "36555ca20b15843f215bd3b50bc4c706d187af9a50908de4fa9516bc6ac5ef10",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.00308617882367854,
+            "rgb_max_abs": 0.03906470537185669,
+            "rgb_psnr_db": 50.211578260941685,
+            "display_psnr_db": 49.18417169286232
+          },
+          "deterministic": true
+        },
+        {
+          "round": 2,
+          "case": "turbo",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "74",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "23308000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "84",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz \n1: 921Mhz *\n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25212000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "ms": 82.637,
+          "gpu_mhz": 2156.0,
+          "gpu_mcycles": 178.165372,
+          "telemetry": {
+            "min_mhz": 1982.0,
+            "max_mhz": 2327.0,
+            "power_w": 29.4,
+            "edge_c": 89.7
+          },
+          "sha256": "37c2bf877fadc4b824a3d9325090ce1b7e4c31277d82962ec1dcb094503fefbf",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.009329372014734664,
+            "rgb_max_abs": 0.09355008602142334,
+            "rgb_psnr_db": 40.602951776119,
+            "display_psnr_db": 40.4809108264831
+          },
+          "deterministic": true
+        },
+        {
+          "round": 3,
+          "case": "turbo",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "76",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "23242000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "71000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "83",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz \n1: 850Mhz *\n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25334000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "70000"
+          },
+          "ms": 83.519,
+          "gpu_mhz": 2121.0,
+          "gpu_mcycles": 177.143799,
+          "telemetry": {
+            "min_mhz": 1952.0,
+            "max_mhz": 2296.0,
+            "power_w": 29.4,
+            "edge_c": 89.1
+          },
+          "sha256": "37c2bf877fadc4b824a3d9325090ce1b7e4c31277d82962ec1dcb094503fefbf",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.009329372014734664,
+            "rgb_max_abs": 0.09355008602142334,
+            "rgb_psnr_db": 40.602951776119,
+            "display_psnr_db": 40.4809108264831
+          },
+          "deterministic": true
+        },
+        {
+          "round": 3,
+          "case": "fast",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "75",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "23499000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "70000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "83",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz \n1: 836Mhz *\n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25524000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "72000"
+          },
+          "ms": 84.172,
+          "gpu_mhz": 2171.0,
+          "gpu_mcycles": 182.73741199999998,
+          "telemetry": {
+            "min_mhz": 2016.0,
+            "max_mhz": 2350.0,
+            "power_w": 29.5,
+            "edge_c": 88.8
+          },
+          "sha256": "36555ca20b15843f215bd3b50bc4c706d187af9a50908de4fa9516bc6ac5ef10",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.00308617882367854,
+            "rgb_max_abs": 0.03906470537185669,
+            "rgb_psnr_db": 50.211578260941685,
+            "display_psnr_db": 49.18417169286232
+          },
+          "deterministic": true
+        },
+        {
+          "round": 3,
+          "case": "baseline",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "71",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "23116000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "69000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "86",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25407000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "70000"
+          },
+          "ms": 86.927,
+          "gpu_mhz": 2172.0,
+          "gpu_mcycles": 188.80544400000002,
+          "telemetry": {
+            "min_mhz": 1948.0,
+            "max_mhz": 2353.0,
+            "power_w": 29.5,
+            "edge_c": 88.5
+          },
+          "sha256": "70633242b61728c4e4043ad22d1528b0b2bc431b34b1d9a5002df8336edfe605",
+          "exact": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "deterministic": true
+        }
+      ]
+    },
+    "final-small-720p": {
+      "source": "1a1a481b4efb86e27489294f548dccca4a5d1942",
+      "source_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "started_utc": "2026-11-16T16:07:55.838191+00:00",
+      "model": "CC_SMALL_FP8.bin",
+      "model_sha256": "7e966e2639dbec6596aa0bac3b8761137d2c40ca8cb4aca30df7ca10043c6e33",
+      "extent": [
+        1280,
+        720
+      ],
+      "input_sha256": "ef5b1e8852382b6c8b0ab2bcdcb34bc264229557c0608b399314760c4d1c3ec8",
+      "binaries": {
+        "baseline": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "6e5c912b22467cd539d692083bf0d2c71ff38dc0f82cda9e6fec345a4b2983a9"
+        },
+        "fast": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "02b86bbf155a79805f9fb79e10e956284511e998065a8d7854215169f6b2801e"
+        },
+        "turbo": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "5aae592fa7b013737c077b77bf75f893cce89e037c758903135125769160f414"
+        }
+      },
+      "environment": {
+        "VK_LOADER_LAYERS_DISABLE": "~implicit~"
+      },
+      "summary": {
+        "baseline": {
+          "median_ms": 40.4765,
+          "min_ms": 40.415,
+          "max_ms": 40.668,
+          "exact": true,
+          "deterministic": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "reduction_percent_vs_exact_z1": 0.0
+        },
+        "fast": {
+          "median_ms": 39.222,
+          "min_ms": 39.128,
+          "max_ms": 39.374,
+          "exact": false,
+          "deterministic": true,
+          "quality": {
+            "rgb_rmse": 0.0036058227479110437,
+            "rgb_max_abs": 0.041335418820381165,
+            "rgb_psnr_db": 48.85991251564538,
+            "display_psnr_db": 48.07785251042848
+          },
+          "reduction_percent_vs_exact_z1": 3.099329240423454
+        },
+        "turbo": {
+          "median_ms": 38.473,
+          "min_ms": 38.329,
+          "max_ms": 38.826,
+          "exact": false,
+          "deterministic": true,
+          "quality": {
+            "rgb_rmse": 0.00950836839819504,
+            "rgb_max_abs": 0.071330726146698,
+            "rgb_psnr_db": 40.437880000796014,
+            "display_psnr_db": 40.31898381629474
+          },
+          "reduction_percent_vs_exact_z1": 4.949785678109531
+        }
+      },
+      "runs": [
+        {
+          "round": 0,
+          "case": "baseline",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "62",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "18464000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "69000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "85",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25606000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "69000"
+          },
+          "ms": 40.668,
+          "gpu_mhz": 2195.0,
+          "gpu_mcycles": 89.26625999999999,
+          "telemetry": {
+            "min_mhz": 2046.0,
+            "max_mhz": 2363.0,
+            "power_w": 26.8,
+            "edge_c": 86.5
+          },
+          "sha256": "79fc630cdcf98d5cf4f4220b30d445bc257c00bde2cbc8f03a3bc24c19c566ce",
+          "exact": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "deterministic": true
+        },
+        {
+          "round": 0,
+          "case": "fast",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "81",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24715000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "68000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "85",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25940000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "68000"
+          },
+          "ms": 39.374,
+          "gpu_mhz": 2199.0,
+          "gpu_mcycles": 86.583426,
+          "telemetry": {
+            "min_mhz": 2053.0,
+            "max_mhz": 2357.0,
+            "power_w": 27.1,
+            "edge_c": 85.7
+          },
+          "sha256": "02c4586304e04a15ddc8acf85b0aea7dcdbc9ef4edb7b777aa34f784b9ed2105",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.0036058227479110437,
+            "rgb_max_abs": 0.041335418820381165,
+            "rgb_psnr_db": 48.85991251564538,
+            "display_psnr_db": 48.07785251042848
+          },
+          "deterministic": true
+        },
+        {
+          "round": 0,
+          "case": "turbo",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "81",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24991000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "67000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "84",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25852000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "68000"
+          },
+          "ms": 38.495,
+          "gpu_mhz": 2192.0,
+          "gpu_mcycles": 84.38104,
+          "telemetry": {
+            "min_mhz": 1924.0,
+            "max_mhz": 2368.0,
+            "power_w": 27.0,
+            "edge_c": 85.3
+          },
+          "sha256": "2313c560be42218769d363db931de2f5da4436694565de20754dbd5a4ec2b7b2",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.00950836839819504,
+            "rgb_max_abs": 0.071330726146698,
+            "rgb_psnr_db": 40.437880000796014,
+            "display_psnr_db": 40.31898381629474
+          },
+          "deterministic": true
+        },
+        {
+          "round": 1,
+          "case": "turbo",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "81",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25445000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "68000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "84",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25479000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "67000"
+          },
+          "ms": 38.451,
+          "gpu_mhz": 2200.0,
+          "gpu_mcycles": 84.59219999999999,
+          "telemetry": {
+            "min_mhz": 1929.0,
+            "max_mhz": 2372.0,
+            "power_w": 27.0,
+            "edge_c": 85.2
+          },
+          "sha256": "2313c560be42218769d363db931de2f5da4436694565de20754dbd5a4ec2b7b2",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.00950836839819504,
+            "rgb_max_abs": 0.071330726146698,
+            "rgb_psnr_db": 40.437880000796014,
+            "display_psnr_db": 40.31898381629474
+          },
+          "deterministic": true
+        },
+        {
+          "round": 1,
+          "case": "fast",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "80",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24622000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "67000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "87",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25860000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "68000"
+          },
+          "ms": 39.247,
+          "gpu_mhz": 2206.0,
+          "gpu_mcycles": 86.578882,
+          "telemetry": {
+            "min_mhz": 2005.0,
+            "max_mhz": 2361.0,
+            "power_w": 27.0,
+            "edge_c": 84.9
+          },
+          "sha256": "02c4586304e04a15ddc8acf85b0aea7dcdbc9ef4edb7b777aa34f784b9ed2105",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.0036058227479110437,
+            "rgb_max_abs": 0.041335418820381165,
+            "rgb_psnr_db": 48.85991251564538,
+            "display_psnr_db": 48.07785251042848
+          },
+          "deterministic": true
+        },
+        {
+          "round": 1,
+          "case": "baseline",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "85",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25368000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "68000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "85",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25572000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "67000"
+          },
+          "ms": 40.424,
+          "gpu_mhz": 2216.0,
+          "gpu_mcycles": 89.579584,
+          "telemetry": {
+            "min_mhz": 2074.0,
+            "max_mhz": 2374.0,
+            "power_w": 27.2,
+            "edge_c": 84.9
+          },
+          "sha256": "79fc630cdcf98d5cf4f4220b30d445bc257c00bde2cbc8f03a3bc24c19c566ce",
+          "exact": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "deterministic": true
+        },
+        {
+          "round": 2,
+          "case": "baseline",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "82",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24937000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "67000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "84",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25550000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "67000"
+          },
+          "ms": 40.529,
+          "gpu_mhz": 2208.0,
+          "gpu_mcycles": 89.488032,
+          "telemetry": {
+            "min_mhz": 2017.0,
+            "max_mhz": 2369.0,
+            "power_w": 27.1,
+            "edge_c": 84.6
+          },
+          "sha256": "79fc630cdcf98d5cf4f4220b30d445bc257c00bde2cbc8f03a3bc24c19c566ce",
+          "exact": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "deterministic": true
+        },
+        {
+          "round": 2,
+          "case": "fast",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "81",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24709000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "66000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "85",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25839000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "66000"
+          },
+          "ms": 39.197,
+          "gpu_mhz": 2209.0,
+          "gpu_mcycles": 86.58617300000002,
+          "telemetry": {
+            "min_mhz": 2024.0,
+            "max_mhz": 2361.0,
+            "power_w": 26.9,
+            "edge_c": 84.2
+          },
+          "sha256": "02c4586304e04a15ddc8acf85b0aea7dcdbc9ef4edb7b777aa34f784b9ed2105",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.0036058227479110437,
+            "rgb_max_abs": 0.041335418820381165,
+            "rgb_psnr_db": 48.85991251564538,
+            "display_psnr_db": 48.07785251042848
+          },
+          "deterministic": true
+        },
+        {
+          "round": 2,
+          "case": "turbo",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "81",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25008000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "66000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "86",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25833000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "67000"
+          },
+          "ms": 38.329,
+          "gpu_mhz": 2205.0,
+          "gpu_mcycles": 84.51544500000001,
+          "telemetry": {
+            "min_mhz": 2020.0,
+            "max_mhz": 2375.0,
+            "power_w": 27.0,
+            "edge_c": 84.3
+          },
+          "sha256": "2313c560be42218769d363db931de2f5da4436694565de20754dbd5a4ec2b7b2",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.00950836839819504,
+            "rgb_max_abs": 0.071330726146698,
+            "rgb_psnr_db": 40.437880000796014,
+            "display_psnr_db": 40.31898381629474
+          },
+          "deterministic": true
+        },
+        {
+          "round": 3,
+          "case": "turbo",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "82",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24970000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "66000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "86",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "26074000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "67000"
+          },
+          "ms": 38.826,
+          "gpu_mhz": 2172.0,
+          "gpu_mcycles": 84.330072,
+          "telemetry": {
+            "min_mhz": 2019.0,
+            "max_mhz": 2324.0,
+            "power_w": 27.0,
+            "edge_c": 84.3
+          },
+          "sha256": "2313c560be42218769d363db931de2f5da4436694565de20754dbd5a4ec2b7b2",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.00950836839819504,
+            "rgb_max_abs": 0.071330726146698,
+            "rgb_psnr_db": 40.437880000796014,
+            "display_psnr_db": 40.31898381629474
+          },
+          "deterministic": true
+        },
+        {
+          "round": 3,
+          "case": "fast",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "83",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25119000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "67000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "83",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "25366000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "66000"
+          },
+          "ms": 39.128,
+          "gpu_mhz": 2214.0,
+          "gpu_mcycles": 86.62939200000001,
+          "telemetry": {
+            "min_mhz": 2077.0,
+            "max_mhz": 2372.0,
+            "power_w": 27.0,
+            "edge_c": 84.4
+          },
+          "sha256": "02c4586304e04a15ddc8acf85b0aea7dcdbc9ef4edb7b777aa34f784b9ed2105",
+          "exact": false,
+          "quality": {
+            "rgb_rmse": 0.0036058227479110437,
+            "rgb_max_abs": 0.041335418820381165,
+            "rgb_psnr_db": 48.85991251564538,
+            "display_psnr_db": 48.07785251042848
+          },
+          "deterministic": true
+        },
+        {
+          "round": 3,
+          "case": "baseline",
+          "sensors_before": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "79",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "24445000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "66000"
+          },
+          "sensors_after": {
+            "/sys/class/drm/card1/device/gpu_busy_percent": "89",
+            "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+            "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "26483000",
+            "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "68000"
+          },
+          "ms": 40.415,
+          "gpu_mhz": 2212.0,
+          "gpu_mcycles": 89.39797999999999,
+          "telemetry": {
+            "min_mhz": 2013.0,
+            "max_mhz": 2387.0,
+            "power_w": 27.1,
+            "edge_c": 84.3
+          },
+          "sha256": "79fc630cdcf98d5cf4f4220b30d445bc257c00bde2cbc8f03a3bc24c19c566ce",
+          "exact": true,
+          "quality": {
+            "rgb_rmse": 0.0,
+            "rgb_max_abs": 0.0,
+            "rgb_psnr_db": null,
+            "display_psnr_db": null
+          },
+          "deterministic": true
+        }
+      ]
+    }
+  },
+  "quality_1080p": {
+    "final-silver-1080p": {
+      "reference": "docs/ngx-verification/310.8.0/single-frame-outputs/1920x1080_nvidia.png",
+      "cases": {
+        "baseline": {
+          "psnr_baseline_db": null,
+          "ssim_baseline": 1.0,
+          "psnr_nvidia_db": 45.620091517850135,
+          "ssim_nvidia": 0.996070120125169
+        },
+        "fast": {
+          "psnr_baseline_db": 47.00469638560179,
+          "ssim_baseline": 0.9967693457512259,
+          "psnr_nvidia_db": 45.244045778874664,
+          "ssim_nvidia": 0.9962639495882661
+        },
+        "turbo": {
+          "psnr_baseline_db": 42.51767440789486,
+          "ssim_baseline": 0.9957754381430615,
+          "psnr_nvidia_db": 42.30038813728933,
+          "ssim_nvidia": 0.9951814636365333
+        }
+      }
+    },
+    "final-small-1080p": {
+      "reference": "docs/ngx-verification/310.9.16/single-frame-outputs/1920x1080_nvidia.png",
+      "cases": {
+        "baseline": {
+          "psnr_baseline_db": null,
+          "ssim_baseline": 1.0,
+          "psnr_nvidia_db": 49.434868006001324,
+          "ssim_nvidia": 0.9970780529503979
+        },
+        "fast": {
+          "psnr_baseline_db": 49.18417169286232,
+          "ssim_baseline": 0.9972060380086977,
+          "psnr_nvidia_db": 49.1318945296608,
+          "ssim_nvidia": 0.9971870918704971
+        },
+        "turbo": {
+          "psnr_baseline_db": 40.4809108264831,
+          "ssim_baseline": 0.9955268678289415,
+          "psnr_nvidia_db": 40.42886109573807,
+          "ssim_nvidia": 0.9954687226722713
+        }
+      }
+    }
+  },
+  "shader_checks": {
+    "pinned_glslang": "16.5.0",
+    "fresh_generic_files_identical": 514,
+    "fresh_exact_z1_files_identical": 520,
+    "fast_and_turbo_spirv_val_passed": 850,
+    "changed_spirv_per_variant_vs_generic": 18,
+    "network_variants": [
+      "base",
+      "experimental",
+      "optimized",
+      "int4",
+      "performance",
+      "ultra"
+    ],
+    "host_constants_and_derived_int4_shader_bytes": "identical",
+    "legacy_int4": "untouched",
+    "rdna4_compiled": false,
+    "logs": [
+      "build/aggressive/build-preserved.log",
+      "build/aggressive/build-fast.log"
+    ]
+  },
+  "acceptance_exit_codes": {
+    "score-small": 0,
+    "score-silver": 0,
+    "after-silver": 1,
+    "after-small": 1,
+    "after-engine": 0,
+    "variants-fast": 2,
+    "engine-fast-small-0": 0,
+    "engine-fast-small-1": 0,
+    "engine-fast-silver-0": 0,
+    "engine-fast-silver-1": 0,
+    "variants-turbo": 2,
+    "engine-turbo-small-0": 0,
+    "engine-turbo-small-1": 0,
+    "engine-turbo-silver-0": 0,
+    "engine-turbo-silver-1": 0,
+    "cpu-port": 0
+  },
+  "exact_before_after": {
+    "out_1080p_0.rgba8": "f2f845e83bba073cf1f3fb16878524c84b48e973288e55a257b7e591748a6170",
+    "out_1080p_1.rgba8": "f2f845e83bba073cf1f3fb16878524c84b48e973288e55a257b7e591748a6170",
+    "out_1440p_0.rgba8": "5900c16caf4f721e25929d965e4942bf7afa99a9c69752ab9ae18ddf6b43c1a3",
+    "out_1440p_1.rgba8": "5900c16caf4f721e25929d965e4942bf7afa99a9c69752ab9ae18ddf6b43c1a3",
+    "out_4k_0.rgba8": "1065d74b419117833cb3266560a4fea65062a378027f624f24559eef5520b419",
+    "out_4k_1.rgba8": "1065d74b419117833cb3266560a4fea65062a378027f624f24559eef5520b419",
+    "out_engine_1080p.rgba8": "b9a48d0787bcbefa663df57b12be9f4008f8da18945f441b31855b7522782a04",
+    "out_small_1080p_0.rgba8": "d52cfab95df3a49bcb0805874621ad6446e079709993aa59640c1d59c3aef37a",
+    "out_small_1080p_1.rgba8": "d52cfab95df3a49bcb0805874621ad6446e079709993aa59640c1d59c3aef37a",
+    "out_small_1440p_0.rgba8": "0143cf81263ecb74bd90b7ce4229bd69a509852afe0ea0870fad65f5863509a8",
+    "out_small_1440p_1.rgba8": "0143cf81263ecb74bd90b7ce4229bd69a509852afe0ea0870fad65f5863509a8",
+    "out_small_4k_0.rgba8": "9e24fa136a5816490d6b011d4ecf06429fb9be7fab7330ed0113d255bb197cd8",
+    "out_small_4k_1.rgba8": "9e24fa136a5816490d6b011d4ecf06429fb9be7fab7330ed0113d255bb197cd8"
+  },
+  "strict_checks": {
+    "silver": {
+      "before_exit": 1,
+      "after_exit": 1,
+      "logs_identical": true,
+      "historical_goldens": "inherited frame failures/CLOSE, not overwritten",
+      "layer_hashes": "identical",
+      "log": [
+        "GPU: AMD Ryzen Z1 Extreme (RADV PHOENIX)",
+        "e4m3 quantise mismatches 0 / 65536, decode mismatches 0 / 256",
+        "GPU: AMD Ryzen Z1 Extreme (RADV PHOENIX)",
+        "f32: 0 mismatches over 2^32 inputs",
+        "f16 pairs: 0 mismatches over 2^32 inputs",
+        "GPU: AMD Ryzen Z1 Extreme (RADV PHOENIX)",
+        "wmma lane halves: output row m from lane half m%2 of both operands: yes (0 of 1024 elements differ)",
+        " 1080p: PSNR 45.62 dB  SSIM 0.99607 vs NVIDIA   FAIL (59.0 dB from golden, floors ok)",
+        " 1440p: PSNR 47.93 dB  SSIM 0.99680 vs NVIDIA   CLOSE (60.6 dB from golden)",
+        "    4k: PSNR 49.11 dB  SSIM 0.99698 vs NVIDIA   CLOSE (65.8 dB from golden)",
+        "engine path (in place, FP16): 50.42 dB against the plain path   ok",
+        "layers: identical",
+        "RESULT: FAIL"
+      ]
+    },
+    "small": {
+      "before_exit": 1,
+      "after_exit": 1,
+      "logs_identical": true,
+      "historical_goldens": "inherited frame failures/CLOSE, not overwritten",
+      "layer_hashes": "identical",
+      "log": [
+        " 1080p: PSNR 49.43 dB  SSIM 0.99708 vs NVIDIA   CLOSE (66.4 dB from golden)",
+        " 1440p: PSNR 49.55 dB  SSIM 0.99685 vs NVIDIA   CLOSE (65.3 dB from golden)",
+        "    4k: PSNR 50.62 dB  SSIM 0.99714 vs NVIDIA   CLOSE (70.7 dB from golden)",
+        "layers: identical",
+        "RESULT: FAIL  (a close picture is a new golden: --update-golden, with the reason in the commit)"
+      ]
+    }
+  },
+  "installed_modes": {
+    "fast": {
+      "source": "1a1a481b4efb86e27489294f548dccca4a5d1942",
+      "status": "UNVERIFIED (no approved reference)",
+      "cases": {
+        "small-1080p": {
+          "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+          "sha256": "f0cd283b5da953bc0ce022de98cc4030eb5e5fd426935ebae18a8dcd9837f426",
+          "deterministic": true,
+          "reference_exact": false,
+          "rgb8_psnr_vs_previous_exact_z1_db": 49.18417525192019
+        },
+        "silver-1080p": {
+          "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+          "sha256": "0ac59225d8ce29b08836a2d9cd00d68674bb9619c92f1568f5cba160426ee7ea",
+          "deterministic": true,
+          "reference_exact": false,
+          "rgb8_psnr_vs_previous_exact_z1_db": 47.00469638560179
+        },
+        "experimental-1080p": {
+          "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+          "sha256": "b39ec1fbcdc574dc2bde9b96e303213c4e403befe18cdfcd9750aedaf0c74560",
+          "deterministic": true,
+          "reference_exact": false,
+          "rgb8_psnr_vs_previous_exact_z1_db": 49.276204680596855
+        },
+        "quality-1080p": {
+          "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+          "sha256": "3e9670788cd115b2ab080acd4dab28019f34c05706707bbb67dd97dc8fae58b5",
+          "deterministic": true,
+          "reference_exact": false,
+          "rgb8_psnr_vs_previous_exact_z1_db": 47.384973638269344
+        },
+        "balanced-1080p": {
+          "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+          "sha256": "0f9153ca40ddd587ffc6b77180951f9cadc27118a6cb4bff14bd875dd063723d",
+          "deterministic": true,
+          "reference_exact": false,
+          "rgb8_psnr_vs_previous_exact_z1_db": 47.14067032286415
+        },
+        "performance-1080p": {
+          "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+          "sha256": "28b23be3ebdce4b1e52505715eddb06c036732c5b9861fc67ea05aaa20afe9bb",
+          "deterministic": true,
+          "reference_exact": false,
+          "rgb8_psnr_vs_previous_exact_z1_db": 46.886856707463
+        },
+        "ultra-1080p": {
+          "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+          "sha256": "a12705156dc968dfb86e5c3157b472c5c9dffbfade1ce747a20e16ad8f4ec08b",
+          "deterministic": true,
+          "reference_exact": false,
+          "rgb8_psnr_vs_previous_exact_z1_db": 46.52329271964903
+        }
+      },
+      "models": {
+        "CC_SMALL_FP8.bin": "7e966e2639dbec6596aa0bac3b8761137d2c40ca8cb4aca30df7ca10043c6e33",
+        "CC_SILVER_AARDWOLD.bin": "2b41c888cf4155b8958c665ba64018ab0bd25c85fc71a2b6db86d0d04d1f7fbd",
+        "CC_SMALL_FP8_EXPERIMENTAL.bin": "8bf68796d0994b543e539ce239b2914459c0d4a53fb48dbc1bfc392b08050755",
+        "CC_SILVER_AARDWOLD_OPTIMIZED.bin": "6503c904f37f3081186078df68ccca766b5dc73fbab47771414af7f4ce6fba6e",
+        "CC_SILVER_AARDWOLD_OPTIMIZED_INT4.bin": "af75dec162690b4b173317e56a28e35771c1c7247a06722dfbc0f39df424273f"
+      },
+      "quality_comparison_reference": {
+        "source": "72a157f81a5811556e81d46d9d7621453b26eab7",
+        "status": "previous exact Z1 outputs, not independent numerical acceptance"
+      }
+    },
+    "turbo": {
+      "source": "1a1a481b4efb86e27489294f548dccca4a5d1942",
+      "status": "UNVERIFIED (no approved reference)",
+      "cases": {
+        "small-1080p": {
+          "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+          "sha256": "ff6f973819f6fd39d4470201a3aa733c5cd744a021d38ac3cee80979ca304f85",
+          "deterministic": true,
+          "reference_exact": false,
+          "rgb8_psnr_vs_previous_exact_z1_db": 40.48091454449413
+        },
+        "silver-1080p": {
+          "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+          "sha256": "d67fb34f2d200cfafa98adfcd0676fb67f7c62557293affe24ce792c9e4fff7c",
+          "deterministic": true,
+          "reference_exact": false,
+          "rgb8_psnr_vs_previous_exact_z1_db": 42.51768150085029
+        },
+        "experimental-1080p": {
+          "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+          "sha256": "154442fe263d399d224a5f27e434361c3bf2eb5d4bbb80e01b27b9dadfeedffb",
+          "deterministic": true,
+          "reference_exact": false,
+          "rgb8_psnr_vs_previous_exact_z1_db": 39.10748850293122
+        },
+        "quality-1080p": {
+          "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+          "sha256": "c4ac36b9a30d579651d65b1806a003075e29f4cc8b8bd6e7c0ab0b332c419f22",
+          "deterministic": true,
+          "reference_exact": false,
+          "rgb8_psnr_vs_previous_exact_z1_db": 42.25850309347162
+        },
+        "balanced-1080p": {
+          "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+          "sha256": "1afeb02221e0be94279da2233ef986cb4ae5530a08e2412ab189c94396873688",
+          "deterministic": true,
+          "reference_exact": false,
+          "rgb8_psnr_vs_previous_exact_z1_db": 44.12082180803256
+        },
+        "performance-1080p": {
+          "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+          "sha256": "b877b1ebadd01dfb649d373d49ad167755c98bd063c0e68fe3d668f40564c19b",
+          "deterministic": true,
+          "reference_exact": false,
+          "rgb8_psnr_vs_previous_exact_z1_db": 44.46269325138938
+        },
+        "ultra-1080p": {
+          "input_sha256": "524e93d17c4fdfb4e0fb7c34769fbeadc5e9a5b8f0288c54e6c9713f6942ff74",
+          "sha256": "4414c36c4edacaaee080ce103a0d4d10560447d8ae97e6ff47c01187766ea58b",
+          "deterministic": true,
+          "reference_exact": false,
+          "rgb8_psnr_vs_previous_exact_z1_db": 44.1683461424837
+        }
+      },
+      "models": {
+        "CC_SMALL_FP8.bin": "7e966e2639dbec6596aa0bac3b8761137d2c40ca8cb4aca30df7ca10043c6e33",
+        "CC_SILVER_AARDWOLD.bin": "2b41c888cf4155b8958c665ba64018ab0bd25c85fc71a2b6db86d0d04d1f7fbd",
+        "CC_SMALL_FP8_EXPERIMENTAL.bin": "8bf68796d0994b543e539ce239b2914459c0d4a53fb48dbc1bfc392b08050755",
+        "CC_SILVER_AARDWOLD_OPTIMIZED.bin": "6503c904f37f3081186078df68ccca766b5dc73fbab47771414af7f4ce6fba6e",
+        "CC_SILVER_AARDWOLD_OPTIMIZED_INT4.bin": "af75dec162690b4b173317e56a28e35771c1c7247a06722dfbc0f39df424273f"
+      },
+      "quality_comparison_reference": {
+        "source": "72a157f81a5811556e81d46d9d7621453b26eab7",
+        "status": "previous exact Z1 outputs, not independent numerical acceptance"
+      }
+    }
+  },
+  "engine_path": {
+    "fast-small": {
+      "format": "FP16 in place; zero motion; two-frame engine harness",
+      "extent": [
+        1920,
+        1080
+      ],
+      "deterministic": true,
+      "sha256": "82d3a12e3afec14c9a23f6edc4ee16f00fc4c6dcde3448b3bb6da8af2fb0c1ee",
+      "reference_status": "smoke test; no independent temporal quality reference"
+    },
+    "fast-silver": {
+      "format": "FP16 in place; zero motion; two-frame engine harness",
+      "extent": [
+        1920,
+        1080
+      ],
+      "deterministic": true,
+      "sha256": "8810a3f6b54215bc97408e5a1ab64a9051aa70228a3ccb28712f309d7522ba12",
+      "reference_status": "smoke test; no independent temporal quality reference"
+    },
+    "turbo-small": {
+      "format": "FP16 in place; zero motion; two-frame engine harness",
+      "extent": [
+        1920,
+        1080
+      ],
+      "deterministic": true,
+      "sha256": "cb134923bd00e7192ddb1959c4376291354149759b835997a6dd60007607b86c",
+      "reference_status": "smoke test; no independent temporal quality reference"
+    },
+    "turbo-silver": {
+      "format": "FP16 in place; zero motion; two-frame engine harness",
+      "extent": [
+        1920,
+        1080
+      ],
+      "deterministic": true,
+      "sha256": "0f8ba37d38fa7ac87fd41f39c925535b8399b6f287f82ae36bc110741dc61bd4",
+      "reference_status": "smoke test; no independent temporal quality reference"
+    }
+  },
+  "not_qualified": [
+    "real game/Proton integration",
+    "moving scenes",
+    "HDR",
+    "resize/SR toggles",
+    "frame generation/HUD interaction",
+    "independent numerical references for fitted and INT4 networks"
+  ],
+  "delivery": {
+    "local_only": true,
+    "original_exact_archive_preserved": true,
+    "host_source": "72a157f",
+    "host_internal_version": "0.0.9-z1-preview-g72a157f",
+    "host_and_calibration_sources_and_host_defines": "byte-identical to base artifact; host files reused and audited",
+    "base_archive_sha256": "9d13e81a8d226e6aa770f332210bce018e43bbcc216dc9d51fcb8f469431e662",
+    "archive_audits": "build/aggressive/package-audit-{fast,turbo}.json; final size/checksum in RDNA3-Z1E-ARTIFACTS.md"
+  }
 }
