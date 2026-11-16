@@ -52,6 +52,8 @@ retains FP16 values inside C=32 blocks, and `z1-extreme-turbo` retains FP16 at a
 their e4m3 quantization sites. Both keep saturation and the original model weights.
 Their archives include `-Fast-` or `-Turbo-`. Turbo is a shader profile; it does
 not change the Ally's power mode. See [quality/performance comparisons](docs/RDNA3-Z1E-AGGRESSIVE.md).
+The [local trial artifact record](docs/RDNA3-Z1E-ARTIFACTS.md) lists checksums,
+component provenance and rollback.
 
 ## Previous port to 0.0.8.3
 
