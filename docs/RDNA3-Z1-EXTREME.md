@@ -170,4 +170,25 @@ differences, with exactly the same scores/verdicts before and after. Silver:
 does not resolve those historical differences or establish game/FG/HUD/resize
 qualification. See `build/z1/{before,after}/` and the validation JSON.
 
-Optimized-network and package evidence will be recorded after completion.
+All seven installed choices (Small, Silver, Experimental, Quality, Balanced,
+Performance and Ultra) run twice each at 1080p in both generic and target
+installs. All **seven before/after hashes match**, with deterministic output,
+the intended mode and no fallback. The variant harness correctly exits 2 for
+each install: an independent approved fitted/optimized reference is still absent.
+Before/after equality does not change that qualification status.
+
+## Delivery
+
+Production implementation: `72a157f`; later documentation commits record tests.
+The normal package installer and its existing model extraction/migration apply.
+No game installation, model or user INI was changed by this work.
+
+```sh
+NR_GPU=rdna3 NR_ARCH=x86_64 NR_SHADER_PROFILE=z1-extreme \
+  NR_VERSION=0.0.9-z1-preview-g72a157f bash linux/build/build_package.sh
+```
+
+Archive: `linux/package/DLSSNR-AMD-Vulkan-Linux-0.0.9-z1-preview-g72a157f-x86_64-rdna3-z1-extreme.tar.gz`.
+The checksum is distributed beside it in `.sha256`. Models stay outside Git
+and the distributed archive. This is a target trial package; no release tag
+or game-FPS claim is made.

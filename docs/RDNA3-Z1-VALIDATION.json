@@ -870,5 +870,52 @@
     "historical_goldens": "Inherited strict failures retained; no golden changes",
     "quantiser_and_wmma": "PASS before and after"
   },
-  "optimized_variants_before_after": "pending"
+  "optimized_variants_before_after": {
+    "cases": {
+      "small-1080p": {
+        "generic_sha256": "d52cfab95df3a49bcb0805874621ad6446e079709993aa59640c1d59c3aef37a",
+        "z1_sha256": "d52cfab95df3a49bcb0805874621ad6446e079709993aa59640c1d59c3aef37a",
+        "exact": true,
+        "deterministic": true
+      },
+      "silver-1080p": {
+        "generic_sha256": "f2f845e83bba073cf1f3fb16878524c84b48e973288e55a257b7e591748a6170",
+        "z1_sha256": "f2f845e83bba073cf1f3fb16878524c84b48e973288e55a257b7e591748a6170",
+        "exact": true,
+        "deterministic": true
+      },
+      "experimental-1080p": {
+        "generic_sha256": "c4d4d175b63f4597ea5d4dfa77954e7390155f78093ec7c321804ac5bd560eae",
+        "z1_sha256": "c4d4d175b63f4597ea5d4dfa77954e7390155f78093ec7c321804ac5bd560eae",
+        "exact": true,
+        "deterministic": true
+      },
+      "quality-1080p": {
+        "generic_sha256": "84d7951b60a4ced5ec6f0c5acfd90050da09ddf3dcfb73bf09fd3877e027f5f8",
+        "z1_sha256": "84d7951b60a4ced5ec6f0c5acfd90050da09ddf3dcfb73bf09fd3877e027f5f8",
+        "exact": true,
+        "deterministic": true
+      },
+      "balanced-1080p": {
+        "generic_sha256": "af2a33caa8cd60180c08ba080221f10267e7e0516fcae44141bbf7ef9fafe2e3",
+        "z1_sha256": "af2a33caa8cd60180c08ba080221f10267e7e0516fcae44141bbf7ef9fafe2e3",
+        "exact": true,
+        "deterministic": true
+      },
+      "performance-1080p": {
+        "generic_sha256": "d962d84c4b14cf20b9a1d0c3cbd00806c8429b01fedc4cde5c39246d692baac0",
+        "z1_sha256": "d962d84c4b14cf20b9a1d0c3cbd00806c8429b01fedc4cde5c39246d692baac0",
+        "exact": true,
+        "deterministic": true
+      },
+      "ultra-1080p": {
+        "generic_sha256": "1d6d657e9f68a6be103111ca7e42db58a997d27fc48f95944d446ad08837c4ac",
+        "z1_sha256": "1d6d657e9f68a6be103111ca7e42db58a997d27fc48f95944d446ad08837c4ac",
+        "exact": true,
+        "deterministic": true
+      }
+    },
+    "independent_reference": "UNVERIFIED; this is before/after equivalence only"
+  },
+  "implementation_commit": "72a157f81a5811556e81d46d9d7621453b26eab7"
 }
