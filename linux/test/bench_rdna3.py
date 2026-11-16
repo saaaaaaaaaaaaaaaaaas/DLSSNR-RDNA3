@@ -8,6 +8,8 @@ Optional per-case graph/spv_dir paths are relative to the repository root.
 Each round reverses case order to reduce clock/temperature ordering bias.
 Output equality is checked on RGBA32F bytes, separately from timing. This is
 not an independent numerical reference, a game benchmark or a power-mode switch.
+--allow-different permits approximate candidates while still rejecting invalid
+or nondeterministic output. RGB errors use peak 1; null PSNR means an exact match.
 """
 import argparse
 import datetime
@@ -90,6 +92,19 @@ def parse_timing(output):
     return float(times[0]), layers
 
 
+def quality_metrics(data, reference):
+    a = np.frombuffer(data, np.float32).reshape(-1, 4)[:, :3]
+    b = np.frombuffer(reference, np.float32).reshape(-1, 4)[:, :3]
+    delta = a - b
+    mse = float(np.mean(np.square(delta, dtype=np.float64)))
+    display_a = np.rint(np.clip(a, 0, 1) * 255).astype(np.uint8)
+    display_b = np.rint(np.clip(b, 0, 1) * 255).astype(np.uint8)
+    display_mse = float(np.mean(np.square(display_a.astype(np.float32) - display_b, dtype=np.float64)))
+    return {'rgb_rmse': math.sqrt(mse), 'rgb_max_abs': float(np.max(np.abs(delta))),
+            'rgb_psnr_db': None if mse == 0 else -10 * math.log10(mse),
+            'display_psnr_db': None if display_mse == 0 else 10 * math.log10(255 ** 2 / display_mse)}
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--model', type=Path, required=True)
@@ -103,6 +118,8 @@ def main():
     ap.add_argument('--warmup', type=positive, default=8)
     ap.add_argument('--repeats', type=positive, default=20)
     ap.add_argument('--timeout', type=positive, default=180, help='per GPU process, seconds')
+    ap.add_argument('--allow-different', action='store_true', help='measure image-changing candidates; deterministic output still required')
+    ap.add_argument('--min-psnr', type=float, default=0, help='optional minimum RGB PSNR vs the first case (peak 1)')
     ap.add_argument('--out', type=Path, required=True, help='new directory for logs, input, outputs and report.json')
     args = ap.parse_args()
     args.model = args.model.resolve()
@@ -133,12 +150,15 @@ def main():
               'model': args.model.name, 'model_sha256': hashlib.sha256(args.model.read_bytes()).hexdigest(),
               'model_kind': args.model_kind, 'extent': [w, h], 'input_sha256': hashlib.sha256(input_file.read_bytes()).hexdigest(),
               'warmup': args.warmup, 'repeats': args.repeats, 'rounds': args.rounds, 'cases': cases,
+              'allow_different': args.allow_different, 'min_psnr_db': args.min_psnr,
               'environment': {k: v for k, v in os.environ.items() if k.startswith(('NR_', 'RADV_', 'VK_'))}, 'runs': []}
     report['binaries'] = {
         name: {'graph_sha256': hashlib.sha256(root_path(case.get('graph', str(graph))).read_bytes()).hexdigest(),
                'shader_tree_sha256': shader_digest(root_path(case.get('spv_dir', str(args.spv_dir))))}
         for name, case in cases.items()}
     reference = None
+    reference_data = None
+    case_hashes = {}
     try:
         for round_index in range(args.rounds):
             names = list(cases)
@@ -180,18 +200,29 @@ def main():
                 row['sha256'] = hashlib.sha256(data).hexdigest()
                 if reference is None:
                     reference = row['sha256']
+                    reference_data = data
                 row['exact'] = row['sha256'] == reference
+                row['quality'] = quality_metrics(data, reference_data)
+                case_hashes.setdefault(name, row['sha256'])
+                row['deterministic'] = row['sha256'] == case_hashes[name]
                 report['runs'].append(row)
                 (args.out / 'report.json').write_text(json.dumps(report, indent=2) + '\n')
-                print(f'{round_index + 1}/{args.rounds} {name}: {row["ms"]:.3f} ms  {"EXACT" if row["exact"] else "DIFFERENT"}', flush=True)
+                score = row['quality']['rgb_psnr_db']
+                picture = 'EXACT' if row['exact'] else 'CHANGED (RGB exact)' if score is None else f'CHANGED ({score:.2f} dB)'
+                print(f'{round_index + 1}/{args.rounds} {name}: {row["ms"]:.3f} ms  {picture}', flush=True)
         report['summary'] = {}
         for name in cases:
             rows = [r for r in report['runs'] if r['case'] == name]
             times = [r['ms'] for r in rows]
             report['summary'][name] = {'median_ms': statistics.median(times), 'min_ms': min(times),
-                                       'max_ms': max(times), 'exact': all(r['exact'] for r in rows)}
+                                       'max_ms': max(times), 'exact': all(r['exact'] for r in rows),
+                                       'deterministic': all(r['deterministic'] for r in rows),
+                                       'quality': rows[0]['quality']}
         print(json.dumps(report['summary'], indent=2))
-        return 0 if all(r['exact'] for r in report['runs']) else 1
+        ok = all(r['deterministic'] and (args.allow_different or r['exact']) and
+                 (r['quality']['rgb_psnr_db'] is None or r['quality']['rgb_psnr_db'] >= args.min_psnr)
+                 for r in report['runs'])
+        return 0 if ok else 1
     except (RuntimeError, subprocess.TimeoutExpired, OSError) as e:
         report['error'] = str(e)
         print(f'ERROR: {e}', file=sys.stderr)
