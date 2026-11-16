@@ -17,6 +17,7 @@
 #   NR_GPU=rdna3|rdna4  the network to build (linux/build/arch/); default rdna4. An rdna3 package
 #                       carries -rdna3 in its name
 #   NR_VERSION=...      override the version (default: from the git tags, linux/build/version.sh)
+#   NR_SHADER_PROFILE=z1-extreme  explicit Z1 Extreme shader tuning (NR_GPU=rdna3)
 #   NR_LANG_EXTRA=<dir> test packages only: extra language files (and fonts/) into dlssnr-amd/lang
 #   NR_SIGN=1           the package's Windows binaries signed (self-signed, linux/build/sign_pe.py)
 #
@@ -48,6 +49,12 @@ done
 gpu=${NR_GPU:-rdna4}
 [[ -f "linux/build/arch/$gpu.sh" ]] || { echo "NR_GPU must be rdna3 or rdna4" >&2; exit 2; }
 source "linux/build/arch/$gpu.sh"
+profile=${NR_SHADER_PROFILE:-generic}
+case "$profile" in
+    generic) ;;
+    z1-extreme) [[ "$gpu" == rdna3 ]] || { echo 'z1-extreme requires NR_GPU=rdna3' >&2; exit 2; };;
+    *) echo 'NR_SHADER_PROFILE must be generic or z1-extreme' >&2; exit 2;;
+esac
 
 # ---- compile ----------------------------------------------------------------
 common=(-std=c++17 -O2 -DNDEBUG -Itoolchain/Vulkan-Headers/include -Ilinux/src -Ilinux/src/core -Ilinux/src/layer -Ilinux/src/pe -I"$out")
@@ -394,6 +401,7 @@ cp -- LICENSE "$pkg/DLSSNR-AMD-LICENSE.txt"
 if [[ "$gpu" == rdna3 ]]; then
     cp -- docs/RDNA3-TARGET-TESTING.md docs/RDNA3-TARGET-TESTING-0.0.9.md docs/RDNA3-PORT-0.0.9.md "$pkg/"
     [[ ! -f docs/RDNA3-0.0.9-VALIDATION.json ]] || cp -- docs/RDNA3-0.0.9-VALIDATION.json "$pkg/"
+    [[ "$profile" != z1-extreme ]] || cp -- docs/RDNA3-Z1-EXTREME.md docs/RDNA3-Z1-VALIDATION.json "$pkg/"
 fi
 chmod +x "$pkg/install.sh" "$mt/extract_model.sh"
 
@@ -403,7 +411,8 @@ chmod +x "$pkg/install.sh" "$mt/extract_model.sh"
 
 # ---- archive ------------------------------------------------------------------
 version=$(bash linux/build/version.sh)
-archive="DLSSNR-AMD-Vulkan-Linux-$version-$arch$([[ "$gpu" == rdna4 ]] || echo "-$gpu").tar.gz"
+profile_suffix=; [[ "$profile" == generic ]] || profile_suffix="-$profile"
+archive="DLSSNR-AMD-Vulkan-Linux-$version-$arch$([[ "$gpu" == rdna4 ]] || echo "-$gpu")$profile_suffix.tar.gz"
 tar --sort=name --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner -C "$pkg" -cf - . |
     gzip -n > "$out/$archive"
 # The finished package goes beside the installer sources in linux/package/ (not in git).

@@ -33,6 +33,7 @@ for f in accumulation.txt swin-bias-storage.txt coherent-act.txt shader-constant
 done
 cp -- "$NR_PRODUCT_SPV"/runtime/* "$dst/shaders/runtime/"
 cp -- "$NR_PRODUCT_SPV"/temporal/* "$dst/shaders/temporal/"
+[[ ! -f "$NR_PRODUCT_SPV/gpu-profile.txt" ]] || cp -- "$NR_PRODUCT_SPV/gpu-profile.txt" "$dst/shaders/"
 bash linux/build/build_renodx.sh "$dst/shaders/renodx" > /dev/null   # the RenoDX-style option
 bash linux/build/build_wilsjo2.sh "$dst/shaders/wilsjo2" > /dev/null   # HUD FIX on every route
 # wilsjo2_classic.spv carries AMD FidelityFX Super Resolution 1 (MIT): its notice goes with it
@@ -44,6 +45,7 @@ for f in accumulation.txt swin-bias-storage.txt coherent-act.txt shader-constant
     cp -- "$NR_PRODUCT_SPV-experimental/$f" "$xs/"
 done
 cp -- "$NR_PRODUCT_SPV-experimental"/temporal/* "$xs/temporal/"
+[[ ! -f "$NR_PRODUCT_SPV-experimental/gpu-profile.txt" ]] || cp -- "$NR_PRODUCT_SPV-experimental/gpu-profile.txt" "$xs/"
 os="$dst/optimized/shaders"; mkdir -p -- "$os/temporal"
 python3 linux/build/build_network.py "$NR_GPU_ARCH" --optimized --out "$NR_PRODUCT_SPV-optimized" > /dev/null
 cp -- "$NR_PRODUCT_SPV-optimized"/g_*.spv "$os/"
@@ -52,6 +54,7 @@ for f in accumulation.txt swin-bias-storage.txt coherent-act.txt shader-constant
     cp -- "$NR_PRODUCT_SPV-optimized/$f" "$os/"
 done
 cp -- "$NR_PRODUCT_SPV-optimized"/temporal/* "$os/temporal/"
+[[ ! -f "$NR_PRODUCT_SPV-optimized/gpu-profile.txt" ]] || cp -- "$NR_PRODUCT_SPV-optimized/gpu-profile.txt" "$os/"
 mkdir -p -- "$dst/lang"
 python3 linux/build/make_lang.py "$dst/lang/English.txt" linux/src/pe/nr_pe_menu.cpp linux/src/ui/nr_control_ui.hpp \
     linux/src/ui/nr_control_pages.hpp linux/src/core/nr_renodx_keys.hpp linux/src/ui/nr_wilsjo2_shared_keys.hpp \

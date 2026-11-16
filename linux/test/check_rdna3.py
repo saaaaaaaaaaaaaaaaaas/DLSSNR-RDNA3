@@ -48,6 +48,13 @@ PNG_NAMES = {"1080p": "1920x1080", "1440p": "2560x1440", "4k": "3840x2160"}
 PSNR_FLOOR_MARGIN, SSIM_FLOOR_MARGIN, CLOSE_TO_GOLDEN_DB = 0.15, 0.0005, 60.0
 
 
+def network_dir():
+    profile = os.environ.get('NR_SHADER_PROFILE', 'generic')
+    if profile not in ('generic', 'z1-extreme'):
+        sys.exit('NR_SHADER_PROFILE must be generic or z1-extreme')
+    return ROOT / 'build/linux/rdna3' / ('network' if profile == 'generic' else f'network-{profile}')
+
+
 def run(cmd, **kw):
     r = subprocess.run(cmd, cwd=kw.pop("cwd", ROOT), capture_output=True, text=True, **kw)
     if r.returncode:
@@ -111,7 +118,7 @@ def build(model):
     inst = BUILD / "inst" / "dlssnr-amd"
     shutil.rmtree(inst, ignore_errors=True)
     inst.mkdir(parents=True)
-    shutil.copytree(ROOT / "build" / "linux" / "rdna3" / "network", inst / "shaders")
+    shutil.copytree(network_dir(), inst / "shaders")
     shutil.copyfile(model, inst / "CC_SILVER_AARDWOLD.bin")
 
 
@@ -193,7 +200,7 @@ def layer_hashes():
     blob = BUILD / "in_1080p.f32"
     rgba.tofile(blob)
     out = run([str(BUILD / "nr_graph"), "--plan", str(plan), "--model-pack", str(BUILD / "inst/dlssnr-amd/CC_SILVER_AARDWOLD.bin"),
-               "--spv-dir", str(ROOT / "build/linux/rdna3/network"), "--host-boundary", "--no-reuse",
+               "--spv-dir", str(network_dir()), "--host-boundary", "--no-reuse",
                "--source-width", str(w), "--source-height", str(h), "--in-image", str(blob), "--value-stats"])
     rows = []
     for line in out.splitlines():
@@ -213,7 +220,7 @@ def profile(name="4k"):
     blob = BUILD / f"in_{name}.f32"
     (np.fromfile(in_path, np.uint8).reshape(-1, 4).astype(np.float32) / 255).tofile(blob)
     out = run([str(BUILD / "nr_graph"), "--plan", str(plan), "--model-pack", str(BUILD / "inst/dlssnr-amd/CC_SILVER_AARDWOLD.bin"),
-               "--spv-dir", str(ROOT / "build/linux/rdna3/network"), "--host-boundary", "--reuse",
+               "--spv-dir", str(network_dir()), "--host-boundary", "--reuse",
                "--source-width", str(w), "--source-height", str(h), "--in-image", str(blob),
                "--warmup", "3", "--repeats", "10", "--per-layer"])
     keep, started = [], False
@@ -237,7 +244,7 @@ def isa(name="1080p"):
     blob = BUILD / f"in_{name}.f32"
     (np.fromfile(in_path, np.uint8).reshape(-1, 4).astype(np.float32) / 255).tofile(blob)
     argv = [str(BUILD / "nr_graph"), "--plan", str(plan), "--model-pack", str(BUILD / "inst/dlssnr-amd/CC_SILVER_AARDWOLD.bin"),
-            "--spv-dir", str(ROOT / "build/linux/rdna3/network"), "--host-boundary", "--reuse",
+            "--spv-dir", str(network_dir()), "--host-boundary", "--reuse",
             "--source-width", str(w), "--source-height", str(h), "--in-image", str(blob)]
     wiring = run(argv + ["--wiring"])
     order = []

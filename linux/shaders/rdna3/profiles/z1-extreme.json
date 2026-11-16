@@ -1,0 +1,7 @@
+{
+  "description": "ROG Ally Z1 Extreme, gfx1103/RADV: preserve the network's arithmetic and host layout.",
+  "change": {
+    "attn": ["NR_APIPE=1"],
+    "gemmproj": ["NR_A_LDSV=1"]
+  }
+}

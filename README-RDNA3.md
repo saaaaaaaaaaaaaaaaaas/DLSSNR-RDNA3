@@ -32,6 +32,20 @@ each layer. On the OptiScaler route fast passes default to Interleaved preset 1;
 the ReShade route defaults to Extrapolation. These defaults apply when fast passes
 are selected; they do not turn that mode on automatically.
 
+## ROG Ally Z1 Extreme
+
+The optional `z1-extreme` shader profile tunes attention prefetch and projection
+operand staging for gfx1103/RADV without changing network precision or weights.
+Build a separate Linux/Proton package with:
+
+```sh
+NR_GPU=rdna3 NR_ARCH=x86_64 NR_SHADER_PROFILE=z1-extreme bash linux/build/build_package.sh
+```
+
+Its archive name ends in `-rdna3-z1-extreme.tar.gz`. The usual build stays generic;
+the Z1 profile is selected at build time, with no game launch variable required.
+See [target measurements, checks and rollback](docs/RDNA3-Z1-EXTREME.md).
+
 ## Previous port to 0.0.8.3
 
 The Linux runtime, menus and model installation have been ported to the pinned

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the Linux network for one GPU architecture from linux/shaders/<arch>/pipelines.json.
 
-    build_network.py <arch> [--int4 | --performance | --ultra | --optimized | --experimental] [--out DIR] [--check DIR]
+    build_network.py <arch> [--int4 | --performance | --ultra | --optimized | --experimental] [--profile generic|z1-extreme] [--out DIR] [--check DIR]
 
 Writes (default build/linux/<arch>/network, with --int4 build/linux/<arch>/network-int4, with --performance
 build/linux/<arch>/network-performance, with --optimized
@@ -25,9 +25,13 @@ proves and marks the constant C=512 attention heads, NR_CONSTH) and block-routes
 pipeline of their own: "<suffix> <kernel>... : <block>...", from the overlay's "routes").
 --check DIR compares every network SPV and marker with DIR byte for byte and
 lists the differences (exit 1 if any).
+--profile z1-extreme (RDNA3 only) changes the selected pipeline defines after the
+model overlay; derived INT4 pipelines remain untouched. NR_SHADER_PROFILE sets
+the default for package builds. Generic builds retain their existing SPIR-V bytes.
 """
 import argparse
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -39,6 +43,17 @@ R = Path(__file__).resolve().parents[2]
 RUNTIME = ['runtime_alpha', 'runtime_depth', 'runtime_blit',
            'runtime_reuse_store', 'runtime_reuse_motion', 'runtime_reuse_warp', 'runtime_reuse_stat']
 MOTION = ['motion_luma', 'motion_estimate']
+
+
+def apply_profile(table, changes):
+    """Override defines by name, after model overlays; derived INT4 kernels stay separate."""
+    unknown = set(changes) - set(table['pipelines'])
+    if unknown:
+        raise ValueError('profile changes unknown pipelines: ' + ', '.join(sorted(unknown)))
+    for name, defines in changes.items():
+        keys = {d.split('=')[0] for d in defines}
+        entry = table['pipelines'][name]
+        entry['defines'] = [d for d in entry['defines'] if d.split('=')[0] not in keys] + defines
 
 
 def glslang(arch, src, defines, out):
@@ -59,9 +74,18 @@ def main():
     ap.add_argument('--ultra', action='store_true')
     ap.add_argument('--optimized', action='store_true')
     ap.add_argument('--experimental', action='store_true')
+    ap.add_argument('--profile', choices=['generic', 'z1-extreme'],
+                    default=os.environ.get('NR_SHADER_PROFILE', 'generic'),
+                    help='shader tuning; NR_SHADER_PROFILE propagates it through package builds')
     ap.add_argument('--out', type=Path)
     ap.add_argument('--check', type=Path)
     a = ap.parse_args()
+    if a.profile not in ('generic', 'z1-extreme'):
+        ap.error('NR_SHADER_PROFILE must be generic or z1-extreme')
+    if a.profile != 'generic' and a.arch != 'rdna3':
+        ap.error('z1-extreme requires rdna3')
+    if a.profile != 'generic' and a.legacy_int4:
+        ap.error('legacy INT4 keeps the generic profile')
     table = json.loads((R / 'linux/shaders' / a.arch / 'pipelines.json').read_text())
     if a.legacy_int4 + a.int4 + a.performance + a.ultra + a.optimized + a.experimental > 1:
         sys.exit('one of --int4, --performance, --ultra, --optimized, --experimental')
@@ -75,7 +99,11 @@ def main():
         assert not set(i4['change']) - set(default), 'pipelines-%s.json changes unknown pipelines' % overlay
         table['pipelines'] = {k: derive(e, i4['change'].get(k, {})) for k, e in default.items()}
         table['pipelines'].update({k: derive(default[c['base']], c) for k, c in i4['new'].items()})
-    out = a.out or R / 'build/linux' / a.arch / (f'network-{overlay}' if overlay else 'network')
+    if a.profile != 'generic':
+        profile = json.loads((R / 'linux/shaders' / a.arch / 'profiles' / f'{a.profile}.json').read_text())
+        apply_profile(table, profile['change'])
+    suffix = '' if a.profile == 'generic' else '-' + a.profile
+    out = a.out or R / 'build/linux' / a.arch / ((f'network-{overlay}' if overlay else 'network') + suffix)
     if out.exists():
         shutil.rmtree(out)
     (out / 'runtime').mkdir(parents=True)
@@ -91,6 +119,8 @@ def main():
         glslang(a.arch, R / 'linux/shaders' / a.arch / e['source'], e['defines'], out / f'g_{name}.spv')
     for name, text in table['markers'].items():
         (out / name).write_text('\n'.join(text) + '\n' if isinstance(text, list) else text + '\n')
+    if a.profile != 'generic':
+        (out / 'gpu-profile.txt').write_text(a.profile + '\n')
     for name, v in table['variants'].items():
         base = pipelines[v['base']]
         glslang(a.arch, R / 'linux/shaders' / a.arch / base['source'], base['defines'] + v['add'],

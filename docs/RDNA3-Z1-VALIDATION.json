@@ -1,0 +1,874 @@
+{
+  "base_commit": "c518f6508dac6ffacda96331ec6df56e6ef7a281",
+  "hardware": {
+    "system": "ROG Ally RC71L_RC71L",
+    "gpu": "AMD Ryzen Z1 Extreme (RADV PHOENIX)",
+    "pci_id": "1002:15bf",
+    "driver": "Mesa 26.2.6-arch3.1",
+    "power_control": "auto; no clocks or power limits changed"
+  },
+  "measurement": {
+    "date": "2026-11-16",
+    "rounds": 4,
+    "warmup_frames": 30,
+    "measured_frames_per_run": 40,
+    "case_order": "AB BA AB BA",
+    "scope": "isolated network GPU time; not game FPS",
+    "all_outputs_exact": true
+  },
+  "cases": {
+    "silver-1080p": {
+      "extent": [
+        1920,
+        1080
+      ],
+      "model_sha256": "2b41c888cf4155b8958c665ba64018ab0bd25c85fc71a2b6db86d0d04d1f7fbd",
+      "input_sha256": "79150122cb6ce661a09f98ce5eeceecbaf1fc546554c528a157ecab14b72ce53",
+      "baseline": {
+        "median_ms": 156.911,
+        "min_ms": 156.673,
+        "max_ms": 157.228,
+        "exact": true
+      },
+      "z1_extreme": {
+        "median_ms": 151.7465,
+        "min_ms": 151.438,
+        "max_ms": 151.904,
+        "exact": true
+      },
+      "time_saved_percent": 3.291,
+      "runs": [
+        {
+          "round": 0,
+          "case": "baseline",
+          "ms": 156.737,
+          "gpu_mhz": 2192.0,
+          "gpu_mcycles": 343.56750400000004,
+          "telemetry": {
+            "min_mhz": 1654.0,
+            "max_mhz": 2410.0,
+            "power_w": 29.9,
+            "edge_c": 89.2
+          },
+          "sha256": "469073d3f69fa57b01812bfed7aa82558a7883b66dc18a8d3baca2edc3e6b503",
+          "exact": true
+        },
+        {
+          "round": 0,
+          "case": "z1-extreme",
+          "ms": 151.756,
+          "gpu_mhz": 2164.0,
+          "gpu_mcycles": 328.399984,
+          "telemetry": {
+            "min_mhz": 1649.0,
+            "max_mhz": 2384.0,
+            "power_w": 29.9,
+            "edge_c": 89.8
+          },
+          "sha256": "469073d3f69fa57b01812bfed7aa82558a7883b66dc18a8d3baca2edc3e6b503",
+          "exact": true
+        },
+        {
+          "round": 1,
+          "case": "z1-extreme",
+          "ms": 151.904,
+          "gpu_mhz": 2164.0,
+          "gpu_mcycles": 328.720256,
+          "telemetry": {
+            "min_mhz": 1864.0,
+            "max_mhz": 2379.0,
+            "power_w": 29.9,
+            "edge_c": 90.1
+          },
+          "sha256": "469073d3f69fa57b01812bfed7aa82558a7883b66dc18a8d3baca2edc3e6b503",
+          "exact": true
+        },
+        {
+          "round": 1,
+          "case": "baseline",
+          "ms": 156.673,
+          "gpu_mhz": 2187.0,
+          "gpu_mcycles": 342.64385100000004,
+          "telemetry": {
+            "min_mhz": 1915.0,
+            "max_mhz": 2399.0,
+            "power_w": 29.9,
+            "edge_c": 90.4
+          },
+          "sha256": "469073d3f69fa57b01812bfed7aa82558a7883b66dc18a8d3baca2edc3e6b503",
+          "exact": true
+        },
+        {
+          "round": 2,
+          "case": "baseline",
+          "ms": 157.085,
+          "gpu_mhz": 2179.0,
+          "gpu_mcycles": 342.28821500000004,
+          "telemetry": {
+            "min_mhz": 1933.0,
+            "max_mhz": 2394.0,
+            "power_w": 29.9,
+            "edge_c": 90.6
+          },
+          "sha256": "469073d3f69fa57b01812bfed7aa82558a7883b66dc18a8d3baca2edc3e6b503",
+          "exact": true
+        },
+        {
+          "round": 2,
+          "case": "z1-extreme",
+          "ms": 151.438,
+          "gpu_mhz": 2164.0,
+          "gpu_mcycles": 327.711832,
+          "telemetry": {
+            "min_mhz": 1968.0,
+            "max_mhz": 2432.0,
+            "power_w": 29.9,
+            "edge_c": 91.0
+          },
+          "sha256": "469073d3f69fa57b01812bfed7aa82558a7883b66dc18a8d3baca2edc3e6b503",
+          "exact": true
+        },
+        {
+          "round": 3,
+          "case": "z1-extreme",
+          "ms": 151.737,
+          "gpu_mhz": 2161.0,
+          "gpu_mcycles": 327.903657,
+          "telemetry": {
+            "min_mhz": 1944.0,
+            "max_mhz": 2401.0,
+            "power_w": 29.9,
+            "edge_c": 91.3
+          },
+          "sha256": "469073d3f69fa57b01812bfed7aa82558a7883b66dc18a8d3baca2edc3e6b503",
+          "exact": true
+        },
+        {
+          "round": 3,
+          "case": "baseline",
+          "ms": 157.228,
+          "gpu_mhz": 2176.0,
+          "gpu_mcycles": 342.128128,
+          "telemetry": {
+            "min_mhz": 1911.0,
+            "max_mhz": 2388.0,
+            "power_w": 29.9,
+            "edge_c": 91.1
+          },
+          "sha256": "469073d3f69fa57b01812bfed7aa82558a7883b66dc18a8d3baca2edc3e6b503",
+          "exact": true
+        }
+      ],
+      "binaries": {
+        "baseline": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "944fb576f5c2988435deea9e183d444aeab023d8bb65cc2e81710b6a63fddf22"
+        },
+        "z1-extreme": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "6e5c912b22467cd539d692083bf0d2c71ff38dc0f82cda9e6fec345a4b2983a9"
+        }
+      }
+    },
+    "silver-720p": {
+      "extent": [
+        1280,
+        720
+      ],
+      "model_sha256": "2b41c888cf4155b8958c665ba64018ab0bd25c85fc71a2b6db86d0d04d1f7fbd",
+      "input_sha256": "ef5b1e8852382b6c8b0ab2bcdcb34bc264229557c0608b399314760c4d1c3ec8",
+      "baseline": {
+        "median_ms": 75.104,
+        "min_ms": 72.761,
+        "max_ms": 75.376,
+        "exact": true
+      },
+      "z1_extreme": {
+        "median_ms": 73.297,
+        "min_ms": 71.552,
+        "max_ms": 73.466,
+        "exact": true
+      },
+      "time_saved_percent": 2.406,
+      "runs": [
+        {
+          "round": 0,
+          "case": "baseline",
+          "ms": 72.761,
+          "gpu_mhz": 2279.0,
+          "gpu_mcycles": 165.822319,
+          "telemetry": {
+            "min_mhz": 2092.0,
+            "max_mhz": 2475.0,
+            "power_w": 28.8,
+            "edge_c": 73.1
+          },
+          "sha256": "c9dda210221a48af8ccc57d41dbea7475c5e2793d6676a740ed33060bb21bc99",
+          "exact": true
+        },
+        {
+          "round": 0,
+          "case": "z1-extreme",
+          "ms": 71.552,
+          "gpu_mhz": 2237.0,
+          "gpu_mcycles": 160.06182400000003,
+          "telemetry": {
+            "min_mhz": 2065.0,
+            "max_mhz": 2413.0,
+            "power_w": 29.0,
+            "edge_c": 79.7
+          },
+          "sha256": "c9dda210221a48af8ccc57d41dbea7475c5e2793d6676a740ed33060bb21bc99",
+          "exact": true
+        },
+        {
+          "round": 1,
+          "case": "z1-extreme",
+          "ms": 73.466,
+          "gpu_mhz": 2167.0,
+          "gpu_mcycles": 159.200822,
+          "telemetry": {
+            "min_mhz": 1524.0,
+            "max_mhz": 2378.0,
+            "power_w": 29.2,
+            "edge_c": 83.6
+          },
+          "sha256": "c9dda210221a48af8ccc57d41dbea7475c5e2793d6676a740ed33060bb21bc99",
+          "exact": true
+        },
+        {
+          "round": 1,
+          "case": "baseline",
+          "ms": 75.376,
+          "gpu_mhz": 2176.0,
+          "gpu_mcycles": 164.018176,
+          "telemetry": {
+            "min_mhz": 1877.0,
+            "max_mhz": 2380.0,
+            "power_w": 29.4,
+            "edge_c": 87.2
+          },
+          "sha256": "c9dda210221a48af8ccc57d41dbea7475c5e2793d6676a740ed33060bb21bc99",
+          "exact": true
+        },
+        {
+          "round": 2,
+          "case": "baseline",
+          "ms": 75.249,
+          "gpu_mhz": 2165.0,
+          "gpu_mcycles": 162.914085,
+          "telemetry": {
+            "min_mhz": 1923.0,
+            "max_mhz": 2372.0,
+            "power_w": 29.4,
+            "edge_c": 89.3
+          },
+          "sha256": "c9dda210221a48af8ccc57d41dbea7475c5e2793d6676a740ed33060bb21bc99",
+          "exact": true
+        },
+        {
+          "round": 2,
+          "case": "z1-extreme",
+          "ms": 73.369,
+          "gpu_mhz": 2163.0,
+          "gpu_mcycles": 158.697147,
+          "telemetry": {
+            "min_mhz": 1995.0,
+            "max_mhz": 2314.0,
+            "power_w": 29.2,
+            "edge_c": 90.0
+          },
+          "sha256": "c9dda210221a48af8ccc57d41dbea7475c5e2793d6676a740ed33060bb21bc99",
+          "exact": true
+        },
+        {
+          "round": 3,
+          "case": "z1-extreme",
+          "ms": 73.225,
+          "gpu_mhz": 2163.0,
+          "gpu_mcycles": 158.385675,
+          "telemetry": {
+            "min_mhz": 2026.0,
+            "max_mhz": 2320.0,
+            "power_w": 29.1,
+            "edge_c": 89.6
+          },
+          "sha256": "c9dda210221a48af8ccc57d41dbea7475c5e2793d6676a740ed33060bb21bc99",
+          "exact": true
+        },
+        {
+          "round": 3,
+          "case": "baseline",
+          "ms": 74.959,
+          "gpu_mhz": 2177.0,
+          "gpu_mcycles": 163.18574300000003,
+          "telemetry": {
+            "min_mhz": 1913.0,
+            "max_mhz": 2379.0,
+            "power_w": 29.2,
+            "edge_c": 88.9
+          },
+          "sha256": "c9dda210221a48af8ccc57d41dbea7475c5e2793d6676a740ed33060bb21bc99",
+          "exact": true
+        }
+      ],
+      "binaries": {
+        "baseline": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "944fb576f5c2988435deea9e183d444aeab023d8bb65cc2e81710b6a63fddf22"
+        },
+        "z1-extreme": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "6e5c912b22467cd539d692083bf0d2c71ff38dc0f82cda9e6fec345a4b2983a9"
+        }
+      }
+    },
+    "silver-900p": {
+      "extent": [
+        1600,
+        900
+      ],
+      "model_sha256": "2b41c888cf4155b8958c665ba64018ab0bd25c85fc71a2b6db86d0d04d1f7fbd",
+      "input_sha256": "ed93c9400ce0b86ae5fa25362969abf5eb8131a5eddd66f174ed0360b0d9ef26",
+      "baseline": {
+        "median_ms": 112.976,
+        "min_ms": 112.913,
+        "max_ms": 114.274,
+        "exact": true
+      },
+      "z1_extreme": {
+        "median_ms": 109.81200000000001,
+        "min_ms": 109.185,
+        "max_ms": 110.498,
+        "exact": true
+      },
+      "time_saved_percent": 2.801,
+      "runs": [
+        {
+          "round": 0,
+          "case": "baseline",
+          "ms": 114.274,
+          "gpu_mhz": 2150.0,
+          "gpu_mcycles": 245.6891,
+          "telemetry": {
+            "min_mhz": 1902.0,
+            "max_mhz": 2338.0,
+            "power_w": 29.8,
+            "edge_c": 88.9
+          },
+          "sha256": "281bdb3b996ef6ae889999e09a735a76175827cc768fcc2116bb404a3523ec2e",
+          "exact": true
+        },
+        {
+          "round": 0,
+          "case": "z1-extreme",
+          "ms": 110.346,
+          "gpu_mhz": 2152.0,
+          "gpu_mcycles": 237.464592,
+          "telemetry": {
+            "min_mhz": 1989.0,
+            "max_mhz": 2365.0,
+            "power_w": 29.7,
+            "edge_c": 88.8
+          },
+          "sha256": "281bdb3b996ef6ae889999e09a735a76175827cc768fcc2116bb404a3523ec2e",
+          "exact": true
+        },
+        {
+          "round": 1,
+          "case": "z1-extreme",
+          "ms": 109.278,
+          "gpu_mhz": 2175.0,
+          "gpu_mcycles": 237.67965,
+          "telemetry": {
+            "min_mhz": 1938.0,
+            "max_mhz": 2368.0,
+            "power_w": 29.7,
+            "edge_c": 88.9
+          },
+          "sha256": "281bdb3b996ef6ae889999e09a735a76175827cc768fcc2116bb404a3523ec2e",
+          "exact": true
+        },
+        {
+          "round": 1,
+          "case": "baseline",
+          "ms": 112.976,
+          "gpu_mhz": 2189.0,
+          "gpu_mcycles": 247.304464,
+          "telemetry": {
+            "min_mhz": 1893.0,
+            "max_mhz": 2392.0,
+            "power_w": 29.8,
+            "edge_c": 88.6
+          },
+          "sha256": "281bdb3b996ef6ae889999e09a735a76175827cc768fcc2116bb404a3523ec2e",
+          "exact": true
+        },
+        {
+          "round": 2,
+          "case": "baseline",
+          "ms": 112.976,
+          "gpu_mhz": 2189.0,
+          "gpu_mcycles": 247.304464,
+          "telemetry": {
+            "min_mhz": 1894.0,
+            "max_mhz": 2398.0,
+            "power_w": 29.8,
+            "edge_c": 88.2
+          },
+          "sha256": "281bdb3b996ef6ae889999e09a735a76175827cc768fcc2116bb404a3523ec2e",
+          "exact": true
+        },
+        {
+          "round": 2,
+          "case": "z1-extreme",
+          "ms": 110.498,
+          "gpu_mhz": 2141.0,
+          "gpu_mcycles": 236.576218,
+          "telemetry": {
+            "min_mhz": 1895.0,
+            "max_mhz": 2346.0,
+            "power_w": 29.7,
+            "edge_c": 88.5
+          },
+          "sha256": "281bdb3b996ef6ae889999e09a735a76175827cc768fcc2116bb404a3523ec2e",
+          "exact": true
+        },
+        {
+          "round": 3,
+          "case": "z1-extreme",
+          "ms": 109.185,
+          "gpu_mhz": 2179.0,
+          "gpu_mcycles": 237.91411499999998,
+          "telemetry": {
+            "min_mhz": 1989.0,
+            "max_mhz": 2367.0,
+            "power_w": 29.7,
+            "edge_c": 88.7
+          },
+          "sha256": "281bdb3b996ef6ae889999e09a735a76175827cc768fcc2116bb404a3523ec2e",
+          "exact": true
+        },
+        {
+          "round": 3,
+          "case": "baseline",
+          "ms": 112.913,
+          "gpu_mhz": 2183.0,
+          "gpu_mcycles": 246.489079,
+          "telemetry": {
+            "min_mhz": 1992.0,
+            "max_mhz": 2389.0,
+            "power_w": 29.8,
+            "edge_c": 88.6
+          },
+          "sha256": "281bdb3b996ef6ae889999e09a735a76175827cc768fcc2116bb404a3523ec2e",
+          "exact": true
+        }
+      ],
+      "binaries": {
+        "baseline": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "944fb576f5c2988435deea9e183d444aeab023d8bb65cc2e81710b6a63fddf22"
+        },
+        "z1-extreme": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "6e5c912b22467cd539d692083bf0d2c71ff38dc0f82cda9e6fec345a4b2983a9"
+        }
+      }
+    },
+    "small-1080p": {
+      "extent": [
+        1920,
+        1080
+      ],
+      "model_sha256": "7e966e2639dbec6596aa0bac3b8761137d2c40ca8cb4aca30df7ca10043c6e33",
+      "input_sha256": "79150122cb6ce661a09f98ce5eeceecbaf1fc546554c528a157ecab14b72ce53",
+      "baseline": {
+        "median_ms": 91.202,
+        "min_ms": 91.017,
+        "max_ms": 91.581,
+        "exact": true
+      },
+      "z1_extreme": {
+        "median_ms": 87.121,
+        "min_ms": 87.041,
+        "max_ms": 87.359,
+        "exact": true
+      },
+      "time_saved_percent": 4.475,
+      "runs": [
+        {
+          "round": 0,
+          "case": "baseline",
+          "ms": 91.017,
+          "gpu_mhz": 2191.0,
+          "gpu_mcycles": 199.418247,
+          "telemetry": {
+            "min_mhz": 1536.0,
+            "max_mhz": 2410.0,
+            "power_w": 29.5,
+            "edge_c": 87.8
+          },
+          "sha256": "70633242b61728c4e4043ad22d1528b0b2bc431b34b1d9a5002df8336edfe605",
+          "exact": true
+        },
+        {
+          "round": 0,
+          "case": "z1-extreme",
+          "ms": 87.041,
+          "gpu_mhz": 2166.0,
+          "gpu_mcycles": 188.53080599999998,
+          "telemetry": {
+            "min_mhz": 1678.0,
+            "max_mhz": 2351.0,
+            "power_w": 29.5,
+            "edge_c": 89.0
+          },
+          "sha256": "70633242b61728c4e4043ad22d1528b0b2bc431b34b1d9a5002df8336edfe605",
+          "exact": true
+        },
+        {
+          "round": 1,
+          "case": "z1-extreme",
+          "ms": 87.073,
+          "gpu_mhz": 2167.0,
+          "gpu_mcycles": 188.68719099999998,
+          "telemetry": {
+            "min_mhz": 1943.0,
+            "max_mhz": 2340.0,
+            "power_w": 29.5,
+            "edge_c": 89.3
+          },
+          "sha256": "70633242b61728c4e4043ad22d1528b0b2bc431b34b1d9a5002df8336edfe605",
+          "exact": true
+        },
+        {
+          "round": 1,
+          "case": "baseline",
+          "ms": 91.581,
+          "gpu_mhz": 2170.0,
+          "gpu_mcycles": 198.73077,
+          "telemetry": {
+            "min_mhz": 1659.0,
+            "max_mhz": 2379.0,
+            "power_w": 29.6,
+            "edge_c": 89.1
+          },
+          "sha256": "70633242b61728c4e4043ad22d1528b0b2bc431b34b1d9a5002df8336edfe605",
+          "exact": true
+        },
+        {
+          "round": 2,
+          "case": "baseline",
+          "ms": 91.157,
+          "gpu_mhz": 2182.0,
+          "gpu_mcycles": 198.904574,
+          "telemetry": {
+            "min_mhz": 2007.0,
+            "max_mhz": 2374.0,
+            "power_w": 29.6,
+            "edge_c": 89.5
+          },
+          "sha256": "70633242b61728c4e4043ad22d1528b0b2bc431b34b1d9a5002df8336edfe605",
+          "exact": true
+        },
+        {
+          "round": 2,
+          "case": "z1-extreme",
+          "ms": 87.359,
+          "gpu_mhz": 2156.0,
+          "gpu_mcycles": 188.346004,
+          "telemetry": {
+            "min_mhz": 1883.0,
+            "max_mhz": 2329.0,
+            "power_w": 29.5,
+            "edge_c": 89.9
+          },
+          "sha256": "70633242b61728c4e4043ad22d1528b0b2bc431b34b1d9a5002df8336edfe605",
+          "exact": true
+        },
+        {
+          "round": 3,
+          "case": "z1-extreme",
+          "ms": 87.169,
+          "gpu_mhz": 2160.0,
+          "gpu_mcycles": 188.28503999999998,
+          "telemetry": {
+            "min_mhz": 2002.0,
+            "max_mhz": 2338.0,
+            "power_w": 29.5,
+            "edge_c": 90.2
+          },
+          "sha256": "70633242b61728c4e4043ad22d1528b0b2bc431b34b1d9a5002df8336edfe605",
+          "exact": true
+        },
+        {
+          "round": 3,
+          "case": "baseline",
+          "ms": 91.247,
+          "gpu_mhz": 2181.0,
+          "gpu_mcycles": 199.009707,
+          "telemetry": {
+            "min_mhz": 1905.0,
+            "max_mhz": 2378.0,
+            "power_w": 29.6,
+            "edge_c": 89.8
+          },
+          "sha256": "70633242b61728c4e4043ad22d1528b0b2bc431b34b1d9a5002df8336edfe605",
+          "exact": true
+        }
+      ],
+      "binaries": {
+        "baseline": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "944fb576f5c2988435deea9e183d444aeab023d8bb65cc2e81710b6a63fddf22"
+        },
+        "z1-extreme": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "6e5c912b22467cd539d692083bf0d2c71ff38dc0f82cda9e6fec345a4b2983a9"
+        }
+      }
+    },
+    "small-720p": {
+      "extent": [
+        1280,
+        720
+      ],
+      "model_sha256": "7e966e2639dbec6596aa0bac3b8761137d2c40ca8cb4aca30df7ca10043c6e33",
+      "input_sha256": "ef5b1e8852382b6c8b0ab2bcdcb34bc264229557c0608b399314760c4d1c3ec8",
+      "baseline": {
+        "median_ms": 41.84,
+        "min_ms": 41.61,
+        "max_ms": 41.873,
+        "exact": true
+      },
+      "z1_extreme": {
+        "median_ms": 40.801500000000004,
+        "min_ms": 40.634,
+        "max_ms": 40.909,
+        "exact": true
+      },
+      "time_saved_percent": 2.482,
+      "runs": [
+        {
+          "round": 0,
+          "case": "baseline",
+          "ms": 41.873,
+          "gpu_mhz": 2185.0,
+          "gpu_mcycles": 91.492505,
+          "telemetry": {
+            "min_mhz": 2026.0,
+            "max_mhz": 2367.0,
+            "power_w": 27.2,
+            "edge_c": 89.0
+          },
+          "sha256": "79fc630cdcf98d5cf4f4220b30d445bc257c00bde2cbc8f03a3bc24c19c566ce",
+          "exact": true
+        },
+        {
+          "round": 0,
+          "case": "z1-extreme",
+          "ms": 40.897,
+          "gpu_mhz": 2176.0,
+          "gpu_mcycles": 88.991872,
+          "telemetry": {
+            "min_mhz": 1993.0,
+            "max_mhz": 2329.0,
+            "power_w": 27.5,
+            "edge_c": 88.8
+          },
+          "sha256": "79fc630cdcf98d5cf4f4220b30d445bc257c00bde2cbc8f03a3bc24c19c566ce",
+          "exact": true
+        },
+        {
+          "round": 1,
+          "case": "z1-extreme",
+          "ms": 40.909,
+          "gpu_mhz": 2183.0,
+          "gpu_mcycles": 89.30434699999999,
+          "telemetry": {
+            "min_mhz": 2028.0,
+            "max_mhz": 2330.0,
+            "power_w": 27.3,
+            "edge_c": 88.1
+          },
+          "sha256": "79fc630cdcf98d5cf4f4220b30d445bc257c00bde2cbc8f03a3bc24c19c566ce",
+          "exact": true
+        },
+        {
+          "round": 1,
+          "case": "baseline",
+          "ms": 41.823,
+          "gpu_mhz": 2195.0,
+          "gpu_mcycles": 91.801485,
+          "telemetry": {
+            "min_mhz": 1998.0,
+            "max_mhz": 2376.0,
+            "power_w": 27.4,
+            "edge_c": 87.4
+          },
+          "sha256": "79fc630cdcf98d5cf4f4220b30d445bc257c00bde2cbc8f03a3bc24c19c566ce",
+          "exact": true
+        },
+        {
+          "round": 2,
+          "case": "baseline",
+          "ms": 41.857,
+          "gpu_mhz": 2191.0,
+          "gpu_mcycles": 91.70868700000001,
+          "telemetry": {
+            "min_mhz": 1504.0,
+            "max_mhz": 2387.0,
+            "power_w": 27.5,
+            "edge_c": 87.2
+          },
+          "sha256": "79fc630cdcf98d5cf4f4220b30d445bc257c00bde2cbc8f03a3bc24c19c566ce",
+          "exact": true
+        },
+        {
+          "round": 2,
+          "case": "z1-extreme",
+          "ms": 40.706,
+          "gpu_mhz": 2187.0,
+          "gpu_mcycles": 89.02402200000002,
+          "telemetry": {
+            "min_mhz": 2055.0,
+            "max_mhz": 2346.0,
+            "power_w": 27.4,
+            "edge_c": 87.4
+          },
+          "sha256": "79fc630cdcf98d5cf4f4220b30d445bc257c00bde2cbc8f03a3bc24c19c566ce",
+          "exact": true
+        },
+        {
+          "round": 3,
+          "case": "z1-extreme",
+          "ms": 40.634,
+          "gpu_mhz": 2193.0,
+          "gpu_mcycles": 89.110362,
+          "telemetry": {
+            "min_mhz": 2074.0,
+            "max_mhz": 2341.0,
+            "power_w": 27.3,
+            "edge_c": 87.2
+          },
+          "sha256": "79fc630cdcf98d5cf4f4220b30d445bc257c00bde2cbc8f03a3bc24c19c566ce",
+          "exact": true
+        },
+        {
+          "round": 3,
+          "case": "baseline",
+          "ms": 41.61,
+          "gpu_mhz": 2206.0,
+          "gpu_mcycles": 91.79166000000001,
+          "telemetry": {
+            "min_mhz": 2036.0,
+            "max_mhz": 2389.0,
+            "power_w": 27.5,
+            "edge_c": 86.9
+          },
+          "sha256": "79fc630cdcf98d5cf4f4220b30d445bc257c00bde2cbc8f03a3bc24c19c566ce",
+          "exact": true
+        }
+      ],
+      "binaries": {
+        "baseline": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "944fb576f5c2988435deea9e183d444aeab023d8bb65cc2e81710b6a63fddf22"
+        },
+        "z1-extreme": {
+          "graph_sha256": "7af16bb0d5422f8e95b3e6b7e0b44d7c0019a2927ddc0fad5c60c7489dd13ae9",
+          "shader_tree_sha256": "6e5c912b22467cd539d692083bf0d2c71ff38dc0f82cda9e6fec345a4b2983a9"
+        }
+      }
+    }
+  },
+  "static_checks": {
+    "rdna3_profile_spirv_validated": 425,
+    "generic_files_identical_to_base": 514,
+    "profile_changed_pipelines": [
+      "g_attn.spv",
+      "g_gemmproj.spv"
+    ],
+    "derived_int4_and_temporal_unchanged": true,
+    "port_cpu_checks": "PASS",
+    "rdna4_generic_files_identical_to_original_builder": 76
+  },
+  "runtime_before_after": {
+    "strict_exit_codes": {
+      "check_rdna3": 1,
+      "check_rdna3_small": 1
+    },
+    "before_after": {
+      "out_1080p_0.rgba8": {
+        "exact": true,
+        "before_sha256": "f2f845e83bba073cf1f3fb16878524c84b48e973288e55a257b7e591748a6170",
+        "after_sha256": "f2f845e83bba073cf1f3fb16878524c84b48e973288e55a257b7e591748a6170"
+      },
+      "out_1080p_1.rgba8": {
+        "exact": true,
+        "before_sha256": "f2f845e83bba073cf1f3fb16878524c84b48e973288e55a257b7e591748a6170",
+        "after_sha256": "f2f845e83bba073cf1f3fb16878524c84b48e973288e55a257b7e591748a6170"
+      },
+      "out_1440p_0.rgba8": {
+        "exact": true,
+        "before_sha256": "5900c16caf4f721e25929d965e4942bf7afa99a9c69752ab9ae18ddf6b43c1a3",
+        "after_sha256": "5900c16caf4f721e25929d965e4942bf7afa99a9c69752ab9ae18ddf6b43c1a3"
+      },
+      "out_1440p_1.rgba8": {
+        "exact": true,
+        "before_sha256": "5900c16caf4f721e25929d965e4942bf7afa99a9c69752ab9ae18ddf6b43c1a3",
+        "after_sha256": "5900c16caf4f721e25929d965e4942bf7afa99a9c69752ab9ae18ddf6b43c1a3"
+      },
+      "out_4k_0.rgba8": {
+        "exact": true,
+        "before_sha256": "1065d74b419117833cb3266560a4fea65062a378027f624f24559eef5520b419",
+        "after_sha256": "1065d74b419117833cb3266560a4fea65062a378027f624f24559eef5520b419"
+      },
+      "out_4k_1.rgba8": {
+        "exact": true,
+        "before_sha256": "1065d74b419117833cb3266560a4fea65062a378027f624f24559eef5520b419",
+        "after_sha256": "1065d74b419117833cb3266560a4fea65062a378027f624f24559eef5520b419"
+      },
+      "out_engine_1080p.rgba8": {
+        "exact": true,
+        "before_sha256": "b9a48d0787bcbefa663df57b12be9f4008f8da18945f441b31855b7522782a04",
+        "after_sha256": "b9a48d0787bcbefa663df57b12be9f4008f8da18945f441b31855b7522782a04"
+      },
+      "out_small_1080p_0.rgba8": {
+        "exact": true,
+        "before_sha256": "d52cfab95df3a49bcb0805874621ad6446e079709993aa59640c1d59c3aef37a",
+        "after_sha256": "d52cfab95df3a49bcb0805874621ad6446e079709993aa59640c1d59c3aef37a"
+      },
+      "out_small_1080p_1.rgba8": {
+        "exact": true,
+        "before_sha256": "d52cfab95df3a49bcb0805874621ad6446e079709993aa59640c1d59c3aef37a",
+        "after_sha256": "d52cfab95df3a49bcb0805874621ad6446e079709993aa59640c1d59c3aef37a"
+      },
+      "out_small_1440p_0.rgba8": {
+        "exact": true,
+        "before_sha256": "0143cf81263ecb74bd90b7ce4229bd69a509852afe0ea0870fad65f5863509a8",
+        "after_sha256": "0143cf81263ecb74bd90b7ce4229bd69a509852afe0ea0870fad65f5863509a8"
+      },
+      "out_small_1440p_1.rgba8": {
+        "exact": true,
+        "before_sha256": "0143cf81263ecb74bd90b7ce4229bd69a509852afe0ea0870fad65f5863509a8",
+        "after_sha256": "0143cf81263ecb74bd90b7ce4229bd69a509852afe0ea0870fad65f5863509a8"
+      },
+      "out_small_4k_0.rgba8": {
+        "exact": true,
+        "before_sha256": "9e24fa136a5816490d6b011d4ecf06429fb9be7fab7330ed0113d255bb197cd8",
+        "after_sha256": "9e24fa136a5816490d6b011d4ecf06429fb9be7fab7330ed0113d255bb197cd8"
+      },
+      "out_small_4k_1.rgba8": {
+        "exact": true,
+        "before_sha256": "9e24fa136a5816490d6b011d4ecf06429fb9be7fab7330ed0113d255bb197cd8",
+        "after_sha256": "9e24fa136a5816490d6b011d4ecf06429fb9be7fab7330ed0113d255bb197cd8"
+      }
+    },
+    "layer_checks": "Silver and Small: identical before and after",
+    "historical_goldens": "Inherited strict failures retained; no golden changes",
+    "quantiser_and_wmma": "PASS before and after"
+  },
+  "optimized_variants_before_after": "pending"
+}

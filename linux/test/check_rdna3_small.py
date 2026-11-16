@@ -49,7 +49,7 @@ def build(model):
     data = INST / "dlssnr-amd"
     shutil.rmtree(INST, ignore_errors=True)
     data.mkdir(parents=True)
-    shutil.copytree(ROOT / "build" / "linux" / "rdna3" / "network", data / "shaders")
+    shutil.copytree(base.network_dir(), data / "shaders")
     shutil.copyfile(model, data / "CC_SMALL_FP8.bin")
 
 
