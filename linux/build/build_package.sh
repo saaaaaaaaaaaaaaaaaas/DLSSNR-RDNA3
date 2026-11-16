@@ -18,6 +18,7 @@
 #                       carries -rdna3 in its name
 #   NR_VERSION=...      override the version (default: from the git tags, linux/build/version.sh)
 #   NR_SHADER_PROFILE=z1-extreme  explicit Z1 Extreme shader tuning (NR_GPU=rdna3)
+#                     z1-extreme-fast / z1-extreme-turbo allow image-changing C32 arithmetic
 #   NR_LANG_EXTRA=<dir> test packages only: extra language files (and fonts/) into dlssnr-amd/lang
 #   NR_SIGN=1           the package's Windows binaries signed (self-signed, linux/build/sign_pe.py)
 #
@@ -52,8 +53,8 @@ source "linux/build/arch/$gpu.sh"
 profile=${NR_SHADER_PROFILE:-generic}
 case "$profile" in
     generic) ;;
-    z1-extreme) [[ "$gpu" == rdna3 ]] || { echo 'z1-extreme requires NR_GPU=rdna3' >&2; exit 2; };;
-    *) echo 'NR_SHADER_PROFILE must be generic or z1-extreme' >&2; exit 2;;
+    z1-extreme|z1-extreme-fast|z1-extreme-turbo) [[ "$gpu" == rdna3 ]] || { echo 'Z1 profiles require NR_GPU=rdna3' >&2; exit 2; };;
+    *) echo 'unknown NR_SHADER_PROFILE' >&2; exit 2;;
 esac
 
 # ---- compile ----------------------------------------------------------------
@@ -402,6 +403,9 @@ if [[ "$gpu" == rdna3 ]]; then
     cp -- docs/RDNA3-TARGET-TESTING.md docs/RDNA3-TARGET-TESTING-0.0.9.md docs/RDNA3-PORT-0.0.9.md "$pkg/"
     [[ ! -f docs/RDNA3-0.0.9-VALIDATION.json ]] || cp -- docs/RDNA3-0.0.9-VALIDATION.json "$pkg/"
     [[ "$profile" != z1-extreme ]] || cp -- docs/RDNA3-Z1-EXTREME.md docs/RDNA3-Z1-VALIDATION.json "$pkg/"
+    case "$profile" in
+        z1-extreme-fast|z1-extreme-turbo) cp -- docs/RDNA3-Z1E-AGGRESSIVE.md docs/RDNA3-Z1E-FAST-VALIDATION.json "$pkg/";;
+    esac
 fi
 chmod +x "$pkg/install.sh" "$mt/extract_model.sh"
 
@@ -412,8 +416,11 @@ chmod +x "$pkg/install.sh" "$mt/extract_model.sh"
 # ---- archive ------------------------------------------------------------------
 version=$(bash linux/build/version.sh)
 profile_suffix=; [[ "$profile" == generic ]] || profile_suffix="-$profile"
-if [[ "$profile" == z1-extreme && "$arch" == x86_64 ]]; then
-    archive="DLSS-NR-AMD-Vulcan-Linux-$version-Z1E-Optimized-RDNA-3.tar.gz"
+if [[ "$profile" == z1-extreme* && "$arch" == x86_64 ]]; then
+    flavor=
+    [[ "$profile" != z1-extreme-fast ]] || flavor=-Fast
+    [[ "$profile" != z1-extreme-turbo ]] || flavor=-Turbo
+    archive="DLSS-NR-AMD-Vulcan-Linux-$version-Z1E-Optimized$flavor-RDNA-3.tar.gz"
 else
     archive="DLSSNR-AMD-Vulkan-Linux-$version-$arch$([[ "$gpu" == rdna4 ]] || echo "-$gpu")$profile_suffix.tar.gz"
 fi

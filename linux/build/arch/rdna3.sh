@@ -10,9 +10,9 @@ NR_GPU_ARCH=rdna3
 # its e4m3 values, so the RDNA4 tables apply as they are: the weights made from them have the same SHA-256.
 NR_INT4_DATA=rdna4
 NR_PRODUCT_SPV=build/linux/rdna3/network
-if [[ ${NR_SHADER_PROFILE:-generic} == z1-extreme ]]; then
-    NR_PRODUCT_SPV+=-z1-extreme
-fi
+case ${NR_SHADER_PROFILE:-generic} in
+    z1-extreme|z1-extreme-fast|z1-extreme-turbo) NR_PRODUCT_SPV+=-${NR_SHADER_PROFILE};;
+esac
 NR_PRODUCT_DEFINES=(
     -DNR_ARCH_RDNA3=1
     -DNR_GEMM_WIDE_MT=64 -DNR_GEMM_WIDE_NT=256

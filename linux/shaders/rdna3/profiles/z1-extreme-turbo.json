@@ -1,0 +1,16 @@
+{
+  "description": "Opt-in Z1 approximation: retain FP16 instead of rounding to e4m3 throughout C32 kernels; keep saturation. Does not change device power settings.",
+  "inherit": "z1-extreme",
+  "change": {
+    "fswin32": ["NR_QUANT_F16_ONLY=1"],
+    "fswin32nh": ["NR_QUANT_F16_ONLY=1"],
+    "fswinds32": ["NR_QUANT_F16_ONLY=1"],
+    "fswindsp32": ["NR_QUANT_F16_ONLY=1"],
+    "fswindsp32nh": ["NR_QUANT_F16_ONLY=1"],
+    "fswinfusedup32": ["NR_QUANT_F16_ONLY=1"],
+    "fswinfusedup32nh": ["NR_QUANT_F16_ONLY=1"],
+    "fswinimagepost32": ["NR_QUANT_F16_ONLY=1"],
+    "fswinimagepreds32": ["NR_QUANT_F16_ONLY=1"],
+    "fswinimagepreds32nh": ["NR_QUANT_F16_ONLY=1"]
+  }
+}

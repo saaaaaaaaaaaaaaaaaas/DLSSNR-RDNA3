@@ -1,0 +1,16 @@
+{
+  "description": "Opt-in Z1 approximation: retain FP16 at C32 activation/context sites and throughout the post block; keep saturation.",
+  "inherit": "z1-extreme",
+  "change": {
+    "fswin32": ["NR_RELAX_QUANT_MASK=5"],
+    "fswin32nh": ["NR_RELAX_QUANT_MASK=5"],
+    "fswinds32": ["NR_RELAX_QUANT_MASK=5"],
+    "fswindsp32": ["NR_RELAX_QUANT_MASK=5"],
+    "fswindsp32nh": ["NR_RELAX_QUANT_MASK=5"],
+    "fswinfusedup32": ["NR_RELAX_QUANT_MASK=5"],
+    "fswinfusedup32nh": ["NR_RELAX_QUANT_MASK=5"],
+    "fswinimagepost32": ["NR_QUANT_F16_ONLY=1"],
+    "fswinimagepreds32": ["NR_RELAX_QUANT_MASK=5"],
+    "fswinimagepreds32nh": ["NR_RELAX_QUANT_MASK=5"]
+  }
+}

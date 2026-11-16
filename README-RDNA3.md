@@ -47,6 +47,12 @@ The usual build stays generic;
 the Z1 profile is selected at build time, with no game launch variable required.
 See [target measurements, checks and rollback](docs/RDNA3-Z1-EXTREME.md).
 
+Two additional opt-in profiles allow image changes: `z1-extreme-fast` selectively
+retains FP16 values inside C=32 blocks, and `z1-extreme-turbo` retains FP16 at all
+their e4m3 quantization sites. Both keep saturation and the original model weights.
+Their archives include `-Fast-` or `-Turbo-`. Turbo is a shader profile; it does
+not change the Ally's power mode. See [quality/performance comparisons](docs/RDNA3-Z1E-AGGRESSIVE.md).
+
 ## Previous port to 0.0.8.3
 
 The Linux runtime, menus and model installation have been ported to the pinned

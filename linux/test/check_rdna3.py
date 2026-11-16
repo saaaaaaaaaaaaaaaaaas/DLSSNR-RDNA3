@@ -50,8 +50,8 @@ PSNR_FLOOR_MARGIN, SSIM_FLOOR_MARGIN, CLOSE_TO_GOLDEN_DB = 0.15, 0.0005, 60.0
 
 def network_dir():
     profile = os.environ.get('NR_SHADER_PROFILE', 'generic')
-    if profile not in ('generic', 'z1-extreme'):
-        sys.exit('NR_SHADER_PROFILE must be generic or z1-extreme')
+    if profile not in ('generic', 'z1-extreme', 'z1-extreme-fast', 'z1-extreme-turbo'):
+        sys.exit('unknown NR_SHADER_PROFILE: ' + profile)
     return ROOT / 'build/linux/rdna3' / ('network' if profile == 'generic' else f'network-{profile}')
 
 

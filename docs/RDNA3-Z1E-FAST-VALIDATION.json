@@ -1,0 +1,6 @@
+{
+  "base_commit": "e7f7ac84b37b31c87cbbcbc321587a2f47f1f02c",
+  "status": "measurement in progress; not an approved reference",
+  "user_authorization": "image changes allowed; RDNA4 builds and package uploads prohibited",
+  "profiles": ["z1-extreme-fast", "z1-extreme-turbo"]
+}

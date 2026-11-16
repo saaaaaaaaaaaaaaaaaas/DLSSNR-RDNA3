@@ -26,7 +26,7 @@ float16_t nr_e4m3_decode(uint code) {
     return (code & 0x7Fu) == 0x7Fu ? unpackFloat2x16(0x7E00u)[0] : v;
 }
 
-// NR_QUANT_F16_ONLY=1 (diagnostic, off by default): keep the clamp to +-448 and stop rounding onto the e4m3 grid, so a
+// NR_QUANT_F16_ONLY=1 (opt-in approximation, off by default): keep the clamp to +-448 and stop rounding onto the e4m3 grid, so a
 // value leaves at the precision of the f16 it is stored in. The picture changes; this measures what the rounding costs.
 #ifndef NR_QUANT_F16_ONLY
 #define NR_QUANT_F16_ONLY 0
