@@ -30,11 +30,12 @@ struct SeamlessHistory {
         VkSamplerCreateInfo si{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
         si.magFilter=si.minFilter=VK_FILTER_NEAREST;
         si.addressModeU=si.addressModeV=si.addressModeW=VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-        NRVK_CHECK(vkCreateSampler(c.device,&si,nullptr,&sampler));
         // Construction during recording queues transitions in that same command
         // buffer. It must not submit/wait on a queue containing the game frame.
         const bool deferred=c.defer_transitions; c.defer_transitions=true;
+        const size_t pending=c.pending.size();
         try {
+            NRVK_CHECK(vkCreateSampler(c.device,&si,nullptr,&sampler));
             for(int k=0;k<2;++k) {
                 // Both usages are required: storage when written, sampled by
                 // the next frame. Keep the owning view sampler-free so writes
@@ -53,7 +54,12 @@ struct SeamlessHistory {
                 std::vector<nrvk::Context::Image*> images{&shown,&answer,&motion,&depth,&rs,&gs,&projected,&residual[k^1],&guide[k^1]};
                 reproject[k].create(c,path,{},sizeof(Push),images);
             }
-        } catch(...) {c.defer_transitions=deferred;throw;}
+        } catch(...) {
+            c.defer_transitions=deferred;
+            c.pending.resize(pending);
+            release(); // a later real frame can retry; never keep partial sets
+            throw;
+        }
         c.defer_transitions=deferred;
     }
     static void barrier(VkCommandBuffer cmd) {
@@ -79,13 +85,15 @@ struct SeamlessHistory {
         if(full) {p.mode=3;dispatch(cmd,reproject[current],p);}
         current^=1;have=true;
     }
-    ~SeamlessHistory() {
+    void release() {
         if(!ctx) return;
         for(auto& k:reproject) if(k.device) k.destroy();
         for(auto& im:residual) ctx->destroy(im);
         for(auto& im:guide) ctx->destroy(im);
         ctx->destroy(projected);
         if(sampler) vkDestroySampler(ctx->device,sampler,nullptr);
+        sampler=VK_NULL_HANDLE;ctx=nullptr;have=false;
     }
+    ~SeamlessHistory() { release(); }
 };
 } // namespace nr
