@@ -1,0 +1,3003 @@
+{
+  "status": "GPU Motion passed; packaging and full-NR regression in progress",
+  "motion": {
+    "640x360": {
+      "scene": {
+        "scene": "Motion (procedural Vulkan regression)",
+        "extent": [
+          640,
+          360
+        ],
+        "frames": 24,
+        "depth": "device depth, forward Z",
+        "motion": "current to previous, normalized UV",
+        "cut_frames": [
+          13
+        ],
+        "invalid_motion_frames": [
+          15
+        ],
+        "cases": [
+          {
+            "frame": 0,
+            "camera": 0,
+            "camera_angle_rad": 0,
+            "object": 160.0,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 0
+          },
+          {
+            "frame": 1,
+            "camera": 0,
+            "camera_angle_rad": 0,
+            "object": 167.68,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 1532
+          },
+          {
+            "frame": 2,
+            "camera": 4.0,
+            "camera_angle_rad": 0,
+            "object": 175.36,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 1712
+          },
+          {
+            "frame": 3,
+            "camera": 8.0,
+            "camera_angle_rad": 0,
+            "object": 183.04000000000002,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 1712
+          },
+          {
+            "frame": 4,
+            "camera": 12.0,
+            "camera_angle_rad": 0,
+            "object": 190.72,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 1532
+          },
+          {
+            "frame": 5,
+            "camera": 16.0,
+            "camera_angle_rad": 0,
+            "object": 198.4,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 1712
+          },
+          {
+            "frame": 6,
+            "camera": 20.0,
+            "camera_angle_rad": 0,
+            "object": 206.08,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 1712
+          },
+          {
+            "frame": 7,
+            "camera": 24.0,
+            "camera_angle_rad": 0,
+            "object": 213.76000000000002,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 1532
+          },
+          {
+            "frame": 8,
+            "camera": 60.0,
+            "camera_angle_rad": 0.18,
+            "object": 221.44,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 1704
+          },
+          {
+            "frame": 9,
+            "camera": 96.0,
+            "camera_angle_rad": 0.36,
+            "object": 229.12,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 1652
+          },
+          {
+            "frame": 10,
+            "camera": 132.0,
+            "camera_angle_rad": 0.54,
+            "object": 236.8,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 1647
+          },
+          {
+            "frame": 11,
+            "camera": 168.0,
+            "camera_angle_rad": 0.72,
+            "object": 244.48000000000002,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 1661
+          },
+          {
+            "frame": 12,
+            "camera": 204.0,
+            "camera_angle_rad": 0.8999999999999999,
+            "object": 252.16000000000003,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 1655
+          },
+          {
+            "frame": 13,
+            "camera": 261.33333333333337,
+            "camera_angle_rad": -0.35,
+            "object": 259.84000000000003,
+            "cut": true,
+            "invalid_motion": false,
+            "exposed_pixels": 1649
+          },
+          {
+            "frame": 14,
+            "camera": 265.33333333333337,
+            "camera_angle_rad": -0.35,
+            "object": 267.52000000000004,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 1668
+          },
+          {
+            "frame": 15,
+            "camera": 269.33333333333337,
+            "camera_angle_rad": -0.35,
+            "object": 275.2,
+            "cut": false,
+            "invalid_motion": true,
+            "exposed_pixels": 1677
+          },
+          {
+            "frame": 16,
+            "camera": 273.33333333333337,
+            "camera_angle_rad": -0.35,
+            "object": 282.88,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 1677
+          },
+          {
+            "frame": 17,
+            "camera": 277.33333333333337,
+            "camera_angle_rad": -0.35,
+            "object": 290.56,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 1671
+          },
+          {
+            "frame": 18,
+            "camera": 384.0,
+            "camera_angle_rad": -0.35,
+            "object": 298.24,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 1508
+          },
+          {
+            "frame": 19,
+            "camera": 384.0,
+            "camera_angle_rad": -0.35,
+            "object": 298.24,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 0
+          },
+          {
+            "frame": 20,
+            "camera": 384.0,
+            "camera_angle_rad": -0.35,
+            "object": 298.24,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 0
+          },
+          {
+            "frame": 21,
+            "camera": 384.0,
+            "camera_angle_rad": -0.35,
+            "object": 298.24,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 0
+          },
+          {
+            "frame": 22,
+            "camera": 384.0,
+            "camera_angle_rad": -0.35,
+            "object": 298.24,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 0
+          },
+          {
+            "frame": 23,
+            "camera": 384.0,
+            "camera_angle_rad": -0.35,
+            "object": 298.24,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 0
+          }
+        ]
+      },
+      "reference": "full-NR Turbo on every real frame, not independent game ground truth",
+      "cases": {
+        "motion-full": {
+          "full_launches": 24,
+          "motion_gated": 0,
+          "warmup_frames_excluded": 4,
+          "gpu_average_ms": 25.53967555,
+          "gpu_full_average_ms": 25.53967555,
+          "gpu_reconstruction_average_ms": null,
+          "exposed_blue_mean_rgb8": 0.0,
+          "exposed_mae_mean_rgb8": 0.0,
+          "frames": [
+            {
+              "frame": 0,
+              "full": true,
+              "sha256": "8942823ae03473a3de9cb0f053c52ec58f55531aeaa4b05aa100b93afa214e06",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 25.507344
+            },
+            {
+              "frame": 1,
+              "full": true,
+              "sha256": "035e49bf0f09f24ebd6fd874c5c22aa77eb11eda4bb6f8fa91d58172642fc714",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 25.646408
+            },
+            {
+              "frame": 2,
+              "full": true,
+              "sha256": "fd0b6e9e6409d05fda0e9df0beaa592891e4afa8fd4d98b5a66e0b23218b66f3",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 25.968861
+            },
+            {
+              "frame": 3,
+              "full": true,
+              "sha256": "295b782789c920d0e66af1f754f81521a3b99a3bcf3e1e6befa70231e1137a7b",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 25.627292
+            },
+            {
+              "frame": 4,
+              "full": true,
+              "sha256": "25e5395662e2913fec5bf29a0201a06d5cfd8eacf89ec07229b18ea4f8f74ddd",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 25.42627
+            },
+            {
+              "frame": 5,
+              "full": true,
+              "sha256": "0ac3e7cce7fc60b78cbda37e918fc27ab33a8b0fea94f3bc65bddbe30ffcb6ed",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 25.608296
+            },
+            {
+              "frame": 6,
+              "full": true,
+              "sha256": "130781b179fe7d2a4e9bee9aa08af0ecf5fd8a02b725d3cb99936ff5e0c52c82",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 25.417413
+            },
+            {
+              "frame": 7,
+              "full": true,
+              "sha256": "cfeab5e1bdb4d043ed930e04b385da890cb3201c8b38361c9ab3fd1c414b984c",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 25.628214
+            },
+            {
+              "frame": 8,
+              "full": true,
+              "sha256": "52e8019f11951239eecc410bd32e8af478c452d594137855942cdb7dad0962f3",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 25.614548
+            },
+            {
+              "frame": 9,
+              "full": true,
+              "sha256": "59c870129b563430ddfb00c11ac7ff0057e7add9c337f5489691887a08e340d1",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 25.580884
+            },
+            {
+              "frame": 10,
+              "full": true,
+              "sha256": "dfba375ae4060da85955ead462042e30b4ff4c01614d3574f642ad3e4b1b53db",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 25.539966
+            },
+            {
+              "frame": 11,
+              "full": true,
+              "sha256": "72a4da020a4dbef13ddc1c1cbf6cabe389379603317572379f666eb671c8bdfd",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 25.513957
+            },
+            {
+              "frame": 12,
+              "full": true,
+              "sha256": "23a91215d784eba95df736f3e9e2c13f63de55dd0accf51c16b8b1432fb8c26b",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 25.524136
+            },
+            {
+              "frame": 13,
+              "full": true,
+              "sha256": "c7e40fc9fc70f31594f6ee82f4ce37cc83a5cf6683ece9d1ea0aadf924c9b8e0",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 25.440537
+            },
+            {
+              "frame": 14,
+              "full": true,
+              "sha256": "a81dcf953777e004014860a44ee976786bbe03e0e5841e3622308e7a29229989",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 25.572348
+            },
+            {
+              "frame": 15,
+              "full": true,
+              "sha256": "42eb5860de2e784082c82cb4852bc9061bcbe36e85007f181933b8f7a2e9812e",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 25.496764
+            },
+            {
+              "frame": 16,
+              "full": true,
+              "sha256": "5a8ca0f9aac34d11a55efd467a54eacca384384eefb3e8e566ecd2718b4101f8",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 25.524697
+            },
+            {
+              "frame": 17,
+              "full": true,
+              "sha256": "9e6d974be01ce1446ede2175b24a5494450de72f8564b6276a40b02bde4f4dca",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 25.423705
+            },
+            {
+              "frame": 18,
+              "full": true,
+              "sha256": "002c33af72c831371c49a201a9b1da5c9eaa6040d28d1ec87995d60c6e535ede",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 25.430959
+            },
+            {
+              "frame": 19,
+              "full": true,
+              "sha256": "2455fee195c6390b192fffe76455123b71e553cd323cfa383c01ed38b37d12fd",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 25.658912
+            },
+            {
+              "frame": 20,
+              "full": true,
+              "sha256": "4c0c405ee221a2a6e301a674b1e58260701bc700cf8aeba1faf1f759d333d2a3",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 25.593227
+            },
+            {
+              "frame": 21,
+              "full": true,
+              "sha256": "4c6e347e70003f231ddbe2e3f1b192f7f1e2e5053bd40ae658e9fbcc86d2e906",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 25.54193
+            },
+            {
+              "frame": 22,
+              "full": true,
+              "sha256": "8aee95e441138a22e72c4e020109935106934142ad1bd04650f5b61f569b1dd6",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 25.659834
+            },
+            {
+              "frame": 23,
+              "full": true,
+              "sha256": "b593f88e9a755d1083d42539e6a1ceff2a1dc9ad7b4c6d23b9d6c8c7d29149cc",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 25.596914
+            }
+          ]
+        },
+        "motion-n2": {
+          "full_launches": 12,
+          "motion_gated": 0,
+          "warmup_frames_excluded": 4,
+          "gpu_average_ms": 13.36516205,
+          "gpu_full_average_ms": 25.9952233,
+          "gpu_reconstruction_average_ms": 0.7351008,
+          "exposed_blue_mean_rgb8": 1.2129894535084622,
+          "exposed_mae_mean_rgb8": 2.0052608601616457,
+          "frames": [
+            {
+              "frame": 0,
+              "full": true,
+              "sha256": "4f26ab38e0d2a9b419ee37aafa6084f60d7260aa067ea460969c7a78fec121e5",
+              "psnr_db": 83.22270316989557,
+              "rmse_rgb8": 0.017595638137944344,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 25.860776
+            },
+            {
+              "frame": 1,
+              "full": false,
+              "sha256": "1a3ebe0849110ebedec8bd159ca2e76530711b7314d25dae0c4f12dcf26e744a",
+              "psnr_db": 50.33982427691568,
+              "rmse_rgb8": 0.7754413692405311,
+              "exposed_positive_blue_error_rgb8": 0.6778720626631853,
+              "exposed_mae_rgb8": 2.3194081810269798,
+              "gpu_ms": 0.948162
+            },
+            {
+              "frame": 2,
+              "full": true,
+              "sha256": "319a4903f64797bc559292415a53f673c101a5c29c150cfd13762f9646222930",
+              "psnr_db": 55.37936368235769,
+              "rmse_rgb8": 0.43408221880789494,
+              "exposed_positive_blue_error_rgb8": 0.036214953271028034,
+              "exposed_mae_rgb8": 0.6255841121495327,
+              "gpu_ms": 26.009619
+            },
+            {
+              "frame": 3,
+              "full": false,
+              "sha256": "34f02595f6c2f834348560ce0c086496efb69f9150227960935e0a8205f23d54",
+              "psnr_db": 45.68825437677727,
+              "rmse_rgb8": 1.3247302747827294,
+              "exposed_positive_blue_error_rgb8": 0.4856892523364486,
+              "exposed_mae_rgb8": 2.2476635514018692,
+              "gpu_ms": 0.691314
+            },
+            {
+              "frame": 4,
+              "full": true,
+              "sha256": "fb59a14472aa6030190bba21ce6d2c4fd35f8a6809788887ee394a7e916a2685",
+              "psnr_db": 53.82996062674838,
+              "rmse_rgb8": 0.518850391892178,
+              "exposed_positive_blue_error_rgb8": 0.12173629242819843,
+              "exposed_mae_rgb8": 1.5739773716275023,
+              "gpu_ms": 26.149885
+            },
+            {
+              "frame": 5,
+              "full": false,
+              "sha256": "9a58040a19b53d86ffe2a2a969dc2a3aa967cb32468466de6b9adbb8d94f9647",
+              "psnr_db": 47.294639119167016,
+              "rmse_rgb8": 1.1010529997839946,
+              "exposed_positive_blue_error_rgb8": 0.6238317757009346,
+              "exposed_mae_rgb8": 2.019470404984424,
+              "gpu_ms": 0.688468
+            },
+            {
+              "frame": 6,
+              "full": true,
+              "sha256": "1ee1d1d17441b28361044f299e90a255d0576c48476d3dc39208c3278ff908e8",
+              "psnr_db": 54.9026307842915,
+              "rmse_rgb8": 0.45857316957259053,
+              "exposed_positive_blue_error_rgb8": 0.04935747663551402,
+              "exposed_mae_rgb8": 0.8720794392523364,
+              "gpu_ms": 26.21573
+            },
+            {
+              "frame": 7,
+              "full": false,
+              "sha256": "43007cba0a2f797a9f15891dde1c5803915486e2f41e1600279f892e7e954084",
+              "psnr_db": 45.84205827858587,
+              "rmse_rgb8": 1.3014793043416517,
+              "exposed_positive_blue_error_rgb8": 0.7242167101827677,
+              "exposed_mae_rgb8": 2.9168842471714536,
+              "gpu_ms": 0.960625
+            },
+            {
+              "frame": 8,
+              "full": true,
+              "sha256": "852e64697206c7ebbf157a96e1219a6b341cf3e25375cdede94370e6acefd6fd",
+              "psnr_db": 53.209977117010965,
+              "rmse_rgb8": 0.5572387695560103,
+              "exposed_positive_blue_error_rgb8": 0.17781690140845072,
+              "exposed_mae_rgb8": 0.6394757433489828,
+              "gpu_ms": 25.999439
+            },
+            {
+              "frame": 9,
+              "full": false,
+              "sha256": "bfe26481d3a6dbe9b4c638e36f4d82abae0b6320ba7e15b55f07772aff9ea549",
+              "psnr_db": 44.03146015126735,
+              "rmse_rgb8": 1.603124210345629,
+              "exposed_positive_blue_error_rgb8": 0.8271791767554479,
+              "exposed_mae_rgb8": 4.27138821630347,
+              "gpu_ms": 0.712434
+            },
+            {
+              "frame": 10,
+              "full": true,
+              "sha256": "90373b808fa34239bffca69106370b67952689a65c36805a00dc8e3836b4d3a7",
+              "psnr_db": 53.29322656626331,
+              "rmse_rgb8": 0.5519234569347591,
+              "exposed_positive_blue_error_rgb8": 0.05494839101396479,
+              "exposed_mae_rgb8": 1.0080955272212102,
+              "gpu_ms": 26.107725
+            },
+            {
+              "frame": 11,
+              "full": false,
+              "sha256": "aacb2e1b52d84e58bb80683dcbdf19b428f56e65255fe1ea973575e8a648aad9",
+              "psnr_db": 43.69127336423237,
+              "rmse_rgb8": 1.6671570459140137,
+              "exposed_positive_blue_error_rgb8": 0.7543648404575557,
+              "exposed_mae_rgb8": 2.423841059602649,
+              "gpu_ms": 1.00503
+            },
+            {
+              "frame": 12,
+              "full": true,
+              "sha256": "f6f0f4b0710defd04bfd0685dfe6936b17311ca51406b5146a6075921659982f",
+              "psnr_db": 53.14377035681044,
+              "rmse_rgb8": 0.5615024590988663,
+              "exposed_positive_blue_error_rgb8": 0.11208459214501511,
+              "exposed_mae_rgb8": 0.8358509566968781,
+              "gpu_ms": 25.872037
+            },
+            {
+              "frame": 13,
+              "full": false,
+              "sha256": "877adcf18a816b52c9c2968a4a8615b5a1bea19aeb67bffb088c3a02b0ca5c16",
+              "psnr_db": 37.47880829678389,
+              "rmse_rgb8": 3.4087862202505996,
+              "exposed_positive_blue_error_rgb8": 3.119769557307459,
+              "exposed_mae_rgb8": 2.820497271073378,
+              "gpu_ms": 0.458752
+            },
+            {
+              "frame": 14,
+              "full": true,
+              "sha256": "1dbc107318480c4ad8f12a81c505d36bd3aef1bba1a6b5a0fef1cc024021f992",
+              "psnr_db": 52.707643694643224,
+              "rmse_rgb8": 0.5904158335287778,
+              "exposed_positive_blue_error_rgb8": 2.1669664268585134,
+              "exposed_mae_rgb8": 1.8585131894484412,
+              "gpu_ms": 26.025409
+            },
+            {
+              "frame": 15,
+              "full": false,
+              "sha256": "44a4ff9debb3ae9d6179c23fc105b4a1dc0e848ec223ca2f919c89293a55fab5",
+              "psnr_db": 50.527628282184494,
+              "rmse_rgb8": 0.7588549411839256,
+              "exposed_positive_blue_error_rgb8": 4.050685748360167,
+              "exposed_mae_rgb8": 3.4949314251639834,
+              "gpu_ms": 0.714157
+            },
+            {
+              "frame": 16,
+              "full": true,
+              "sha256": "6bfe4ea6a2edc097fd5dd9be8505dea077f1208ec70062d1fb6c00b91f346ce1",
+              "psnr_db": 52.05147767179803,
+              "rmse_rgb8": 0.6367461047009647,
+              "exposed_positive_blue_error_rgb8": 0.5503875968992248,
+              "exposed_mae_rgb8": 1.0459153249850923,
+              "gpu_ms": 25.9471
+            },
+            {
+              "frame": 17,
+              "full": false,
+              "sha256": "3cab159fb00db764abc82c413668c199a09a6e7f011099f93911286af242b888",
+              "psnr_db": 49.59776391705711,
+              "rmse_rgb8": 0.8446017648594536,
+              "exposed_positive_blue_error_rgb8": 4.094254937163376,
+              "exposed_mae_rgb8": 3.2942349890285256,
+              "gpu_ms": 0.735718
+            },
+            {
+              "frame": 18,
+              "full": true,
+              "sha256": "219e704d122f6083ff504d146b51345cbc1e207258dd0d81d389a5dfcdc81563",
+              "psnr_db": 50.15007274243803,
+              "rmse_rgb8": 0.7925680175858726,
+              "exposed_positive_blue_error_rgb8": 0.7672413793103449,
+              "exposed_mae_rgb8": 1.0037577365163572,
+              "gpu_ms": 25.783589
+            },
+            {
+              "frame": 19,
+              "full": false,
+              "sha256": "219e704d122f6083ff504d146b51345cbc1e207258dd0d81d389a5dfcdc81563",
+              "psnr_db": 50.525664752939306,
+              "rmse_rgb8": 0.7590265070640985,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 0.685342
+            },
+            {
+              "frame": 20,
+              "full": true,
+              "sha256": "9259456eb7eece989e18d003584b2330b14375acd6461624cf053920988f40d5",
+              "psnr_db": 51.19995943120821,
+              "rmse_rgb8": 0.7023315996920015,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 25.93648
+            },
+            {
+              "frame": 21,
+              "full": false,
+              "sha256": "9259456eb7eece989e18d003584b2330b14375acd6461624cf053920988f40d5",
+              "psnr_db": 51.422543711295916,
+              "rmse_rgb8": 0.6845623263835834,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 0.660695
+            },
+            {
+              "frame": 22,
+              "full": true,
+              "sha256": "bb65625064dbf8e42aaf8b63be2baf476157e16e5f9e3037d7b42934ef57e463",
+              "psnr_db": 53.540929790411774,
+              "rmse_rgb8": 0.5364060789005671,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 25.914839
+            },
+            {
+              "frame": 23,
+              "full": false,
+              "sha256": "bb65625064dbf8e42aaf8b63be2baf476157e16e5f9e3037d7b42934ef57e463",
+              "psnr_db": 54.628317815345,
+              "rmse_rgb8": 0.47328668833155646,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 0.729787
+            }
+          ]
+        },
+        "motion-n3": {
+          "full_launches": 8,
+          "motion_gated": 0,
+          "warmup_frames_excluded": 4,
+          "gpu_average_ms": 8.43736315,
+          "gpu_full_average_ms": 26.256026833333333,
+          "gpu_reconstruction_average_ms": 0.800793,
+          "exposed_blue_mean_rgb8": 1.4807709975356733,
+          "exposed_mae_mean_rgb8": 2.3347974456971095,
+          "frames": [
+            {
+              "frame": 0,
+              "full": true,
+              "sha256": "4f26ab38e0d2a9b419ee37aafa6084f60d7260aa067ea460969c7a78fec121e5",
+              "psnr_db": 83.22270316989557,
+              "rmse_rgb8": 0.017595638137944344,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 25.919367
+            },
+            {
+              "frame": 1,
+              "full": false,
+              "sha256": "1a3ebe0849110ebedec8bd159ca2e76530711b7314d25dae0c4f12dcf26e744a",
+              "psnr_db": 50.33982427691568,
+              "rmse_rgb8": 0.7754413692405311,
+              "exposed_positive_blue_error_rgb8": 0.6778720626631853,
+              "exposed_mae_rgb8": 2.3194081810269798,
+              "gpu_ms": 0.698647
+            },
+            {
+              "frame": 2,
+              "full": false,
+              "sha256": "9d3350b1b1d358ddcd187f3f34e55161b2778f91c42e5fc8ac4d588a7552c80f",
+              "psnr_db": 45.68805030153982,
+              "rmse_rgb8": 1.3247613997258916,
+              "exposed_positive_blue_error_rgb8": 0.6524532710280374,
+              "exposed_mae_rgb8": 1.793613707165109,
+              "gpu_ms": 0.672037
+            },
+            {
+              "frame": 3,
+              "full": true,
+              "sha256": "d284d999996743a370a0a982d188625d2a1a0bb01b41b4f942532d3558d78e0c",
+              "psnr_db": 55.50391055729059,
+              "rmse_rgb8": 0.4279023312539821,
+              "exposed_positive_blue_error_rgb8": 0.01197429906542056,
+              "exposed_mae_rgb8": 0.7326713395638629,
+              "gpu_ms": 26.173931
+            },
+            {
+              "frame": 4,
+              "full": false,
+              "sha256": "18a2ce7287370451d9dc6b9b377d35ba8e772bbde831ffa2772a14b9c2688e5b",
+              "psnr_db": 48.44744720804411,
+              "rmse_rgb8": 0.9642015383110947,
+              "exposed_positive_blue_error_rgb8": 0.8612924281984334,
+              "exposed_mae_rgb8": 3.208006962576153,
+              "gpu_ms": 0.679251
+            },
+            {
+              "frame": 5,
+              "full": false,
+              "sha256": "3586ada962a25abb26e1d80eed7aef99cbfad4be8fe8245034aeebb4e8d6989a",
+              "psnr_db": 51.0737573656847,
+              "rmse_rgb8": 0.7126106557996865,
+              "exposed_positive_blue_error_rgb8": 0.5955023364485982,
+              "exposed_mae_rgb8": 1.7603193146417446,
+              "gpu_ms": 0.671115
+            },
+            {
+              "frame": 6,
+              "full": true,
+              "sha256": "d81cf0010b9c7227038640a7a0885c251f1f4b48a53bf8945f24500031afdc96",
+              "psnr_db": 54.74882189178839,
+              "rmse_rgb8": 0.46676586247322155,
+              "exposed_positive_blue_error_rgb8": 0.04964953271028037,
+              "exposed_mae_rgb8": 0.8691588785046729,
+              "gpu_ms": 26.047771
+            },
+            {
+              "frame": 7,
+              "full": false,
+              "sha256": "647c0703d6c9c8180f5e5936d0220096903e26c9c9a7306bb1089c87d439b781",
+              "psnr_db": 45.860958036261835,
+              "rmse_rgb8": 1.2986504747450545,
+              "exposed_positive_blue_error_rgb8": 0.702023498694517,
+              "exposed_mae_rgb8": 2.8816362053959965,
+              "gpu_ms": 0.687186
+            },
+            {
+              "frame": 8,
+              "full": false,
+              "sha256": "59ac9451d3f1ef459829f7df3b864dcc5d66674c9654ee7edffa2d8192854637",
+              "psnr_db": 42.909152815137226,
+              "rmse_rgb8": 1.8242423750849435,
+              "exposed_positive_blue_error_rgb8": 0.8911384976525821,
+              "exposed_mae_rgb8": 2.54264475743349,
+              "gpu_ms": 0.685623
+            },
+            {
+              "frame": 9,
+              "full": true,
+              "sha256": "08fb3ad8a51058ad421a5f0ff30cdb0017ab607c06cd8c433d79891f761370ee",
+              "psnr_db": 52.19405614954223,
+              "rmse_rgb8": 0.6263792651391777,
+              "exposed_positive_blue_error_rgb8": 0.07294188861985472,
+              "exposed_mae_rgb8": 2.6142050040355125,
+              "gpu_ms": 26.103397
+            },
+            {
+              "frame": 10,
+              "full": false,
+              "sha256": "3a228d34eed992f46ca35f2ea00520b1b1a1f01f9b8dd0175e33c670afba4fdd",
+              "psnr_db": 44.16405366426253,
+              "rmse_rgb8": 1.5788377332591728,
+              "exposed_positive_blue_error_rgb8": 0.7437765634486946,
+              "exposed_mae_rgb8": 2.269176280105242,
+              "gpu_ms": 0.711712
+            },
+            {
+              "frame": 11,
+              "full": false,
+              "sha256": "2bc3f19fdf178b78c81b41c2a0d9dc64eb4f267b9f3dfc0d45263931f3879a3e",
+              "psnr_db": 42.09092415505658,
+              "rmse_rgb8": 2.004444208664374,
+              "exposed_positive_blue_error_rgb8": 0.670680313064419,
+              "exposed_mae_rgb8": 2.1776038531005417,
+              "gpu_ms": 0.904158
+            },
+            {
+              "frame": 12,
+              "full": true,
+              "sha256": "7c6c884aa8ffd51e604112a600d8023be6edd592980ecd8f7ed177ceddfdd8f0",
+              "psnr_db": 53.144507778404986,
+              "rmse_rgb8": 0.5614547902382537,
+              "exposed_positive_blue_error_rgb8": 0.11208459214501511,
+              "exposed_mae_rgb8": 0.8358509566968781,
+              "gpu_ms": 26.549244
+            },
+            {
+              "frame": 13,
+              "full": false,
+              "sha256": "877adcf18a816b52c9c2968a4a8615b5a1bea19aeb67bffb088c3a02b0ca5c16",
+              "psnr_db": 37.47880829678389,
+              "rmse_rgb8": 3.4087862202505996,
+              "exposed_positive_blue_error_rgb8": 3.119769557307459,
+              "exposed_mae_rgb8": 2.820497271073378,
+              "gpu_ms": 0.580062
+            },
+            {
+              "frame": 14,
+              "full": false,
+              "sha256": "cda5445049eca33b2f621f08965973b61c82729faddbc529d995b89a25b3bce8",
+              "psnr_db": 37.16321019891956,
+              "rmse_rgb8": 3.5349206585862714,
+              "exposed_positive_blue_error_rgb8": 4.265887290167866,
+              "exposed_mae_rgb8": 4.079736211031175,
+              "gpu_ms": 1.330167
+            },
+            {
+              "frame": 15,
+              "full": true,
+              "sha256": "5d8b9b1c0042f13ac05c3abb54dab0099041b11e0f6c949182c63fb5324de182",
+              "psnr_db": 54.28174335754272,
+              "rmse_rgb8": 0.4925530498783298,
+              "exposed_positive_blue_error_rgb8": 1.535778175313059,
+              "exposed_mae_rgb8": 1.3247863247863247,
+              "gpu_ms": 26.624186
+            },
+            {
+              "frame": 16,
+              "full": false,
+              "sha256": "3a8c4b5edd478fde34072fc164129c1d54cf2eeaaec35e7e6cb75b700e81c5fd",
+              "psnr_db": 50.448110588539414,
+              "rmse_rgb8": 0.7658340134200825,
+              "exposed_positive_blue_error_rgb8": 3.6553369111508647,
+              "exposed_mae_rgb8": 3.2689326177698272,
+              "gpu_ms": 0.712915
+            },
+            {
+              "frame": 17,
+              "full": false,
+              "sha256": "6da02ee357de3f7de4eae7a4ed26b517d5692d97c4fd6fb60c03e87c39f6d117",
+              "psnr_db": 48.869812701284935,
+              "rmse_rgb8": 0.9184373680736613,
+              "exposed_positive_blue_error_rgb8": 4.168461998803112,
+              "exposed_mae_rgb8": 3.3656493117893476,
+              "gpu_ms": 0.72638
+            },
+            {
+              "frame": 18,
+              "full": true,
+              "sha256": "219e704d122f6083ff504d146b51345cbc1e207258dd0d81d389a5dfcdc81563",
+              "psnr_db": 50.15007274243803,
+              "rmse_rgb8": 0.7925680175858726,
+              "exposed_positive_blue_error_rgb8": 0.7672413793103449,
+              "exposed_mae_rgb8": 1.0037577365163572,
+              "gpu_ms": 26.093498
+            },
+            {
+              "frame": 19,
+              "full": false,
+              "sha256": "219e704d122f6083ff504d146b51345cbc1e207258dd0d81d389a5dfcdc81563",
+              "psnr_db": 50.525664752939306,
+              "rmse_rgb8": 0.7590265070640985,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 0.958261
+            },
+            {
+              "frame": 20,
+              "full": false,
+              "sha256": "219e704d122f6083ff504d146b51345cbc1e207258dd0d81d389a5dfcdc81563",
+              "psnr_db": 51.22770172482177,
+              "rmse_rgb8": 0.7000919665115963,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 0.924276
+            },
+            {
+              "frame": 21,
+              "full": true,
+              "sha256": "db34c296b4599fb670fb246020fe6055adda42cafddde28ba9e68a730df91138",
+              "psnr_db": 51.934092399324754,
+              "rmse_rgb8": 0.645409807366176,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 26.118065
+            },
+            {
+              "frame": 22,
+              "full": false,
+              "sha256": "db34c296b4599fb670fb246020fe6055adda42cafddde28ba9e68a730df91138",
+              "psnr_db": 53.39181746239429,
+              "rmse_rgb8": 0.545694161646939,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 0.976495
+            },
+            {
+              "frame": 23,
+              "full": false,
+              "sha256": "db34c296b4599fb670fb246020fe6055adda42cafddde28ba9e68a730df91138",
+              "psnr_db": 55.090635750573924,
+              "rmse_rgb8": 0.4487540621914562,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 0.663501
+            }
+          ]
+        },
+        "motion-n4": {
+          "full_launches": 6,
+          "motion_gated": 0,
+          "warmup_frames_excluded": 4,
+          "gpu_average_ms": 7.1459975,
+          "gpu_full_average_ms": 26.075592,
+          "gpu_reconstruction_average_ms": 0.8361326666666666,
+          "exposed_blue_mean_rgb8": 1.6621051383641465,
+          "exposed_mae_mean_rgb8": 2.5330937078937192,
+          "frames": [
+            {
+              "frame": 0,
+              "full": true,
+              "sha256": "4f26ab38e0d2a9b419ee37aafa6084f60d7260aa067ea460969c7a78fec121e5",
+              "psnr_db": 83.22270316989557,
+              "rmse_rgb8": 0.017595638137944344,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 25.950586
+            },
+            {
+              "frame": 1,
+              "full": false,
+              "sha256": "1a3ebe0849110ebedec8bd159ca2e76530711b7314d25dae0c4f12dcf26e744a",
+              "psnr_db": 50.33982427691568,
+              "rmse_rgb8": 0.7754413692405311,
+              "exposed_positive_blue_error_rgb8": 0.6778720626631853,
+              "exposed_mae_rgb8": 2.3194081810269798,
+              "gpu_ms": 1.243322
+            },
+            {
+              "frame": 2,
+              "full": false,
+              "sha256": "9d3350b1b1d358ddcd187f3f34e55161b2778f91c42e5fc8ac4d588a7552c80f",
+              "psnr_db": 45.68805030153982,
+              "rmse_rgb8": 1.3247613997258916,
+              "exposed_positive_blue_error_rgb8": 0.6524532710280374,
+              "exposed_mae_rgb8": 1.793613707165109,
+              "gpu_ms": 0.698006
+            },
+            {
+              "frame": 3,
+              "full": false,
+              "sha256": "bd862f4b83b9b01aaf7a4c2fd3f78a648c64190e1d959dbe9999b377d25a6707",
+              "psnr_db": 47.9120344691156,
+              "rmse_rgb8": 1.0255065934201244,
+              "exposed_positive_blue_error_rgb8": 0.5163551401869159,
+              "exposed_mae_rgb8": 1.9585280373831775,
+              "gpu_ms": 0.82112
+            },
+            {
+              "frame": 4,
+              "full": true,
+              "sha256": "70933c7bbdaff1b858a05eafe6fc1f8dcf36b0842f0f48601415824af2e1c5b6",
+              "psnr_db": 54.20241995136942,
+              "rmse_rgb8": 0.4970718658451862,
+              "exposed_positive_blue_error_rgb8": 0.12695822454308095,
+              "exposed_mae_rgb8": 1.5718015665796345,
+              "gpu_ms": 26.218295
+            },
+            {
+              "frame": 5,
+              "full": false,
+              "sha256": "613d23930bba0f4beb70cc90c9441d9cc9cb754f57d62dbdb1127eeea97868ef",
+              "psnr_db": 47.544658814364126,
+              "rmse_rgb8": 1.0698114449648488,
+              "exposed_positive_blue_error_rgb8": 0.594626168224299,
+              "exposed_mae_rgb8": 1.9554127725856698,
+              "gpu_ms": 0.909328
+            },
+            {
+              "frame": 6,
+              "full": false,
+              "sha256": "53e1d234a7359b08881c2a191d0a668b12cc6a2af19a96a27a56e5684959b1c8",
+              "psnr_db": 50.12492942557476,
+              "rmse_rgb8": 0.7948656129136501,
+              "exposed_positive_blue_error_rgb8": 0.7441588785046729,
+              "exposed_mae_rgb8": 2.8921339563862927,
+              "gpu_ms": 0.702254
+            },
+            {
+              "frame": 7,
+              "full": false,
+              "sha256": "6b2f2b6c9b3692c1a8699b4cc63f9024424e81f57c2ec286f87305035d29a440",
+              "psnr_db": 46.32161220534169,
+              "rmse_rgb8": 1.231571329568375,
+              "exposed_positive_blue_error_rgb8": 0.7607702349869452,
+              "exposed_mae_rgb8": 2.8918624891209745,
+              "gpu_ms": 0.679251
+            },
+            {
+              "frame": 8,
+              "full": true,
+              "sha256": "7d8066226fa8f39f91e3f01966e32374e902ad5ee8e23d4ad843f0e4a79ef379",
+              "psnr_db": 53.21001758670788,
+              "rmse_rgb8": 0.5572361732495278,
+              "exposed_positive_blue_error_rgb8": 0.17781690140845072,
+              "exposed_mae_rgb8": 0.6394757433489828,
+              "gpu_ms": 25.983248
+            },
+            {
+              "frame": 9,
+              "full": false,
+              "sha256": "bfe26481d3a6dbe9b4c638e36f4d82abae0b6320ba7e15b55f07772aff9ea549",
+              "psnr_db": 44.03146015126735,
+              "rmse_rgb8": 1.603124210345629,
+              "exposed_positive_blue_error_rgb8": 0.8271791767554479,
+              "exposed_mae_rgb8": 4.27138821630347,
+              "gpu_ms": 0.79471
+            },
+            {
+              "frame": 10,
+              "full": false,
+              "sha256": "dd92e1255815e16ebb4996cd577d89cd87b093ae881981393e365528cd00f06e",
+              "psnr_db": 41.68267078485638,
+              "rmse_rgb8": 2.100906095857478,
+              "exposed_positive_blue_error_rgb8": 0.8060109289617486,
+              "exposed_mae_rgb8": 2.4671119206638332,
+              "gpu_ms": 0.733514
+            },
+            {
+              "frame": 11,
+              "full": false,
+              "sha256": "8ac1145e8ff76136b74662dba68d3f6a350121fbbcfa2f6e2dc72a9f47b82e61",
+              "psnr_db": 40.90478926526639,
+              "rmse_rgb8": 2.297739113720751,
+              "exposed_positive_blue_error_rgb8": 0.75105358217941,
+              "exposed_mae_rgb8": 2.2839654826409794,
+              "gpu_ms": 1.020739
+            },
+            {
+              "frame": 12,
+              "full": true,
+              "sha256": "f4f3e98d72361420fe44dd3e00e79fc650f700464b8ac1407386dbe21ca34c59",
+              "psnr_db": 53.142315811054644,
+              "rmse_rgb8": 0.5615964966058816,
+              "exposed_positive_blue_error_rgb8": 0.11208459214501511,
+              "exposed_mae_rgb8": 0.8358509566968781,
+              "gpu_ms": 26.214007
+            },
+            {
+              "frame": 13,
+              "full": false,
+              "sha256": "877adcf18a816b52c9c2968a4a8615b5a1bea19aeb67bffb088c3a02b0ca5c16",
+              "psnr_db": 37.47880829678389,
+              "rmse_rgb8": 3.4087862202505996,
+              "exposed_positive_blue_error_rgb8": 3.119769557307459,
+              "exposed_mae_rgb8": 2.820497271073378,
+              "gpu_ms": 0.625268
+            },
+            {
+              "frame": 14,
+              "full": false,
+              "sha256": "cda5445049eca33b2f621f08965973b61c82729faddbc529d995b89a25b3bce8",
+              "psnr_db": 37.16321019891956,
+              "rmse_rgb8": 3.5349206585862714,
+              "exposed_positive_blue_error_rgb8": 4.265887290167866,
+              "exposed_mae_rgb8": 4.079736211031175,
+              "gpu_ms": 1.327963
+            },
+            {
+              "frame": 15,
+              "full": false,
+              "sha256": "1ba30915eca0f6ac3602d6b63083159aec55ecb3948ab6024d35386fffcdb5ac",
+              "psnr_db": 37.48669389822334,
+              "rmse_rgb8": 3.405692912310645,
+              "exposed_positive_blue_error_rgb8": 4.169051878354204,
+              "exposed_mae_rgb8": 3.9105545617173525,
+              "gpu_ms": 1.10526
+            },
+            {
+              "frame": 16,
+              "full": true,
+              "sha256": "bab261c79ed255e3ffd10f3fa8d34b006bf32ff23befddf24a89c089642843ab",
+              "psnr_db": 51.969061193782565,
+              "rmse_rgb8": 0.6428166552873492,
+              "exposed_positive_blue_error_rgb8": 0.5497912939773405,
+              "exposed_mae_rgb8": 1.04512025442258,
+              "gpu_ms": 25.944375
+            },
+            {
+              "frame": 17,
+              "full": false,
+              "sha256": "ec65d78e65a5c553f5d9cf3370f560a1cb7758e46119b08bc2f67ca1a9edd15b",
+              "psnr_db": 49.47289121824474,
+              "rmse_rgb8": 0.8568318852783372,
+              "exposed_positive_blue_error_rgb8": 4.094853381208857,
+              "exposed_mae_rgb8": 3.291043287452623,
+              "gpu_ms": 0.718605
+            },
+            {
+              "frame": 18,
+              "full": false,
+              "sha256": "3c1683f07051afe534aa152c1b7defdc283182a3f7884c07d63e4414c56d2486",
+              "psnr_db": 43.03128975175329,
+              "rmse_rgb8": 1.798770236418739,
+              "exposed_positive_blue_error_rgb8": 3.8315649867374004,
+              "exposed_mae_rgb8": 3.0404509283819627,
+              "gpu_ms": 0.724497
+            },
+            {
+              "frame": 19,
+              "full": false,
+              "sha256": "fadf8b79e8ad099d65e622c654cba175cb16a1806f88ef728bf4432ef9a4f90e",
+              "psnr_db": 42.953868669033504,
+              "rmse_rgb8": 1.8148751200534126,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 0.886965
+            },
+            {
+              "frame": 20,
+              "full": true,
+              "sha256": "c68f0c114ef21730983bae54e70d293ed77b8c1366bbb1d3387ff4085666989c",
+              "psnr_db": 51.25879746530836,
+              "rmse_rgb8": 0.6975900977253364,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 26.018035
+            },
+            {
+              "frame": 21,
+              "full": false,
+              "sha256": "c68f0c114ef21730983bae54e70d293ed77b8c1366bbb1d3387ff4085666989c",
+              "psnr_db": 51.53090473551741,
+              "rmse_rgb8": 0.6760751040352664,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 0.668991
+            },
+            {
+              "frame": 22,
+              "full": false,
+              "sha256": "c68f0c114ef21730983bae54e70d293ed77b8c1366bbb1d3387ff4085666989c",
+              "psnr_db": 52.401378685027844,
+              "rmse_rgb8": 0.6116053083817543,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 0.870494
+            },
+            {
+              "frame": 23,
+              "full": false,
+              "sha256": "c68f0c114ef21730983bae54e70d293ed77b8c1366bbb1d3387ff4085666989c",
+              "psnr_db": 54.30764122267113,
+              "rmse_rgb8": 0.49108663997604635,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 0.774151
+            }
+          ]
+        },
+        "motion-legacy": {
+          "full_launches": 16,
+          "motion_gated": 6,
+          "warmup_frames_excluded": 4,
+          "gpu_average_ms": 18.00502175,
+          "gpu_full_average_ms": 25.563236214285716,
+          "gpu_reconstruction_average_ms": 0.369188,
+          "exposed_blue_mean_rgb8": 6.5883449074121625,
+          "exposed_mae_mean_rgb8": 7.143593149512491,
+          "frames": [
+            {
+              "frame": 0,
+              "full": true,
+              "sha256": "8942823ae03473a3de9cb0f053c52ec58f55531aeaa4b05aa100b93afa214e06",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 25.412364
+            },
+            {
+              "frame": 1,
+              "full": false,
+              "sha256": "8942823ae03473a3de9cb0f053c52ec58f55531aeaa4b05aa100b93afa214e06",
+              "psnr_db": 30.814922951098197,
+              "rmse_rgb8": 7.341656025342269,
+              "exposed_positive_blue_error_rgb8": 103.4820496083551,
+              "exposed_mae_rgb8": 56.20082680591819,
+              "gpu_ms": 0.333393
+            },
+            {
+              "frame": 2,
+              "full": true,
+              "sha256": "19982a08cdb760374f2640bbabc2e37a00806efea69192ea256305d57390e644",
+              "psnr_db": 55.192505750344026,
+              "rmse_rgb8": 0.44352172010365365,
+              "exposed_positive_blue_error_rgb8": 0.026285046728971962,
+              "exposed_mae_rgb8": 0.6224688473520249,
+              "gpu_ms": 25.566657
+            },
+            {
+              "frame": 3,
+              "full": false,
+              "sha256": "19982a08cdb760374f2640bbabc2e37a00806efea69192ea256305d57390e644",
+              "psnr_db": 29.91885392616122,
+              "rmse_rgb8": 8.139495438623353,
+              "exposed_positive_blue_error_rgb8": 50.91179906542056,
+              "exposed_mae_rgb8": 28.53679906542056,
+              "gpu_ms": 0.346579
+            },
+            {
+              "frame": 4,
+              "full": true,
+              "sha256": "ad11a77ab56a83252a6a6e3e4fa8c670341c4589606af0b35d2dcca2a2804322",
+              "psnr_db": 53.993315441461846,
+              "rmse_rgb8": 0.5091836012823026,
+              "exposed_positive_blue_error_rgb8": 0.125,
+              "exposed_mae_rgb8": 1.561792863359443,
+              "gpu_ms": 25.385192
+            },
+            {
+              "frame": 5,
+              "full": false,
+              "sha256": "ad11a77ab56a83252a6a6e3e4fa8c670341c4589606af0b35d2dcca2a2804322",
+              "psnr_db": 29.769991136887395,
+              "rmse_rgb8": 8.280196124416154,
+              "exposed_positive_blue_error_rgb8": 52.48539719626168,
+              "exposed_mae_rgb8": 26.469042056074766,
+              "gpu_ms": 0.330508
+            },
+            {
+              "frame": 6,
+              "full": true,
+              "sha256": "fc061f30196eec584415ca4371761e88c3f2b352577976021be1f438c5ac4581",
+              "psnr_db": 54.8870024412684,
+              "rmse_rgb8": 0.4593990136076738,
+              "exposed_positive_blue_error_rgb8": 0.040011682242990655,
+              "exposed_mae_rgb8": 0.8664330218068536,
+              "gpu_ms": 25.671296
+            },
+            {
+              "frame": 7,
+              "full": false,
+              "sha256": "fc061f30196eec584415ca4371761e88c3f2b352577976021be1f438c5ac4581",
+              "psnr_db": 30.313310513590285,
+              "rmse_rgb8": 7.778120280157192,
+              "exposed_positive_blue_error_rgb8": 43.06853785900783,
+              "exposed_mae_rgb8": 23.78111401218451,
+              "gpu_ms": 0.331109
+            },
+            {
+              "frame": 8,
+              "full": true,
+              "sha256": "200bf63e48f7acf2a54889175f252b0676809049a055582c7eb4be252740df94",
+              "psnr_db": 53.20439591265356,
+              "rmse_rgb8": 0.5575969439046916,
+              "exposed_positive_blue_error_rgb8": 0.17781690140845072,
+              "exposed_mae_rgb8": 0.6386932707355243,
+              "gpu_ms": 25.440858
+            },
+            {
+              "frame": 9,
+              "full": true,
+              "sha256": "6c59fdac454b7186b6e30f0599d2aecc946d40e046118e39c15b4b78a20ec8b9",
+              "psnr_db": 54.454537804903936,
+              "rmse_rgb8": 0.4828511723395001,
+              "exposed_positive_blue_error_rgb8": 0.14800242130750604,
+              "exposed_mae_rgb8": 0.6928974979822438,
+              "gpu_ms": 25.594991
+            },
+            {
+              "frame": 10,
+              "full": true,
+              "sha256": "cbbab4cf1b94aa63ae9d61669056e9357657f4228951acf459bc86a1c6c818e1",
+              "psnr_db": 55.144603619848304,
+              "rmse_rgb8": 0.44597447142932595,
+              "exposed_positive_blue_error_rgb8": 0.16757741347905283,
+              "exposed_mae_rgb8": 0.6257842541995547,
+              "gpu_ms": 25.71017
+            },
+            {
+              "frame": 11,
+              "full": true,
+              "sha256": "df1a65a8251b53bcde0852af9c0e8a9e839a4cab8ae0d4c1f8b4a3a0ac469206",
+              "psnr_db": 55.49814936372606,
+              "rmse_rgb8": 0.428186245281359,
+              "exposed_positive_blue_error_rgb8": 0.2588801926550271,
+              "exposed_mae_rgb8": 0.4043748745735501,
+              "gpu_ms": 25.72075
+            },
+            {
+              "frame": 12,
+              "full": true,
+              "sha256": "8127eeb12365bffbd22b3728a4e8076a2dbc28ef92b6b6fa4f2698eb61c69e5c",
+              "psnr_db": 56.519420810120124,
+              "rmse_rgb8": 0.38068795851623577,
+              "exposed_positive_blue_error_rgb8": 0.39637462235649545,
+              "exposed_mae_rgb8": 0.4431017119838872,
+              "gpu_ms": 25.653662
+            },
+            {
+              "frame": 13,
+              "full": true,
+              "sha256": "c7e40fc9fc70f31594f6ee82f4ce37cc83a5cf6683ece9d1ea0aadf924c9b8e0",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 25.500291
+            },
+            {
+              "frame": 14,
+              "full": true,
+              "sha256": "ddd9b93f92439f2b468746782aaa3680f664a66039ff0ab55466ade78a513957",
+              "psnr_db": 54.49496125842687,
+              "rmse_rgb8": 0.4806092415419782,
+              "exposed_positive_blue_error_rgb8": 0.37140287769784175,
+              "exposed_mae_rgb8": 0.32533972821742607,
+              "gpu_ms": 25.934676
+            },
+            {
+              "frame": 15,
+              "full": false,
+              "sha256": "ddd9b93f92439f2b468746782aaa3680f664a66039ff0ab55466ade78a513957",
+              "psnr_db": 29.946321773282047,
+              "rmse_rgb8": 8.11379613925269,
+              "exposed_positive_blue_error_rgb8": 0.12999403697078116,
+              "exposed_mae_rgb8": 22.534684953289606,
+              "gpu_ms": 0.328624
+            },
+            {
+              "frame": 16,
+              "full": true,
+              "sha256": "33c107fa0fe9b8bb398723292415adbac803bcd40ecbd33fba518921b2acbe95",
+              "psnr_db": 51.9671608974287,
+              "rmse_rgb8": 0.6429573059093598,
+              "exposed_positive_blue_error_rgb8": 0.5477042337507454,
+              "exposed_mae_rgb8": 1.043331345656927,
+              "gpu_ms": 25.463381
+            },
+            {
+              "frame": 17,
+              "full": false,
+              "sha256": "33c107fa0fe9b8bb398723292415adbac803bcd40ecbd33fba518921b2acbe95",
+              "psnr_db": 29.719463472502436,
+              "rmse_rgb8": 8.328504156298505,
+              "exposed_positive_blue_error_rgb8": 0.1412327947336924,
+              "exposed_mae_rgb8": 26.76421304608019,
+              "gpu_ms": 0.522352
+            },
+            {
+              "frame": 18,
+              "full": true,
+              "sha256": "aae183d9ad54398aee67225402fe44229e61e8e100b67cbf19881f3cb61d43e9",
+              "psnr_db": 50.14244755159198,
+              "rmse_rgb8": 0.7932641047058758,
+              "exposed_positive_blue_error_rgb8": 0.7672413793103449,
+              "exposed_mae_rgb8": 1.0030946065428823,
+              "gpu_ms": 25.296664
+            },
+            {
+              "frame": 19,
+              "full": true,
+              "sha256": "de69589f280d842d70913d9c3eb9ef31c0b8eac35e30df1d7a4645e430370eef",
+              "psnr_db": 51.534796725510915,
+              "rmse_rgb8": 0.6757722348735008,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 25.478249
+            },
+            {
+              "frame": 20,
+              "full": false,
+              "sha256": "de69589f280d842d70913d9c3eb9ef31c0b8eac35e30df1d7a4645e430370eef",
+              "psnr_db": 52.337550178252386,
+              "rmse_rgb8": 0.6161162615003642,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 0.326661
+            },
+            {
+              "frame": 21,
+              "full": true,
+              "sha256": "0b49e19f1a73545db6ea23e680b9cfd1549a8cb5af80047103abd7e214edc26a",
+              "psnr_db": 52.10273312158932,
+              "rmse_rgb8": 0.6329997293896794,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 25.535197
+            },
+            {
+              "frame": 22,
+              "full": false,
+              "sha256": "0b49e19f1a73545db6ea23e680b9cfd1549a8cb5af80047103abd7e214edc26a",
+              "psnr_db": 53.50013393133373,
+              "rmse_rgb8": 0.5389313950876411,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 0.375874
+            },
+            {
+              "frame": 23,
+              "full": true,
+              "sha256": "cb78f2b19d7e3a8579a5e53eb818876405174281283d551f057b4c5443904641",
+              "psnr_db": 53.741819958448644,
+              "rmse_rgb8": 0.5241422666993578,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 25.49993
+            }
+          ]
+        }
+      }
+    },
+    "1280x720": {
+      "scene": {
+        "scene": "Motion (procedural Vulkan regression)",
+        "extent": [
+          1280,
+          720
+        ],
+        "frames": 24,
+        "depth": "device depth, forward Z",
+        "motion": "current to previous, normalized UV",
+        "cut_frames": [
+          13
+        ],
+        "invalid_motion_frames": [
+          15
+        ],
+        "cases": [
+          {
+            "frame": 0,
+            "camera": 0,
+            "camera_angle_rad": 0,
+            "object": 320.0,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 0
+          },
+          {
+            "frame": 1,
+            "camera": 0,
+            "camera_angle_rad": 0,
+            "object": 335.36,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 6496
+          },
+          {
+            "frame": 2,
+            "camera": 8.0,
+            "camera_angle_rad": 0,
+            "object": 350.72,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 6496
+          },
+          {
+            "frame": 3,
+            "camera": 16.0,
+            "camera_angle_rad": 0,
+            "object": 366.08000000000004,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 6856
+          },
+          {
+            "frame": 4,
+            "camera": 24.0,
+            "camera_angle_rad": 0,
+            "object": 381.44,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 6496
+          },
+          {
+            "frame": 5,
+            "camera": 32.0,
+            "camera_angle_rad": 0,
+            "object": 396.8,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 6496
+          },
+          {
+            "frame": 6,
+            "camera": 40.0,
+            "camera_angle_rad": 0,
+            "object": 412.16,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 6856
+          },
+          {
+            "frame": 7,
+            "camera": 48.0,
+            "camera_angle_rad": 0,
+            "object": 427.52000000000004,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 6496
+          },
+          {
+            "frame": 8,
+            "camera": 120.0,
+            "camera_angle_rad": 0.18,
+            "object": 442.88,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 6629
+          },
+          {
+            "frame": 9,
+            "camera": 192.0,
+            "camera_angle_rad": 0.36,
+            "object": 458.24,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 6649
+          },
+          {
+            "frame": 10,
+            "camera": 264.0,
+            "camera_angle_rad": 0.54,
+            "object": 473.6,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 6621
+          },
+          {
+            "frame": 11,
+            "camera": 336.0,
+            "camera_angle_rad": 0.72,
+            "object": 488.96000000000004,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 6626
+          },
+          {
+            "frame": 12,
+            "camera": 408.0,
+            "camera_angle_rad": 0.8999999999999999,
+            "object": 504.32000000000005,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 6623
+          },
+          {
+            "frame": 13,
+            "camera": 522.6666666666667,
+            "camera_angle_rad": -0.35,
+            "object": 519.6800000000001,
+            "cut": true,
+            "invalid_motion": false,
+            "exposed_pixels": 6597
+          },
+          {
+            "frame": 14,
+            "camera": 530.6666666666667,
+            "camera_angle_rad": -0.35,
+            "object": 535.0400000000001,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 6798
+          },
+          {
+            "frame": 15,
+            "camera": 538.6666666666667,
+            "camera_angle_rad": -0.35,
+            "object": 550.4,
+            "cut": false,
+            "invalid_motion": true,
+            "exposed_pixels": 6816
+          },
+          {
+            "frame": 16,
+            "camera": 546.6666666666667,
+            "camera_angle_rad": -0.35,
+            "object": 565.76,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 6827
+          },
+          {
+            "frame": 17,
+            "camera": 554.6666666666667,
+            "camera_angle_rad": -0.35,
+            "object": 581.12,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 6816
+          },
+          {
+            "frame": 18,
+            "camera": 768.0,
+            "camera_angle_rad": -0.35,
+            "object": 596.48,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 5906
+          },
+          {
+            "frame": 19,
+            "camera": 768.0,
+            "camera_angle_rad": -0.35,
+            "object": 596.48,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 0
+          },
+          {
+            "frame": 20,
+            "camera": 768.0,
+            "camera_angle_rad": -0.35,
+            "object": 596.48,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 0
+          },
+          {
+            "frame": 21,
+            "camera": 768.0,
+            "camera_angle_rad": -0.35,
+            "object": 596.48,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 0
+          },
+          {
+            "frame": 22,
+            "camera": 768.0,
+            "camera_angle_rad": -0.35,
+            "object": 596.48,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 0
+          },
+          {
+            "frame": 23,
+            "camera": 768.0,
+            "camera_angle_rad": -0.35,
+            "object": 596.48,
+            "cut": false,
+            "invalid_motion": false,
+            "exposed_pixels": 0
+          }
+        ]
+      },
+      "reference": "full-NR Turbo on every real frame, not independent game ground truth",
+      "cases": {
+        "motion-full": {
+          "full_launches": 24,
+          "motion_gated": 0,
+          "warmup_frames_excluded": 4,
+          "gpu_average_ms": 73.04049185,
+          "gpu_full_average_ms": 73.04049185,
+          "gpu_reconstruction_average_ms": null,
+          "exposed_blue_mean_rgb8": 0.0,
+          "exposed_mae_mean_rgb8": 0.0,
+          "frames": [
+            {
+              "frame": 0,
+              "full": true,
+              "sha256": "1bb69b93573cb5407d1c652fe7015623ca801f6f43410faa34306baa7ab7d9b3",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 75.839456
+            },
+            {
+              "frame": 1,
+              "full": true,
+              "sha256": "8eab42c297fc63a6ce08da1c180e6928bc2ca25ad167c534466a10c203b6c643",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 76.812264
+            },
+            {
+              "frame": 2,
+              "full": true,
+              "sha256": "0bbc0f667fa4c8b1e2aa94f32c1d49d8490734e0f68e97727e52a64be4bb2b34",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 76.608597
+            },
+            {
+              "frame": 3,
+              "full": true,
+              "sha256": "a010596cd22c435cd3f59d5e642d7e5a70faf3dde92709e2d2030c147ba748dc",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 76.838915
+            },
+            {
+              "frame": 4,
+              "full": true,
+              "sha256": "f9fac0f86c9257203495031bbfaeae3e7259516e38cb123fd930eb5439707eb3",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 76.445808
+            },
+            {
+              "frame": 5,
+              "full": true,
+              "sha256": "7dfa324ca07e3cc0ec527772ebeb1561fbad9225798f5471ff2cbd72ac6bbe9b",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 75.97299
+            },
+            {
+              "frame": 6,
+              "full": true,
+              "sha256": "b1a3d0f35373281df1d1831a571ce259265d85bae9b903b045cbb173cdac9029",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 76.050657
+            },
+            {
+              "frame": 7,
+              "full": true,
+              "sha256": "9dadbb627627a13b4d1830e99aa184764f4b5e6e8cf93b80e1eb780a4ca1949a",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 77.061778
+            },
+            {
+              "frame": 8,
+              "full": true,
+              "sha256": "aa8a4a5976480d6c437f02508706ac65a2600b1ea559f16bb31169969c1112f1",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 76.961668
+            },
+            {
+              "frame": 9,
+              "full": true,
+              "sha256": "b62d0bf08f50036a4395551f9f84311bce06b84888232fd029c73cd65cf99097",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 77.808798
+            },
+            {
+              "frame": 10,
+              "full": true,
+              "sha256": "e9e300ef42f7b67e7d3b852ff21fb30cfaf506c6bdf40eeb707ceb3365580724",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 76.818196
+            },
+            {
+              "frame": 11,
+              "full": true,
+              "sha256": "481eeea63bcf6ffe499cd65bffeeaef2c840dd022ccad026b09e73cd6434437c",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 76.291555
+            },
+            {
+              "frame": 12,
+              "full": true,
+              "sha256": "c661f626efa3d30afaf218a7bed55c44c13c20536abec872ac6a62fc15d444ed",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 76.625229
+            },
+            {
+              "frame": 13,
+              "full": true,
+              "sha256": "056c959d4a171889a7d33675fd0ab7bad0315b90e16bb76fa36903a5dc523598",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 76.755396
+            },
+            {
+              "frame": 14,
+              "full": true,
+              "sha256": "d3af56c77aafe4b3558cf35606b26851855a74577477a2889fa00051cba5937b",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 76.733915
+            },
+            {
+              "frame": 15,
+              "full": true,
+              "sha256": "1a52a2e27e7e5a53963644fca2f97c2b52ac8647fdaba313affbfcf7645795a1",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 76.090693
+            },
+            {
+              "frame": 16,
+              "full": true,
+              "sha256": "255d3f24a7ec470557e6082f02979892b2d27bb883ed3a7340af4b4c5a934a0b",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 76.137101
+            },
+            {
+              "frame": 17,
+              "full": true,
+              "sha256": "9184c298ad6960e12754c367f92c4860c58356472397bd5ec5511073e31b8242",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 75.808517
+            },
+            {
+              "frame": 18,
+              "full": true,
+              "sha256": "c15bcb257fb498e0f59ede84f2a30163d18cdd62b1397ffdaec64f0d94d04b52",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 44.331631
+            },
+            {
+              "frame": 19,
+              "full": true,
+              "sha256": "e05ff477164ad57455875a23859be7c9e873efd0be819a721919940197ac7ea0",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 37.713737
+            },
+            {
+              "frame": 20,
+              "full": true,
+              "sha256": "7b5bfab2b7e5f20c67a435e76129c2e02f8319c92c68a44532b01e2e50c86da9",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 77.008838
+            },
+            {
+              "frame": 21,
+              "full": true,
+              "sha256": "28c380866b5995304bed01785ec9456ff43b44887097f8b2e7d150344a9e543a",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 77.095643
+            },
+            {
+              "frame": 22,
+              "full": true,
+              "sha256": "14e603621e9ac244d13631dda3e3e51aa2a741e5a98640bc81ae775aa17a03ea",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 76.040758
+            },
+            {
+              "frame": 23,
+              "full": true,
+              "sha256": "7bd6b20dcc0377128e14622ef77df87af7e59697d69fb90b0d494f5a3a801a7b",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 77.056929
+            }
+          ]
+        },
+        "motion-n2": {
+          "full_launches": 12,
+          "motion_gated": 0,
+          "warmup_frames_excluded": 4,
+          "gpu_average_ms": 40.42549475,
+          "gpu_full_average_ms": 78.3251546,
+          "gpu_reconstruction_average_ms": 2.5258349,
+          "exposed_blue_mean_rgb8": 0.9937538600303409,
+          "exposed_mae_mean_rgb8": 1.7858952597024043,
+          "frames": [
+            {
+              "frame": 0,
+              "full": true,
+              "sha256": "49a892f5d923efdd05c2ffdb31c74291f60696921668e4c922c7942fbc2fcd50",
+              "psnr_db": 78.601173173945,
+              "rmse_rgb8": 0.029955841342809177,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 77.290533
+            },
+            {
+              "frame": 1,
+              "full": false,
+              "sha256": "ed167ce9a7309e4c2fd81edaf2c7bbc124ca08c086d88806c39e4c414bbf8d67",
+              "psnr_db": 50.99252576385321,
+              "rmse_rgb8": 0.7193063466773878,
+              "exposed_positive_blue_error_rgb8": 0.7336822660098522,
+              "exposed_mae_rgb8": 1.8839285714285714,
+              "gpu_ms": 2.615489
+            },
+            {
+              "frame": 2,
+              "full": true,
+              "sha256": "674ba8dfc2912a357c3b2cb87002dc21daacca557b262fb273bf1cab39bcb808",
+              "psnr_db": 52.98910629077062,
+              "rmse_rgb8": 0.5715903207645023,
+              "exposed_positive_blue_error_rgb8": 0.1333128078817734,
+              "exposed_mae_rgb8": 0.6086822660098522,
+              "gpu_ms": 79.266287
+            },
+            {
+              "frame": 3,
+              "full": false,
+              "sha256": "38043d4a20badc69abdfddc9408db5e85ccae000429643f9900d73032bce5d60",
+              "psnr_db": 48.844880920293036,
+              "rmse_rgb8": 0.9210774170598216,
+              "exposed_positive_blue_error_rgb8": 0.4129229871645274,
+              "exposed_mae_rgb8": 2.27280241151303,
+              "gpu_ms": 2.577257
+            },
+            {
+              "frame": 4,
+              "full": true,
+              "sha256": "7ddf80c9e61a90f2b42aae1ae647769b17917a407fead3a258967054513f546a",
+              "psnr_db": 50.50182700195194,
+              "rmse_rgb8": 0.7611124575464571,
+              "exposed_positive_blue_error_rgb8": 0.10983682266009852,
+              "exposed_mae_rgb8": 0.9094314449917899,
+              "gpu_ms": 78.317484
+            },
+            {
+              "frame": 5,
+              "full": false,
+              "sha256": "a65f13d3a343e9380ec04a79a722a24492b30a16563e153001bb810c07bb3139",
+              "psnr_db": 49.82682828768762,
+              "rmse_rgb8": 0.8226190565921254,
+              "exposed_positive_blue_error_rgb8": 0.5647321428571429,
+              "exposed_mae_rgb8": 2.3612992610837438,
+              "gpu_ms": 2.555415
+            },
+            {
+              "frame": 6,
+              "full": true,
+              "sha256": "3ee1ca9068f9269933316bbfde8e8dda7b1665fc84d60f1e1ade88076ed13361",
+              "psnr_db": 53.322459483706126,
+              "rmse_rgb8": 0.5500690455398405,
+              "exposed_positive_blue_error_rgb8": 0.21229579929988332,
+              "exposed_mae_rgb8": 0.5427849085958771,
+              "gpu_ms": 78.15229
+            },
+            {
+              "frame": 7,
+              "full": false,
+              "sha256": "74da5997bb911a154e5955ab5b9c0f1a4881387f5ebbd2ddd55331a131ec8154",
+              "psnr_db": 50.27392479837428,
+              "rmse_rgb8": 0.7813469847208776,
+              "exposed_positive_blue_error_rgb8": 0.4692887931034483,
+              "exposed_mae_rgb8": 2.39998973727422,
+              "gpu_ms": 2.556377
+            },
+            {
+              "frame": 8,
+              "full": true,
+              "sha256": "e28e9bf5817c83b3814d75327041e350182222c039352c6691cba901a4c70ea0",
+              "psnr_db": 50.96732484401511,
+              "rmse_rgb8": 0.7213963460391962,
+              "exposed_positive_blue_error_rgb8": 0.3235027907678383,
+              "exposed_mae_rgb8": 1.0929753105043496,
+              "gpu_ms": 78.672879
+            },
+            {
+              "frame": 9,
+              "full": false,
+              "sha256": "537af3dac8ffd0d79de4cf7f7af071d7c8cc9e78fba02249a33c44af0ce98bd5",
+              "psnr_db": 42.75352017369248,
+              "rmse_rgb8": 1.8572235062584885,
+              "exposed_positive_blue_error_rgb8": 0.49263047074748084,
+              "exposed_mae_rgb8": 2.27217125382263,
+              "gpu_ms": 2.597295
+            },
+            {
+              "frame": 10,
+              "full": true,
+              "sha256": "cdf763fb2a276cc74a97f40f55877908f449b0a7992e44d1383d314071a36964",
+              "psnr_db": 51.42723223566135,
+              "rmse_rgb8": 0.6841929087198965,
+              "exposed_positive_blue_error_rgb8": 0.11946835825404017,
+              "exposed_mae_rgb8": 1.4007451039621406,
+              "gpu_ms": 77.394891
+            },
+            {
+              "frame": 11,
+              "full": false,
+              "sha256": "fa3b85404a275de8e694381f1a1a7a75fd9fb939608341e5b1e3e113d21c0c2b",
+              "psnr_db": 43.10498263287907,
+              "rmse_rgb8": 1.783573654952015,
+              "exposed_positive_blue_error_rgb8": 0.5262601871415635,
+              "exposed_mae_rgb8": 2.8018412315122245,
+              "gpu_ms": 2.656407
+            },
+            {
+              "frame": 12,
+              "full": true,
+              "sha256": "7b3cab7c8ffce2cc3d05735e6cb695d33d00509862e99e67a5143a055d4af9b0",
+              "psnr_db": 50.33336364811494,
+              "rmse_rgb8": 0.7760183628119223,
+              "exposed_positive_blue_error_rgb8": 0.09368866072776687,
+              "exposed_mae_rgb8": 2.2698173033368563,
+              "gpu_ms": 78.807816
+            },
+            {
+              "frame": 13,
+              "full": false,
+              "sha256": "099979d9f78077377bcf82701576ab1b1fd87e48f89ef0f44d84d03295851070",
+              "psnr_db": 36.915959168236874,
+              "rmse_rgb8": 3.6369909636505735,
+              "exposed_positive_blue_error_rgb8": 2.605578293163559,
+              "exposed_mae_rgb8": 2.349653883078167,
+              "gpu_ms": 1.874361
+            },
+            {
+              "frame": 14,
+              "full": true,
+              "sha256": "220130211307e4d52763826ddc70b324c2cc3b22dcbde99c93b0fa6342729cc4",
+              "psnr_db": 54.5260756086903,
+              "rmse_rgb8": 0.478890696495364,
+              "exposed_positive_blue_error_rgb8": 0.5856869667549279,
+              "exposed_mae_rgb8": 0.5249092870452093,
+              "gpu_ms": 77.297707
+            },
+            {
+              "frame": 15,
+              "full": false,
+              "sha256": "0b530645e95ddd742f14d458dee707b23c1bdb22abd8b1f11b0b1b41d476ee1e",
+              "psnr_db": 50.12909080356121,
+              "rmse_rgb8": 0.7944848869125248,
+              "exposed_positive_blue_error_rgb8": 4.182731807511737,
+              "exposed_mae_rgb8": 3.499755477308294,
+              "gpu_ms": 2.580623
+            },
+            {
+              "frame": 16,
+              "full": true,
+              "sha256": "99487030b84b48e9e347a8778d30c021c5021aacbf4208e65e490dfbae2ae20e",
+              "psnr_db": 53.22986783251114,
+              "rmse_rgb8": 0.5559641509600937,
+              "exposed_positive_blue_error_rgb8": 0.618866266295591,
+              "exposed_mae_rgb8": 0.8815975782432498,
+              "gpu_ms": 78.58908
+            },
+            {
+              "frame": 17,
+              "full": false,
+              "sha256": "c810990ef210756ab09eb0be4acb2f3fdf618c3d205bfb981b8ab3a27441186e",
+              "psnr_db": 49.76957060748529,
+              "rmse_rgb8": 0.8280597021775485,
+              "exposed_positive_blue_error_rgb8": 3.0447476525821595,
+              "exposed_mae_rgb8": 2.447085289514867,
+              "gpu_ms": 2.635968
+            },
+            {
+              "frame": 18,
+              "full": true,
+              "sha256": "655a26f9488dab865d996f6c1028f8a1131b4f621db4911a0d3d9d7a74664279",
+              "psnr_db": 53.231052079106675,
+              "rmse_rgb8": 0.5558883551810794,
+              "exposed_positive_blue_error_rgb8": 0.9569928885878768,
+              "exposed_mae_rgb8": 1.034371825262445,
+              "gpu_ms": 79.014368
+            },
+            {
+              "frame": 19,
+              "full": false,
+              "sha256": "655a26f9488dab865d996f6c1028f8a1131b4f621db4911a0d3d9d7a74664279",
+              "psnr_db": 53.66906876985439,
+              "rmse_rgb8": 0.52855080905683,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 2.58427
+            },
+            {
+              "frame": 20,
+              "full": true,
+              "sha256": "11c09b60d97199d5f44288d86003cce52d1eba9dca9e0163815ed98c94e68468",
+              "psnr_db": 53.01879988364704,
+              "rmse_rgb8": 0.5696396176368718,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 79.476446
+            },
+            {
+              "frame": 21,
+              "full": false,
+              "sha256": "11c09b60d97199d5f44288d86003cce52d1eba9dca9e0163815ed98c94e68468",
+              "psnr_db": 52.91584074596738,
+              "rmse_rgb8": 0.5764320808783466,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 2.709548
+            },
+            {
+              "frame": 22,
+              "full": true,
+              "sha256": "9868db9d8ff590f6f4548e9fda7bed73bce7827798ee04fbd8d96c0bcd3e572c",
+              "psnr_db": 52.63291611442098,
+              "rmse_rgb8": 0.5955172894332195,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 77.528585
+            },
+            {
+              "frame": 23,
+              "full": false,
+              "sha256": "9868db9d8ff590f6f4548e9fda7bed73bce7827798ee04fbd8d96c0bcd3e572c",
+              "psnr_db": 53.07553554340498,
+              "rmse_rgb8": 0.5659308948783215,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 2.508085
+            }
+          ]
+        },
+        "motion-n3": {
+          "full_launches": 8,
+          "motion_gated": 0,
+          "warmup_frames_excluded": 4,
+          "gpu_average_ms": 25.3864967,
+          "gpu_full_average_ms": 78.36781333333333,
+          "gpu_reconstruction_average_ms": 2.680218142857143,
+          "exposed_blue_mean_rgb8": 1.3295496046083983,
+          "exposed_mae_mean_rgb8": 2.049595692278123,
+          "frames": [
+            {
+              "frame": 0,
+              "full": true,
+              "sha256": "49a892f5d923efdd05c2ffdb31c74291f60696921668e4c922c7942fbc2fcd50",
+              "psnr_db": 78.601173173945,
+              "rmse_rgb8": 0.029955841342809177,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 77.801384
+            },
+            {
+              "frame": 1,
+              "full": false,
+              "sha256": "ed167ce9a7309e4c2fd81edaf2c7bbc124ca08c086d88806c39e4c414bbf8d67",
+              "psnr_db": 50.99252576385321,
+              "rmse_rgb8": 0.7193063466773878,
+              "exposed_positive_blue_error_rgb8": 0.7336822660098522,
+              "exposed_mae_rgb8": 1.8839285714285714,
+              "gpu_ms": 2.516782
+            },
+            {
+              "frame": 2,
+              "full": false,
+              "sha256": "ac50d4debd288a2bdb8c66e8fbc653f8bc1a5ccf9cc507642cdc40ac0e2ec014",
+              "psnr_db": 49.88185258142485,
+              "rmse_rgb8": 0.8174243137321984,
+              "exposed_positive_blue_error_rgb8": 0.6641779556650246,
+              "exposed_mae_rgb8": 2.0146243842364533,
+              "gpu_ms": 2.614488
+            },
+            {
+              "frame": 3,
+              "full": true,
+              "sha256": "2f55b577c864233026ef7892830f0d6f96262d6f82f0d411a3df9f9cccb079f3",
+              "psnr_db": 52.85283437420916,
+              "rmse_rgb8": 0.580628650369261,
+              "exposed_positive_blue_error_rgb8": 0.08955659276546091,
+              "exposed_mae_rgb8": 0.5249416569428238,
+              "gpu_ms": 78.269112
+            },
+            {
+              "frame": 4,
+              "full": false,
+              "sha256": "bbddad6d87b9d1b1d0967a7d22c8321b3d0698bdfc74eccbac2005efee1357fe",
+              "psnr_db": 51.73729644432334,
+              "rmse_rgb8": 0.6601997540727941,
+              "exposed_positive_blue_error_rgb8": 0.5861299261083743,
+              "exposed_mae_rgb8": 2.1311576354679804,
+              "gpu_ms": 2.751187
+            },
+            {
+              "frame": 5,
+              "full": false,
+              "sha256": "d1a2b0245b425cb5cd67a7c5109e0416514603be5c957bd7c5bfe04231b41035",
+              "psnr_db": 50.103224675385306,
+              "rmse_rgb8": 0.7968543479531575,
+              "exposed_positive_blue_error_rgb8": 0.6525554187192119,
+              "exposed_mae_rgb8": 2.2394807060755335,
+              "gpu_ms": 2.596333
+            },
+            {
+              "frame": 6,
+              "full": true,
+              "sha256": "3ee1ca9068f9269933316bbfde8e8dda7b1665fc84d60f1e1ade88076ed13361",
+              "psnr_db": 53.322459483706126,
+              "rmse_rgb8": 0.5500690455398405,
+              "exposed_positive_blue_error_rgb8": 0.21229579929988332,
+              "exposed_mae_rgb8": 0.5427849085958771,
+              "gpu_ms": 77.735659
+            },
+            {
+              "frame": 7,
+              "full": false,
+              "sha256": "74da5997bb911a154e5955ab5b9c0f1a4881387f5ebbd2ddd55331a131ec8154",
+              "psnr_db": 50.27392479837428,
+              "rmse_rgb8": 0.7813469847208776,
+              "exposed_positive_blue_error_rgb8": 0.4692887931034483,
+              "exposed_mae_rgb8": 2.39998973727422,
+              "gpu_ms": 2.547721
+            },
+            {
+              "frame": 8,
+              "full": false,
+              "sha256": "9dff59603a1a11f94859720343a40522ff94060a4d617db8b97c30af5972205c",
+              "psnr_db": 42.119695795893364,
+              "rmse_rgb8": 1.9978155569074179,
+              "exposed_positive_blue_error_rgb8": 0.9014180117664806,
+              "exposed_mae_rgb8": 2.739075778146528,
+              "gpu_ms": 2.614728
+            },
+            {
+              "frame": 9,
+              "full": true,
+              "sha256": "6bb3f5a14f3ff51ff2dc9026c3932aa10926d0ca3fb0deba69265c458c345e57",
+              "psnr_db": 51.30637816337153,
+              "rmse_rgb8": 0.6937791952482139,
+              "exposed_positive_blue_error_rgb8": 0.49736802526695745,
+              "exposed_mae_rgb8": 0.5620895372737755,
+              "gpu_ms": 77.752531
+            },
+            {
+              "frame": 10,
+              "full": false,
+              "sha256": "0be5926d1864bbb8a97f15f67e1b31bea932259d4fbe9f29b99bb70be3bcd364",
+              "psnr_db": 43.04169871866372,
+              "rmse_rgb8": 1.7966159233519186,
+              "exposed_positive_blue_error_rgb8": 0.5347379549916931,
+              "exposed_mae_rgb8": 2.608518350702311,
+              "gpu_ms": 2.691113
+            },
+            {
+              "frame": 11,
+              "full": false,
+              "sha256": "e6af2dc082dbcfdcf15acfe219c9275b625181eaaa973730d96a15370c8094f5",
+              "psnr_db": 40.944578304049266,
+              "rmse_rgb8": 2.287237512768365,
+              "exposed_positive_blue_error_rgb8": 0.5451252641110775,
+              "exposed_mae_rgb8": 2.6429218231210383,
+              "gpu_ms": 2.703216
+            },
+            {
+              "frame": 12,
+              "full": true,
+              "sha256": "486a976d2dd1d3a9051dfdbf3fd077d2927e191d63ac52463d1ce13b391bf6d6",
+              "psnr_db": 50.33267768929502,
+              "rmse_rgb8": 0.7760796504499989,
+              "exposed_positive_blue_error_rgb8": 0.09368866072776687,
+              "exposed_mae_rgb8": 2.2698173033368563,
+              "gpu_ms": 79.147742
+            },
+            {
+              "frame": 13,
+              "full": false,
+              "sha256": "099979d9f78077377bcf82701576ab1b1fd87e48f89ef0f44d84d03295851070",
+              "psnr_db": 36.915959168236874,
+              "rmse_rgb8": 3.6369909636505735,
+              "exposed_positive_blue_error_rgb8": 2.605578293163559,
+              "exposed_mae_rgb8": 2.349653883078167,
+              "gpu_ms": 1.682757
+            },
+            {
+              "frame": 14,
+              "full": false,
+              "sha256": "a654fcd76aeebbdf8fca48c38d31be164495981603d0d81fe367e27d42ca7ede",
+              "psnr_db": 37.023588452308246,
+              "rmse_rgb8": 3.592202061957983,
+              "exposed_positive_blue_error_rgb8": 3.2097675786996174,
+              "exposed_mae_rgb8": 2.553545160341277,
+              "gpu_ms": 4.195211
+            },
+            {
+              "frame": 15,
+              "full": true,
+              "sha256": "584ddebb490e680a84e522601f52f8c6fa98df9270d4fe874e681a1666c3a98f",
+              "psnr_db": 52.86294290193749,
+              "rmse_rgb8": 0.5799533151909091,
+              "exposed_positive_blue_error_rgb8": 2.447256455399061,
+              "exposed_mae_rgb8": 1.9813184663536776,
+              "gpu_ms": 79.134997
+            },
+            {
+              "frame": 16,
+              "full": false,
+              "sha256": "1072dec05c5823353c2bc84bc8870aa1992754bc01daeccb373a4f930b6d4f43",
+              "psnr_db": 50.26220023123261,
+              "rmse_rgb8": 0.7824023908177987,
+              "exposed_positive_blue_error_rgb8": 3.1113226893218107,
+              "exposed_mae_rgb8": 2.3038914115521703,
+              "gpu_ms": 2.773149
+            },
+            {
+              "frame": 17,
+              "full": false,
+              "sha256": "203de3e1c5bec03ae0eb4e86f43a53ca2d16243ff7ae1d2905b816affde03ec0",
+              "psnr_db": 48.35170118639087,
+              "rmse_rgb8": 0.9748888899771737,
+              "exposed_positive_blue_error_rgb8": 3.119718309859155,
+              "exposed_mae_rgb8": 2.385318857589984,
+              "gpu_ms": 2.654484
+            },
+            {
+              "frame": 18,
+              "full": true,
+              "sha256": "655a26f9488dab865d996f6c1028f8a1131b4f621db4911a0d3d9d7a74664279",
+              "psnr_db": 53.231052079106675,
+              "rmse_rgb8": 0.5558883551810794,
+              "exposed_positive_blue_error_rgb8": 0.9569928885878768,
+              "exposed_mae_rgb8": 1.034371825262445,
+              "gpu_ms": 78.095663
+            },
+            {
+              "frame": 19,
+              "full": false,
+              "sha256": "655a26f9488dab865d996f6c1028f8a1131b4f621db4911a0d3d9d7a74664279",
+              "psnr_db": 53.66906876985439,
+              "rmse_rgb8": 0.52855080905683,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 2.533854
+            },
+            {
+              "frame": 20,
+              "full": false,
+              "sha256": "655a26f9488dab865d996f6c1028f8a1131b4f621db4911a0d3d9d7a74664279",
+              "psnr_db": 53.12337653163635,
+              "rmse_rgb8": 0.5628223741859053,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 2.627673
+            },
+            {
+              "frame": 21,
+              "full": true,
+              "sha256": "662d7077fa2340c022adb3353867e92b863306d2a480ec7bba5ca11df358d32b",
+              "psnr_db": 53.65284940927264,
+              "rmse_rgb8": 0.5295387061579583,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 78.340288
+            },
+            {
+              "frame": 22,
+              "full": false,
+              "sha256": "662d7077fa2340c022adb3353867e92b863306d2a480ec7bba5ca11df358d32b",
+              "psnr_db": 52.751938860252075,
+              "rmse_rgb8": 0.5874125722970122,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 2.612123
+            },
+            {
+              "frame": 23,
+              "full": false,
+              "sha256": "662d7077fa2340c022adb3353867e92b863306d2a480ec7bba5ca11df358d32b",
+              "psnr_db": 53.26044636694175,
+              "rmse_rgb8": 0.554010329346979,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 2.539505
+            }
+          ]
+        },
+        "motion-n4": {
+          "full_launches": 6,
+          "motion_gated": 0,
+          "warmup_frames_excluded": 4,
+          "gpu_average_ms": 21.7662861,
+          "gpu_full_average_ms": 78.345874,
+          "gpu_reconstruction_average_ms": 2.906423466666667,
+          "exposed_blue_mean_rgb8": 1.3723498228974196,
+          "exposed_mae_mean_rgb8": 2.2626203354883807,
+          "frames": [
+            {
+              "frame": 0,
+              "full": true,
+              "sha256": "49a892f5d923efdd05c2ffdb31c74291f60696921668e4c922c7942fbc2fcd50",
+              "psnr_db": 78.601173173945,
+              "rmse_rgb8": 0.029955841342809177,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 77.214669
+            },
+            {
+              "frame": 1,
+              "full": false,
+              "sha256": "ed167ce9a7309e4c2fd81edaf2c7bbc124ca08c086d88806c39e4c414bbf8d67",
+              "psnr_db": 50.99252576385321,
+              "rmse_rgb8": 0.7193063466773878,
+              "exposed_positive_blue_error_rgb8": 0.7336822660098522,
+              "exposed_mae_rgb8": 1.8839285714285714,
+              "gpu_ms": 2.558702
+            },
+            {
+              "frame": 2,
+              "full": false,
+              "sha256": "ac50d4debd288a2bdb8c66e8fbc653f8bc1a5ccf9cc507642cdc40ac0e2ec014",
+              "psnr_db": 49.88185258142485,
+              "rmse_rgb8": 0.8174243137321984,
+              "exposed_positive_blue_error_rgb8": 0.6641779556650246,
+              "exposed_mae_rgb8": 2.0146243842364533,
+              "gpu_ms": 2.620138
+            },
+            {
+              "frame": 3,
+              "full": false,
+              "sha256": "18a1820d58a73f800f2ba83e18bb1555be9ff0cc60fe84b17b11377b55af03cf",
+              "psnr_db": 48.43718991694886,
+              "rmse_rgb8": 0.9653408502575274,
+              "exposed_positive_blue_error_rgb8": 0.5167007001166861,
+              "exposed_mae_rgb8": 2.477003111629716,
+              "gpu_ms": 2.803527
+            },
+            {
+              "frame": 4,
+              "full": true,
+              "sha256": "7ddf80c9e61a90f2b42aae1ae647769b17917a407fead3a258967054513f546a",
+              "psnr_db": 50.50182700195194,
+              "rmse_rgb8": 0.7611124575464571,
+              "exposed_positive_blue_error_rgb8": 0.10983682266009852,
+              "exposed_mae_rgb8": 0.9094314449917899,
+              "gpu_ms": 78.785854
+            },
+            {
+              "frame": 5,
+              "full": false,
+              "sha256": "a65f13d3a343e9380ec04a79a722a24492b30a16563e153001bb810c07bb3139",
+              "psnr_db": 49.82682828768762,
+              "rmse_rgb8": 0.8226190565921254,
+              "exposed_positive_blue_error_rgb8": 0.5647321428571429,
+              "exposed_mae_rgb8": 2.3612992610837438,
+              "gpu_ms": 2.622222
+            },
+            {
+              "frame": 6,
+              "full": false,
+              "sha256": "b1ecedbf237c2a09801e5c564b6f3b7ec8230434cfa90c6c95e9e5ee75722b4b",
+              "psnr_db": 49.708851879869506,
+              "rmse_rgb8": 0.8338685347328993,
+              "exposed_positive_blue_error_rgb8": 0.4412193698949825,
+              "exposed_mae_rgb8": 2.0869797744068457,
+              "gpu_ms": 2.720729
+            },
+            {
+              "frame": 7,
+              "full": false,
+              "sha256": "1079089073a6b7730f3e17bce9508da95655b6e977ad1981e57118bf4fc86d9d",
+              "psnr_db": 47.66005446560533,
+              "rmse_rgb8": 1.0556925509601638,
+              "exposed_positive_blue_error_rgb8": 0.34182573891625617,
+              "exposed_mae_rgb8": 2.2117713464696225,
+              "gpu_ms": 2.55766
+            },
+            {
+              "frame": 8,
+              "full": true,
+              "sha256": "e28e9bf5817c83b3814d75327041e350182222c039352c6691cba901a4c70ea0",
+              "psnr_db": 50.96732484401511,
+              "rmse_rgb8": 0.7213963460391962,
+              "exposed_positive_blue_error_rgb8": 0.3235027907678383,
+              "exposed_mae_rgb8": 1.0929753105043496,
+              "gpu_ms": 78.049615
+            },
+            {
+              "frame": 9,
+              "full": false,
+              "sha256": "537af3dac8ffd0d79de4cf7f7af071d7c8cc9e78fba02249a33c44af0ce98bd5",
+              "psnr_db": 42.75352017369248,
+              "rmse_rgb8": 1.8572235062584885,
+              "exposed_positive_blue_error_rgb8": 0.49263047074748084,
+              "exposed_mae_rgb8": 2.27217125382263,
+              "gpu_ms": 2.598698
+            },
+            {
+              "frame": 10,
+              "full": false,
+              "sha256": "93e99a64bda42fdcab31ec16b29521f2e0de4c1b1d57ffae7c4cd452ca284969",
+              "psnr_db": 40.565213964282904,
+              "rmse_rgb8": 2.3893484094537696,
+              "exposed_positive_blue_error_rgb8": 0.506721039117958,
+              "exposed_mae_rgb8": 3.108543523133464,
+              "gpu_ms": 3.788478
+            },
+            {
+              "frame": 11,
+              "full": false,
+              "sha256": "0f0be063ce864aa4c88758a01c4388abdddefe8b92c063eaedd1dff473eb9dcd",
+              "psnr_db": 39.502447000632316,
+              "rmse_rgb8": 2.700336149663696,
+              "exposed_positive_blue_error_rgb8": 0.5194687594325385,
+              "exposed_mae_rgb8": 3.177834792232619,
+              "gpu_ms": 2.936018
+            },
+            {
+              "frame": 12,
+              "full": true,
+              "sha256": "41c7d3ab1ad81b8fce0ae83f59eb403fe10d0127cf34543e6dc40d4df3bd8262",
+              "psnr_db": 50.33271159345949,
+              "rmse_rgb8": 0.7760766211367277,
+              "exposed_positive_blue_error_rgb8": 0.09368866072776687,
+              "exposed_mae_rgb8": 2.2698173033368563,
+              "gpu_ms": 77.222404
+            },
+            {
+              "frame": 13,
+              "full": false,
+              "sha256": "099979d9f78077377bcf82701576ab1b1fd87e48f89ef0f44d84d03295851070",
+              "psnr_db": 36.915959168236874,
+              "rmse_rgb8": 3.6369909636505735,
+              "exposed_positive_blue_error_rgb8": 2.605578293163559,
+              "exposed_mae_rgb8": 2.349653883078167,
+              "gpu_ms": 1.666847
+            },
+            {
+              "frame": 14,
+              "full": false,
+              "sha256": "a654fcd76aeebbdf8fca48c38d31be164495981603d0d81fe367e27d42ca7ede",
+              "psnr_db": 37.023588452308246,
+              "rmse_rgb8": 3.592202061957983,
+              "exposed_positive_blue_error_rgb8": 3.2097675786996174,
+              "exposed_mae_rgb8": 2.553545160341277,
+              "gpu_ms": 4.21072
+            },
+            {
+              "frame": 15,
+              "full": false,
+              "sha256": "778c6151ca7484ca813f787a918ff83791f883b0a010826ab924e47971066e41",
+              "psnr_db": 37.310726606637076,
+              "rmse_rgb8": 3.475392424301681,
+              "exposed_positive_blue_error_rgb8": 4.377494131455399,
+              "exposed_mae_rgb8": 3.786189358372457,
+              "gpu_ms": 4.223344
+            },
+            {
+              "frame": 16,
+              "full": true,
+              "sha256": "99487030b84b48e9e347a8778d30c021c5021aacbf4208e65e490dfbae2ae20e",
+              "psnr_db": 53.22986783251114,
+              "rmse_rgb8": 0.5559641509600937,
+              "exposed_positive_blue_error_rgb8": 0.618866266295591,
+              "exposed_mae_rgb8": 0.8815975782432498,
+              "gpu_ms": 78.004489
+            },
+            {
+              "frame": 17,
+              "full": false,
+              "sha256": "c810990ef210756ab09eb0be4acb2f3fdf618c3d205bfb981b8ab3a27441186e",
+              "psnr_db": 49.76957060748529,
+              "rmse_rgb8": 0.8280597021775485,
+              "exposed_positive_blue_error_rgb8": 3.0447476525821595,
+              "exposed_mae_rgb8": 2.447085289514867,
+              "gpu_ms": 2.67873
+            },
+            {
+              "frame": 18,
+              "full": false,
+              "sha256": "6f1d62bb4b3a3196a817f5e4afe57a9acb44c9994cb489636b7da499a924f0c1",
+              "psnr_db": 42.005635837568676,
+              "rmse_rgb8": 2.0242231556032935,
+              "exposed_positive_blue_error_rgb8": 3.3351676261429057,
+              "exposed_mae_rgb8": 2.430409752793769,
+              "gpu_ms": 3.111752
+            },
+            {
+              "frame": 19,
+              "full": false,
+              "sha256": "109371b3a3a046c20d589708f284f33d16efcb4c82dafbee44d595778f3a3057",
+              "psnr_db": 41.45055034879468,
+              "rmse_rgb8": 2.157807324765162,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 2.748622
+            },
+            {
+              "frame": 20,
+              "full": true,
+              "sha256": "b52987e8233156c3a5edd1d9bdb389e4f793328236e25968f4941290e43f6ee0",
+              "psnr_db": 52.38481463367516,
+              "rmse_rgb8": 0.6127727567286986,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 79.667008
+            },
+            {
+              "frame": 21,
+              "full": false,
+              "sha256": "b52987e8233156c3a5edd1d9bdb389e4f793328236e25968f4941290e43f6ee0",
+              "psnr_db": 52.13852703634029,
+              "rmse_rgb8": 0.6303965513240822,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 2.576215
+            },
+            {
+              "frame": 22,
+              "full": false,
+              "sha256": "b52987e8233156c3a5edd1d9bdb389e4f793328236e25968f4941290e43f6ee0",
+              "psnr_db": 51.23991662121783,
+              "rmse_rgb8": 0.6991081247839199,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 2.575333
+            },
+            {
+              "frame": 23,
+              "full": false,
+              "sha256": "b52987e8233156c3a5edd1d9bdb389e4f793328236e25968f4941290e43f6ee0",
+              "psnr_db": 51.686075072517866,
+              "rmse_rgb8": 0.6641045057520579,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 2.580984
+            }
+          ]
+        },
+        "motion-legacy": {
+          "full_launches": 16,
+          "motion_gated": 6,
+          "warmup_frames_excluded": 4,
+          "gpu_average_ms": 54.056828700000004,
+          "gpu_full_average_ms": 76.70111885714286,
+          "gpu_reconstruction_average_ms": 1.2201516666666667,
+          "exposed_blue_mean_rgb8": 7.010622066334365,
+          "exposed_mae_mean_rgb8": 7.788646029409646,
+          "frames": [
+            {
+              "frame": 0,
+              "full": true,
+              "sha256": "1bb69b93573cb5407d1c652fe7015623ca801f6f43410faa34306baa7ab7d9b3",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 76.881957
+            },
+            {
+              "frame": 1,
+              "full": false,
+              "sha256": "1bb69b93573cb5407d1c652fe7015623ca801f6f43410faa34306baa7ab7d9b3",
+              "psnr_db": 31.138412709516423,
+              "rmse_rgb8": 7.07325874131885,
+              "exposed_positive_blue_error_rgb8": 102.39493534482759,
+              "exposed_mae_rgb8": 56.98532430213465,
+              "gpu_ms": 1.118686
+            },
+            {
+              "frame": 2,
+              "full": true,
+              "sha256": "8035c1eb72569b2ff52e45f9a8ca2514b73ba4bf568fbd9851e231e70a214a77",
+              "psnr_db": 52.98047996602709,
+              "rmse_rgb8": 0.5721582732942644,
+              "exposed_positive_blue_error_rgb8": 0.13323583743842365,
+              "exposed_mae_rgb8": 0.6088362068965517,
+              "gpu_ms": 76.89398
+            },
+            {
+              "frame": 3,
+              "full": false,
+              "sha256": "8035c1eb72569b2ff52e45f9a8ca2514b73ba4bf568fbd9851e231e70a214a77",
+              "psnr_db": 26.440760491895364,
+              "rmse_rgb8": 12.147926506908304,
+              "exposed_positive_blue_error_rgb8": 56.29200700116686,
+              "exposed_mae_rgb8": 33.26341890315052,
+              "gpu_ms": 1.222563
+            },
+            {
+              "frame": 4,
+              "full": true,
+              "sha256": "e355a4f7e2d40c33f5a38aae3a7a1a2904d146ab8ddb4bca50e29ffac7c9182c",
+              "psnr_db": 50.485196206887,
+              "rmse_rgb8": 0.7625711487752762,
+              "exposed_positive_blue_error_rgb8": 0.10983682266009852,
+              "exposed_mae_rgb8": 0.9098419540229885,
+              "gpu_ms": 75.209419
+            },
+            {
+              "frame": 5,
+              "full": false,
+              "sha256": "e355a4f7e2d40c33f5a38aae3a7a1a2904d146ab8ddb4bca50e29ffac7c9182c",
+              "psnr_db": 26.528728605397085,
+              "rmse_rgb8": 12.025516821832479,
+              "exposed_positive_blue_error_rgb8": 49.48198891625616,
+              "exposed_mae_rgb8": 28.473060344827587,
+              "gpu_ms": 1.62084
+            },
+            {
+              "frame": 6,
+              "full": true,
+              "sha256": "5ac7375fa1686bbadd41865d57b160eebf91bbaaa971092bbf768c0570a5bbd8",
+              "psnr_db": 53.333276288349005,
+              "rmse_rgb8": 0.5493844540542456,
+              "exposed_positive_blue_error_rgb8": 0.21185822637106183,
+              "exposed_mae_rgb8": 0.5425418125243096,
+              "gpu_ms": 76.395633
+            },
+            {
+              "frame": 7,
+              "full": false,
+              "sha256": "5ac7375fa1686bbadd41865d57b160eebf91bbaaa971092bbf768c0570a5bbd8",
+              "psnr_db": 26.635754769053534,
+              "rmse_rgb8": 11.878249464035562,
+              "exposed_positive_blue_error_rgb8": 49.34990763546798,
+              "exposed_mae_rgb8": 29.63115763546798,
+              "gpu_ms": 1.129987
+            },
+            {
+              "frame": 8,
+              "full": true,
+              "sha256": "54f21ca79f9d5170a3178146031db0b4318a4e19a62b0f5171229737da8c2220",
+              "psnr_db": 50.97284593533808,
+              "rmse_rgb8": 0.7209379439988036,
+              "exposed_positive_blue_error_rgb8": 0.3229748076632976,
+              "exposed_mae_rgb8": 1.0927741740835721,
+              "gpu_ms": 75.045107
+            },
+            {
+              "frame": 9,
+              "full": true,
+              "sha256": "17dbcc3eccd85be35284fd13a0b149434cafd404e240859a20f3f1a9333927be",
+              "psnr_db": 53.67362556962297,
+              "rmse_rgb8": 0.5282735929465239,
+              "exposed_positive_blue_error_rgb8": 0.35275981350579033,
+              "exposed_mae_rgb8": 0.3572467037649772,
+              "gpu_ms": 77.344035
+            },
+            {
+              "frame": 10,
+              "full": true,
+              "sha256": "f733a24e4128d205d28720748715d052c482218da90da3047c0433ea4bc9e0b7",
+              "psnr_db": 54.30499760772826,
+              "rmse_rgb8": 0.49123612858560983,
+              "exposed_positive_blue_error_rgb8": 0.10904697175653225,
+              "exposed_mae_rgb8": 0.3683230126365604,
+              "gpu_ms": 77.23659
+            },
+            {
+              "frame": 11,
+              "full": true,
+              "sha256": "7c6cd711bbbc066f19046dc314e2754c8e07f42d5036cd6a7f497d82716bf4e9",
+              "psnr_db": 55.82143841653172,
+              "rmse_rgb8": 0.4125420853952021,
+              "exposed_positive_blue_error_rgb8": 0.1257923332327196,
+              "exposed_mae_rgb8": 0.23251836200825032,
+              "gpu_ms": 77.132513
+            },
+            {
+              "frame": 12,
+              "full": true,
+              "sha256": "ba86032959db4b0247a0324fd1d285908cac53bc564f7fbef2f96421417b9d20",
+              "psnr_db": 53.93299286892572,
+              "rmse_rgb8": 0.5127321346455166,
+              "exposed_positive_blue_error_rgb8": 0.236373244753133,
+              "exposed_mae_rgb8": 0.3793849715637425,
+              "gpu_ms": 76.728505
+            },
+            {
+              "frame": 13,
+              "full": true,
+              "sha256": "056c959d4a171889a7d33675fd0ab7bad0315b90e16bb76fa36903a5dc523598",
+              "psnr_db": null,
+              "rmse_rgb8": 0.0,
+              "exposed_positive_blue_error_rgb8": 0.0,
+              "exposed_mae_rgb8": 0.0,
+              "gpu_ms": 77.156158
+            },
+            {
+              "frame": 14,
+              "full": true,
+              "sha256": "2ac06552226fc5da3c0a827fd43509bd9510c17ab677e19343ba42c187109fec",
+              "psnr_db": 55.635918344960274,
+              "rmse_rgb8": 0.4214482581044312,
+              "exposed_positive_blue_error_rgb8": 0.18623124448367168,
+              "exposed_mae_rgb8": 0.2732176130234383,
+              "gpu_ms": 77.621281
+            },
+            {
+              "frame": 15,
+              "full": false,
+              "sha256": "2ac06552226fc5da3c0a827fd43509bd9510c17ab677e19343ba42c187109fec",
+              "psnr_db": 25.996856787522855,
+              "rmse_rgb8": 12.784900165300073,
+              "exposed_positive_blue_error_rgb8": 2.0707159624413145,
+              "exposed_mae_rgb8": 27.631455399061032,
+              "gpu_ms": 1.149985
+            },
+            {
+              "frame": 16,
+              "full": true,
+              "sha256": "e16bf2e344175206f03675ed9fca146f51cee5295d1a21a00a074377ae1f33dc",
+              "psnr_db": 53.23503921319813,
+              "rmse_rgb8": 0.5556332410962389,
+              "exposed_positive_blue_error_rgb8": 0.6184268346272155,
+              "exposed_mae_rgb8": 0.881451101020458,
+              "gpu_ms": 76.306824
+            },
+            {
+              "frame": 17,
+              "full": false,
+              "sha256": "e16bf2e344175206f03675ed9fca146f51cee5295d1a21a00a074377ae1f33dc",
+              "psnr_db": 26.06704897578971,
+              "rmse_rgb8": 12.681999497547185,
+              "exposed_positive_blue_error_rgb8": 1.0268485915492958,
+              "exposed_mae_rgb8": 25.02274061032864,
+              "gpu_ms": 1.13163
+            },
+            {
+              "frame": 18,
+              "full": true,
+              "sha256": "9dca172226fa42ab92b1ecd5883fbd695867671e74d7a39ba24ddaa8608d061e",
+              "psnr_db": 53.23026932199881,
+              "rmse_rgb8": 0.555938453119954,
+              "exposed_positive_blue_error_rgb8": 0.9565695902472062,
+              "exposed_mae_rgb8": 1.0339767468111525,
+              "gpu_ms": 77.088068
+            },
+            {
+              "frame": 19,
+              "full": true,
+              "sha256": "07266310e9620543d227b0020922b4c8ace1f89e6aa6d5d4cc2c279f30e191c0",
+              "psnr_db": 56.3271978006308,
+              "rmse_rgb8": 0.38920668438671024,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 77.109309
+            },
+            {
+              "frame": 20,
+              "full": false,
+              "sha256": "07266310e9620543d227b0020922b4c8ace1f89e6aa6d5d4cc2c279f30e191c0",
+              "psnr_db": 55.57213976415596,
+              "rmse_rgb8": 0.4245542494945598,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 1.143653
+            },
+            {
+              "frame": 21,
+              "full": true,
+              "sha256": "f9fb4577bf761b49b9e295a59d4a4a9b2c67366355f6f5f1b3667c98bdf594dc",
+              "psnr_db": 53.59946352256557,
+              "rmse_rgb8": 0.532803420553682,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 76.873741
+            },
+            {
+              "frame": 22,
+              "full": false,
+              "sha256": "f9fb4577bf761b49b9e295a59d4a4a9b2c67366355f6f5f1b3667c98bdf594dc",
+              "psnr_db": 52.71507165442,
+              "rmse_rgb8": 0.5899111402206958,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 1.144815
+            },
+            {
+              "frame": 23,
+              "full": true,
+              "sha256": "aeae99bb5c53eab5c4dca917166c75d8c904e9ab521f48633d671a0e11707b94",
+              "psnr_db": 51.89517397991718,
+              "rmse_rgb8": 0.6483081503071125,
+              "exposed_positive_blue_error_rgb8": null,
+              "exposed_mae_rgb8": null,
+              "gpu_ms": 76.568481
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -2817,6 +2817,10 @@ ControlMaskResult Runtime::record_all(VkCommandBuffer cmd, const ColourFrame& fr
         auto& state=impl_->seamless[temporal->feature];
         if(!state) state=std::make_unique<SeamlessHistory>();
         seamless=state.get();
+        const std::array<float,7> settings{float(c.style),c.local_tone,c.local_structure,c.skin_structure,
+                                         float(c.automatic_mask),float(c.seed_fixed),c.history_strength};
+        if(seamless->settings!=settings) seamless->have=false;
+        seamless->settings=settings;
         reuse_skip=!seamless->cadence.next(c.reuse_every);
     } else if(temporal) {
         auto i=impl_->seamless.find(temporal->feature);

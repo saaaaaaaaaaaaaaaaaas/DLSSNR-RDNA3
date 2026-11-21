@@ -2,6 +2,7 @@
 #include "nr_temporal_cadence.hpp"
 #include "nrvk.hpp"
 #include <filesystem>
+#include <array>
 
 namespace nr {
 // One feature, one causal history. No host-visible buffer, private queue or
@@ -13,6 +14,7 @@ struct SeamlessHistory {
     VkSampler sampler{};
     uint32_t current{};
     bool have{};
+    std::array<float,7> settings{};
     TemporalCadence cadence;
     struct Push {
         uint32_t width,height,mode,valid;

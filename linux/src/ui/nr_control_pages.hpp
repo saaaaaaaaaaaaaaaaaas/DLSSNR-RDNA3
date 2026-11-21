@@ -1176,11 +1176,14 @@ inline void draw_network_options(nr::ini_edit::Ini& ini, const nr::control::Shar
     if(section("Seamless temporal NR")) {
         ini_flag(ini,"Enable temporal reconstruction","Temporal","Enabled","1",
                  "Runs full NR at a fixed interval of real frames. Reconstructs its enhancement on other frames without waiting for future frames. Camera movement never adds an inference.");
-        int interval=std::clamp(std::atoi(ini.get("Temporal","Interval","2").c_str()),2,4);
-        if(ImGui::SliderInt(tr("Full NR interval"),&interval,2,4)) ini.set("Temporal","Interval",std::to_string(interval));
+        static int interval=std::clamp(std::atoi(ini.get("Temporal","Interval","2").c_str()),2,4);
+        ImGui::SliderInt(tr("Full NR interval"),&interval,2,4);
+        if(ImGui::IsItemDeactivatedAfterEdit()) ini.set("Temporal","Interval",std::to_string(interval));
         for(const char* key:{"DepthTolerance","ColorTolerance"}) {
-            float v=nr::parse_float(ini.get("Temporal",key,key[0]=='D'?"0.05":"0.08"),0.05f);
-            if(ImGui::SliderFloat(tr(key),&v,0.001f,0.3f,"%.3f")) ini.set("Temporal",key,std::to_string(v));
+            static std::map<std::string,float> pending;
+            if(!pending.count(key)) pending[key]=nr::parse_float(ini.get("Temporal",key,key[0]=='D'?"0.05":"0.08"),0.05f);
+            ImGui::SliderFloat(tr(key),&pending[key],0.001f,0.3f,"%.3f");
+            if(ImGui::IsItemDeactivatedAfterEdit()) {ini.set("Temporal",key,std::to_string(pending[key]));pending.erase(key);}
         }
         ini_flag(ini,"Fill rejected enhancement","Temporal","HoleFill","1","Reconstructs conservative tone from compatible nearby surfaces when detailed history is rejected.");
         ini_flag(ini,"Show reconstruction confidence","Temporal","Confidence","0","Green is trusted detail. Red is rejected history or spatial reconstruction.");
