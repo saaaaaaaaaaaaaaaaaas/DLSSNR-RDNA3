@@ -1172,6 +1172,21 @@ inline void draw_layers_switch(nr::ini_edit::Ini& ini) {
 }
 
 inline void draw_network_options(nr::ini_edit::Ini& ini, const nr::control::Shared* s, const NetworkOptions& o) {
+#if NR_ARCH_RDNA3
+    if(section("Seamless temporal NR")) {
+        ini_flag(ini,"Enable temporal reconstruction","Temporal","Enabled","1",
+                 "Runs full NR at a fixed interval of real frames. Reconstructs its enhancement on other frames without waiting for future frames. Camera movement never adds an inference.");
+        int interval=std::clamp(std::atoi(ini.get("Temporal","Interval","2").c_str()),2,4);
+        if(ImGui::SliderInt(tr("Full NR interval"),&interval,2,4)) ini.set("Temporal","Interval",std::to_string(interval));
+        for(const char* key:{"DepthTolerance","ColorTolerance"}) {
+            float v=nr::parse_float(ini.get("Temporal",key,key[0]=='D'?"0.05":"0.08"),0.05f);
+            if(ImGui::SliderFloat(tr(key),&v,0.001f,0.3f,"%.3f")) ini.set("Temporal",key,std::to_string(v));
+        }
+        ini_flag(ini,"Fill rejected enhancement","Temporal","HoleFill","1","Reconstructs conservative tone from compatible nearby surfaces when detailed history is rejected.");
+        ini_flag(ini,"Show reconstruction confidence","Temporal","Confidence","0","Green is trusted detail. Red is rejected history or spatial reconstruction.");
+        ini_flag(ini,"Log reconstruction GPU time","Temporal","GpuTiming","1","Nonblocking GPU timestamps and full/reconstructed/unexpected inference counts in the NR log.");
+    }
+#endif
     if (const char* e = std::getenv("NR_CONTROL_GLOBAL_OPEN")) ImGui::SetNextItemOpen(e[0] != '0');   // tests
     if (!section("Network model and options", ImGuiTreeNodeFlags_DefaultOpen)) return;
     const int file_model = std::max(0, nr::network_choice(ini.get("Network", "Model", "CC_SMALL_FP8")));

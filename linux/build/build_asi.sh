@@ -24,6 +24,7 @@ stamp=${NR_STAMP:-$(git rev-parse --short HEAD 2>/dev/null || cat .git-commit 2>
 python3 linux/build/generate_device_chain.py toolchain/Vulkan-Headers "$out/nr_device_chain_sizes.hpp" > /dev/null
 common=(-std=c++17 -O2 -DNDEBUG -DNR_BUILD_STAMP="\"$stamp\"" -Itoolchain/Vulkan-Headers/include -Ilinux/src -Ilinux/src/core
         -Ilinux/src/layer -Ilinux/src/pe -I"$out")
+[[ "${NR_GPU:-rdna4}" != rdna3 ]] || common+=(-DNR_ARCH_RDNA3=1)
 [[ "$int4" == 1 ]] && common+=(-DNR_INT4=1)
 "$cxx" "${common[@]}" -I"$minhook/include" -c linux/src/pe/nr_asi_main.cpp -o "$out/asi_main.o"
 # Where a game died: exceptions with their stack in the log, one minidump (nr_pe_crash.hpp)
