@@ -36,8 +36,13 @@ struct SeamlessHistory {
         const bool deferred=c.defer_transitions; c.defer_transitions=true;
         try {
             for(int k=0;k<2;++k) {
-                residual[k]=c.image(shown.w,shown.h,VK_FORMAT_R16G16B16A16_SFLOAT,false);
-                guide[k]=c.image(shown.w,shown.h,VK_FORMAT_R32G32B32A32_SFLOAT,false);
+                // Both usages are required: storage when written, sampled by
+                // the next frame. Keep the owning view sampler-free so writes
+                // bind as storage; the read aliases use the shared sampler.
+                residual[k]=c.image(shown.w,shown.h,VK_FORMAT_R16G16B16A16_SFLOAT,true,false);
+                guide[k]=c.image(shown.w,shown.h,VK_FORMAT_R32G32B32A32_SFLOAT,true,false);
+                vkDestroySampler(c.device,residual[k].sampler,nullptr);residual[k].sampler=VK_NULL_HANDLE;
+                vkDestroySampler(c.device,guide[k].sampler,nullptr);guide[k].sampler=VK_NULL_HANDLE;
                 c.transition(residual[k],VK_IMAGE_LAYOUT_GENERAL);c.transition(guide[k],VK_IMAGE_LAYOUT_GENERAL);
             }
             projected=c.image(shown.w,shown.h,VK_FORMAT_R16G16B16A16_SFLOAT,false);
