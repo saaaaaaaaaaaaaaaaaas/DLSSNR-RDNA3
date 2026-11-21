@@ -70,7 +70,8 @@ int main(int argc, char** argv) try {
     nr::TemporalConfig temporal;
     temporal.enable = true;
     temporal.shaders = std::string(argv[1]) + "/dlssnr-amd/shaders/temporal";
-    nr::Runtime runtime(host, config, nr::ControlMaskConfig{}, temporal);
+    config.temporal_clock=std::make_shared<nr::TemporalClock>();
+    auto runtime=std::make_unique<nr::Runtime>(host, config, nr::ControlMaskConfig{}, temporal);
 
     nr::EngineFrame frame;
     frame.colour.image = image.handle; frame.colour.format = format; frame.colour.width = width; frame.colour.height = height;
@@ -102,18 +103,20 @@ int main(int argc, char** argv) try {
     auto record = [&](VkCommandBuffer cmd) {
         if (estimator) {
             nr::EngineResult r{};
-            r.frame = runtime.record_temporal(cmd, frame.colour, controls, nr::TemporalFrame{frame.reset, frame.feature}).frame;
+            r.frame = runtime->record_temporal(cmd, frame.colour, controls, nr::TemporalFrame{frame.reset, frame.feature}).frame;
             return r;
         }
-        return runtime.record_engine(cmd, frame, controls);
+        return runtime->record_engine(cmd, frame, controls);
     };
     // RUN_SEQUENCE_NEWFEATURE=N: from frame N on the host has a new feature (the old one released), as OptiScaler
     // does when a setting changes. Reuse has to carry on with it.
     const int new_feature_at = std::getenv("RUN_SEQUENCE_NEWFEATURE") ? atoi(std::getenv("RUN_SEQUENCE_NEWFEATURE")) : -1;
     std::printf("%5s %8s %6s %6s %9s\n", "frame", "reused", "gated", "disp", "wall_ms");
     for (int i = 0; i < frames; ++i) {
+        if(const char* at=std::getenv("RUN_SEQUENCE_RECREATE");at && i==atoi(at))
+            runtime=std::make_unique<nr::Runtime>(host,config,nr::ControlMaskConfig{},temporal);
         const bool new_feature = i == new_feature_at;
-        if (new_feature) { runtime.release_feature(frame.feature); frame.feature += 1; }
+        if (new_feature) { runtime->release_feature(frame.feature); frame.feature += 1; }
         const auto rgba = slurp(in_pattern, i);
         if (rgba.size() != size_t(width) * height * 4) throw std::runtime_error("input is not width x height RGBA8");
         std::vector<uint16_t> half(rgba.size());
@@ -128,20 +131,24 @@ int main(int argc, char** argv) try {
         }
         ctx.upload(motion_image, mv.data(), mv.size() * 2);
         if(use_depth) {
-            const auto raw=slurp(std::getenv("RUN_SEQUENCE_DEPTH"),i);
+            auto raw=slurp(std::getenv("RUN_SEQUENCE_DEPTH"),i);
             if(raw.size()!=size_t(width)*height*4) throw std::runtime_error("depth extent");
+            if(frame.depth_inverted) for(size_t k=0;k<raw.size();k+=4) {
+                float d;std::memcpy(&d,raw.data()+k,4);d=1.f-d;std::memcpy(raw.data()+k,&d,4);
+            }
             ctx.upload(depth_image,raw.data(),raw.size());
         }
+        if(std::getenv("RUN_SEQUENCE_INTERLEAVE")) frame.feature=uint64_t(i%2)+1;
         frame.reset = i == 0 || new_feature;
         if(const char* cut=std::getenv("RUN_SEQUENCE_CUT")) frame.reset|=i==atoi(cut);
         if(std::getenv("RUN_SEQUENCE_FG4")) {
-            const auto counts=runtime.temporal_counts();
+            const auto counts=runtime->temporal_counts();
             for(int fg=0;fg<3;++fg) {
                 auto generated=frame;generated.generated=true;
-                const auto ignored=runtime.record_engine(VK_NULL_HANDLE,generated,controls);
+                const auto ignored=runtime->record_engine(VK_NULL_HANDLE,generated,controls);
                 if(ignored.frame.applied || ignored.frame.network_dispatches) throw std::runtime_error("FG frame executed NR");
             }
-            const auto after=runtime.temporal_counts();
+            const auto after=runtime->temporal_counts();
             if(counts.full!=after.full || counts.reconstructed!=after.reconstructed) throw std::runtime_error("FG advanced cadence");
         }
         nr::EngineResult result{};
@@ -188,7 +195,7 @@ int main(int argc, char** argv) try {
                     loops * frames, network_count ? network_ms / network_count : 0.0, network_count,
                     skip_count ? skip_ms / skip_count : 0.0, skip_count, total_ms / (loops * frames));
     }
-    const auto counts=runtime.temporal_counts();
+    const auto counts=runtime->temporal_counts();
     std::printf("cadence full %llu reconstructed %llu unexpected %llu\n",(unsigned long long)counts.full,
         (unsigned long long)counts.reconstructed,(unsigned long long)counts.unexpected);
     vkDestroyQueryPool(ctx.device,queries,nullptr);

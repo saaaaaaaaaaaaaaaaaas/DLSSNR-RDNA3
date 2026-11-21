@@ -51,11 +51,14 @@ def main():
                             'exposed_mae_rgb8':float(abs(error)[exposed].mean()) if exposed.any() else None,
                             'gpu_ms':timings.get(i)})
         warm=[r for r in metrics if r['frame']>=4]
-        skips=[r['gpu_ms'] for r in warm if not r['full'] and r['gpu_ms'] is not None]
-        runs=[r['gpu_ms'] for r in warm if r['full'] and r['gpu_ms'] is not None]
+        # Twelve frames contain whole periods for N=2,3,4. Excluding just four
+        # frames would bias N=3's average toward a different full/skip ratio.
+        timed=[r for r in metrics if r['frame']>=12]
+        skips=[r['gpu_ms'] for r in timed if not r['full'] and r['gpu_ms'] is not None]
+        runs=[r['gpu_ms'] for r in timed if r['full'] and r['gpu_ms'] is not None]
         def mean(values):return statistics.mean(values) if values else None
         report['cases'][name]={'full_launches':sum(r['full'] for r in metrics),'motion_gated':sum(r[2]=='yes' for r in rows),
-            'warmup_frames_excluded':4,'gpu_average_ms':mean([r['gpu_ms'] for r in warm if r['gpu_ms'] is not None]),
+            'warmup_frames_excluded':12,'quality_first_frame':4,'gpu_average_ms':mean([r['gpu_ms'] for r in timed if r['gpu_ms'] is not None]),
             'gpu_full_average_ms':mean(runs),'gpu_reconstruction_average_ms':mean(skips),
             'exposed_blue_mean_rgb8':mean([r['exposed_positive_blue_error_rgb8'] for r in warm if r['exposed_positive_blue_error_rgb8'] is not None]),
             'exposed_mae_mean_rgb8':mean([r['exposed_mae_rgb8'] for r in warm if r['exposed_mae_rgb8'] is not None]),
@@ -68,6 +71,11 @@ def main():
         diff=np.minimum(abs(rgb.astype(np.int16)-full[i][...,:3])*8,255).astype(np.uint8)
         draw.text((8,y+5),name+' frame 9',fill='white');draw.text((w+8,y+5),'difference vs full NR x8',fill='white')
         sheet.paste(Image.fromarray(rgb),(0,y+24));sheet.paste(Image.fromarray(diff),(w,y+24))
+    common=[i for i in range(4,frames) if not report['cases']['motion-n2']['frames'][i]['full'] and not report['cases']['motion-legacy']['frames'][i]['full']]
+    report['common_skipped_comparison']={'frames':common}
+    for name in ('motion-n2','motion-legacy'):
+        values=[report['cases'][name]['frames'][i]['exposed_positive_blue_error_rgb8'] for i in common]
+        report['common_skipped_comparison'][name]=statistics.mean(v for v in values if v is not None)
     sheet.save(root/'motion-comparison.png')
     (root/'motion-quality.json').write_text(json.dumps(report,indent=2)+'\n')
     for name,data in report['cases'].items():

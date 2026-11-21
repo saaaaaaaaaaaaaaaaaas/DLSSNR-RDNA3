@@ -573,6 +573,7 @@ struct Runtime::Impl {
     bool reuse_owned{};
 #if NR_ARCH_RDNA3
     std::filesystem::path seamless_shaders;
+    std::shared_ptr<TemporalClock> seamless_clock;
     nrvk::Kernel seamless_pipeline;
     std::map<uint64_t, std::unique_ptr<SeamlessHistory>> seamless;
     struct RetiredTemporal { std::unique_ptr<SeamlessHistory> history; nr::gpu::Uses uses; };
@@ -2083,6 +2084,7 @@ Runtime::Runtime(const HostDevice& host, const RuntimeConfig& config, const Cont
         impl_->reuse = true;
 #if NR_ARCH_RDNA3
         impl_->seamless_shaders=adapters;
+        impl_->seamless_clock=config.temporal_clock;
         // Compile the shared pipeline while the Runtime is built, rather than
         // on its first real frame. These descriptors are never dispatched;
         // feature histories bind actual-sized images after materialization.
@@ -2403,7 +2405,7 @@ bool Runtime::carry_history(VkCommandBuffer cmd, const Runtime& from, uint64_t f
         if(previous!=from.impl_->seamless.end()) {
             auto& state=impl_->seamless[feature];
             if(!state) state=std::make_unique<SeamlessHistory>();
-            state->cadence=previous->second->cadence;
+            if(!impl_->seamless_clock) state->cadence=previous->second->cadence;
             state->have=false; // changed extent: reject history without extra NR
         }
     }
@@ -2821,10 +2823,13 @@ ControlMaskResult Runtime::record_all(VkCommandBuffer cmd, const ColourFrame& fr
                                          float(c.automatic_mask),float(c.seed_fixed),c.history_strength};
         if(seamless->settings!=settings) seamless->have=false;
         seamless->settings=settings;
-        reuse_skip=!seamless->cadence.next(c.reuse_every);
+        auto& cadence=impl_->seamless_clock?impl_->seamless_clock->features[temporal->feature]:seamless->cadence;
+        reuse_skip=!cadence.next(c.reuse_every);
+        seamless->cadence=cadence;
     } else if(temporal) {
         auto i=impl_->seamless.find(temporal->feature);
         if(i!=impl_->seamless.end()) { i->second->have=false;i->second->cadence.phase=0; }
+        if(impl_->seamless_clock) impl_->seamless_clock->features.erase(temporal->feature);
     }
 #else
     if (reuse_frame) {

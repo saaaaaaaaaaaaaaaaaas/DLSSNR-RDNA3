@@ -1080,6 +1080,7 @@ struct Session::Impl {
     // Controls::reuse_every was asked for once: from then on every runtime is built able to reuse the network's edit.
     // Never cleared, so the cache keeps one kind of runtime.
     bool reuse_want{}, build_reuse{};
+    std::shared_ptr<TemporalClock> real_temporal_clock=std::make_shared<TemporalClock>();
     std::chrono::steady_clock::time_point reuse_logged{};
     int call_net{-1};   // Session::set_call_network
     // The network this call wants: an NR-chain layer's own (set_call_network) when the run can serve it,
@@ -2345,6 +2346,7 @@ RuntimeConfig Session::Impl::make_config(uint32_t w, uint32_t h, VkFormat f) con
     config.root = root; config.width = w; config.height = h; config.colour_format = f;
     config.motion_point = motion_point;
     config.reuse = reuse_want;
+    config.temporal_clock=real_temporal_clock;
     // RuntimeConfig::network: 1 the small model, 2 CC_SMALL_FP8_EXPERIMENTAL, 3 CC_SILVER_AARDWOLD_OPTIMIZED, 0 the
     // 310.8 one
     config.network = net_want == nr::kSmallFp8 ? 1 : net_want == nr::kSmallFp8Experimental ? 2
@@ -3280,6 +3282,7 @@ void Session::release_feature(uint64_t feature) {
     impl_->feature_extent.erase(feature);
     // what it last ran against: a feature that is gone holds no network (make_room / park count these references)
     const auto forget = [&](uint64_t f) {
+        impl_->real_temporal_clock->features.erase(f);
         impl_->feature_slot.erase(f);
         impl_->feature_runtime.erase(f);
         impl_->feature_prev_runtime.erase(f);

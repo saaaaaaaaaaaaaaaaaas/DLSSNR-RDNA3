@@ -7,6 +7,8 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <map>
+#include "nr_temporal_cadence.hpp"
 #ifndef NR_ARCH_RDNA3
 #define NR_ARCH_RDNA3 0
 #endif
@@ -22,6 +24,9 @@ struct TemporalSettings {
     bool confidence = false;
     bool gpu_timing = true;
 };
+// Owned by the host session, shared by its cached runtimes. A resize/rebuild
+// invalidates image history but must not restart the real-frame cadence.
+struct TemporalClock { std::map<uint64_t,TemporalCadence> features; };
 
 struct RuntimeCore;   // Runtime::share_for
 struct ImageHeapRef;  // Runtime::image_heap_wanted
@@ -277,6 +282,7 @@ struct RuntimeConfig {
     // the answer, so the answer must exist as an image). Needs the temporal path (TemporalConfig::enable).
     // Off, the runtime is exactly what it was.
     bool reuse = false;
+    std::shared_ptr<TemporalClock> temporal_clock;
 };
 
 // SDR encoded RGB, source-sized and upright. Accepts RGBA32F and 8-bit RGBA/BGRA
