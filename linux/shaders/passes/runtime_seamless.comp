@@ -1,0 +1,150 @@
+#version 460
+// Causal Vulkan adaptation of the residual/validation ideas in optimizer-fps-dlss5
+// (Yuri Grib, MIT); see include/seamless/LICENSE.txt. No future frame or GPU->CPU
+// scheduling feedback. Coordinates and residuals stay in the model's color domain.
+layout(local_size_x=8, local_size_y=8) in;
+layout(binding=0) uniform sampler2D shown;
+layout(binding=1, rgba32f) uniform image2D answer;
+layout(binding=2, rg32f) uniform readonly image2D motion;
+layout(binding=3) uniform sampler2D depth;
+layout(binding=4) uniform sampler2D previous_residual;
+layout(binding=5) uniform sampler2D previous_guide;
+layout(binding=6, rgba16f) uniform image2D projected;
+layout(binding=7, rgba16f) uniform image2D next_residual;
+layout(binding=8, rgba32f) uniform writeonly image2D next_guide;
+layout(push_constant) uniform Push {
+    uint width, height, mode, valid; // 0 reproject; 1 adopt fresh; 2 fill/compose
+    float scale_x, scale_y, depth_tolerance, color_tolerance;
+    uint has_depth, reversed_z, fill, visualize;
+    uint round_u8, age;
+} pc;
+
+bool finite3(vec3 x) { return !any(isnan(x)) && !any(isinf(x)); }
+bool inside(vec2 q) { return all(greaterThanEqual(q,vec2(0))) && all(lessThan(q,vec2(pc.width,pc.height))); }
+ivec2 bounded(ivec2 p) { return clamp(p,ivec2(0),ivec2(pc.width,pc.height)-1); }
+vec3 color_at(ivec2 p) { return texelFetch(shown,bounded(p),0).rgb; }
+float luma(vec3 c) { return dot(max(c,vec3(0)),vec3(0.2126,0.7152,0.0722)); }
+float depth_at(ivec2 p) {
+    if(pc.has_depth==0u) return 0;
+    ivec2 sz=textureSize(depth,0);
+    return texelFetch(depth,clamp(ivec2((vec2(p)+0.5)/vec2(pc.width,pc.height)*vec2(sz)),ivec2(0),sz-1),0).r;
+}
+float depth_weight(float a,float b) {
+    if(pc.has_depth==0u || pc.depth_tolerance<=0) return 1;
+    if(isnan(a)||isnan(b)||isinf(a)||isinf(b)) return 0;
+    // Device-depth distance to the far plane works for forward/reverse Z. No
+    // projection matrix/previous-depth guide is exposed by the host: camera Z
+    // changes reduce confidence, never cause another inference.
+    float da=pc.reversed_z!=0u?a:1-a, db=pc.reversed_z!=0u?b:1-b;
+    float e=abs(da-db)/max(max(abs(da),abs(db)),0.001);
+    return 1-smoothstep(pc.depth_tolerance,2*pc.depth_tolerance,e);
+}
+float color_weight(vec3 a,vec3 b) {
+    if(!finite3(a)||!finite3(b)) return 0;
+    float ya=luma(a),yb=luma(b);
+    vec3 ca=a/(ya+0.04), cb=b/(yb+0.04);
+    float chroma=max(max(abs(ca.r-cb.r),abs(ca.g-cb.g)),abs(ca.b-cb.b));
+    float lum=abs(ya-yb)/(max(ya,yb)+0.04);
+    float t=max(pc.color_tolerance,0.001);
+    return (1-smoothstep(t,2*t,chroma))*(1-smoothstep(2*t,4*t,lum));
+}
+vec2 vector_at(ivec2 p) {
+    ivec2 sz=imageSize(motion);
+    // Nearest engine vector: filtering foreground/background velocities is
+    // particularly damaging to a thin sword. Color/depth validate its endpoint.
+    ivec2 q=clamp(ivec2((vec2(p)+0.5)/vec2(pc.width,pc.height)*vec2(sz)),ivec2(0),sz-1);
+    return imageLoad(motion,q).xy*vec2(pc.scale_x,pc.scale_y)*vec2(pc.width,pc.height);
+}
+vec4 cubic(float t) {
+    return vec4(-0.5*t+t*t-0.5*t*t*t,1-2.5*t*t+1.5*t*t*t,
+                0.5*t+2*t*t-1.5*t*t*t,-0.5*t*t+0.5*t*t*t);
+}
+vec3 adopt_low(vec3 r,vec3 old_color,vec3 current) {
+    float ratio=clamp((luma(current)+0.04)/(luma(old_color)+0.04),0.5,2.0);
+    // Rejected detail may carry tone, never stale blue chromaticity. Preserve
+    // the current surface's chroma, with signed luminance enhancement only.
+    float y=dot(r,vec3(0.2126,0.7152,0.0722))*ratio;
+    return y*(max(current,vec3(0))+0.04)/(luma(current)+0.04);
+}
+void reproject(ivec2 p) {
+    if(pc.valid==0u) { imageStore(projected,p,vec4(0)); return; }
+    vec3 c=color_at(p); float d=depth_at(p); vec2 m=vector_at(p),q=vec2(p)+m;
+    if(any(isnan(q))||any(isinf(q))||!inside(q)) {imageStore(projected,p,vec4(0));return;}
+    ivec2 base=ivec2(floor(q)); vec2 f=fract(q);
+    vec3 r=vec3(0),lo=vec3(1e30),hi=vec3(-1e30); float accepted=0,geometry=0;
+    for(int y=0;y<2;++y) for(int x=0;x<2;++x) {
+        ivec2 t=bounded(base+ivec2(x,y));
+        vec4 g=texelFetch(previous_guide,t,0),e=texelFetch(previous_residual,t,0);
+        float bil=(x==0?1-f.x:f.x)*(y==0?1-f.y:f.y);
+        float w=depth_weight(d,g.a)*color_weight(c,g.rgb);
+        if(!finite3(e.rgb)) w=0;
+        float a=w*clamp(e.a,0,1);
+        accepted+=bil*a; geometry+=bil*w;
+        r+=bil*w*e.rgb;
+        if(w>0.5) {lo=min(lo,e.rgb);hi=max(hi,e.rgb);}
+    }
+    r=geometry>0.001?r/geometry:vec3(0);
+    // Coherent carry: each link must pass, including earlier skipped frames.
+    // Bicubic detail is restricted to fully accepted surfaces and clamped to
+    // the bilinear footprint so it cannot ring across a silhouette.
+    if(accepted>0.95 && all(lessThanEqual(lo,hi))) {
+        vec4 wx=cubic(f.x),wy=cubic(f.y);vec3 cr=vec3(0);
+        for(int y=0;y<4;++y) for(int x=0;x<4;++x)
+            cr+=wx[x]*wy[y]*texelFetch(previous_residual,bounded(base+ivec2(x-1,y-1)),0).rgb;
+        if(finite3(cr)) r=clamp(cr,lo,hi);
+    }
+    imageStore(projected,p,vec4(finite3(r)?r:vec3(0),accepted));
+}
+void main() {
+    ivec2 p=ivec2(gl_GlobalInvocationID.xy);
+    if(any(greaterThanEqual(p,ivec2(pc.width,pc.height)))) return;
+    if(pc.mode==0u) {reproject(p);return;}
+    vec4 src=texelFetch(shown,p,0); float d=depth_at(p);
+    if(pc.mode==3u) {
+        vec4 r=imageLoad(next_residual,p);vec3 outc=src.rgb+r.rgb;
+        if(pc.round_u8!=0u) outc=round(clamp(outc,0,1)*255)/255;
+        if(pc.visualize!=0u) outc=vec3(0,1,0);
+        imageStore(answer,p,vec4(finite3(outc)?outc:src.rgb,src.a));return;
+    }
+    vec4 old=imageLoad(projected,p); vec3 residual; float confidence;
+    if(pc.mode==1u) {
+        vec4 fresh=imageLoad(answer,p);residual=fresh.rgb-src.rgb;
+        vec3 lo=residual,hi=residual;
+        for(int y=-1;y<=1;++y) for(int x=-1;x<=1;++x) {
+            ivec2 t=bounded(p+ivec2(x,y));vec3 r=imageLoad(answer,t).rgb-color_at(t);
+            lo=min(lo,r);hi=max(hi,r);
+        }
+        // New full-NR output is never read and overwritten in place here;
+        // only the private residual history is stabilized (no inter-WG race).
+        float motionFade=1-smoothstep(2,6,length(vector_at(p)));
+        float keep=pc.valid!=0u?0.6*old.a*motionFade:0;
+        residual=mix(residual,clamp(old.rgb,lo,hi),keep);
+        confidence=1;
+    } else {
+        confidence=clamp(old.a,0,1);vec3 spatial=vec3(0);float sum=0;
+        if(pc.fill!=0u && confidence<0.98 && pc.valid!=0u) {
+            // Two rings provide a smooth low-frequency field for sky and newly
+            // uncovered surfaces. Every donor belongs to a compatible *current*
+            // surface. It is never an unvalidated old rendered frame.
+            const ivec2 dir[8]=ivec2[8](ivec2(1,0),ivec2(1,1),ivec2(0,1),ivec2(-1,1),ivec2(-1,0),ivec2(-1,-1),ivec2(0,-1),ivec2(1,-1));
+            for(int ring=0;ring<2;++ring) for(int k=0;k<8;++k) {
+                ivec2 t=bounded(p+dir[k]*(ring==0?4:24));
+                vec4 e=imageLoad(projected,t);vec3 tc=color_at(t);
+                float w=depth_weight(d,depth_at(t))*color_weight(src.rgb,tc)*e.a;
+                spatial+=adopt_low(e.rgb,tc,src.rgb)*w;sum+=w;
+            }
+        }
+        spatial=sum>0.001?spatial/sum:vec3(0);
+        float detailed=smoothstep(0.1,0.9,confidence);
+        residual=mix(spatial,old.rgb,detailed);
+        // Detail confidence remains zero in filled holes; the next link cannot
+        // promote an inferred low-frequency donor to original neural detail.
+        vec3 outc=src.rgb+residual;
+        if(pc.round_u8!=0u) outc=round(clamp(outc,0,1)*255)/255;
+        if(pc.visualize!=0u) outc=mix(vec3(1,0,0),vec3(0,1,0),confidence);
+        imageStore(answer,p,vec4(finite3(outc)?outc:src.rgb,src.a));
+    }
+    if(!finite3(residual)) {residual=vec3(0);confidence=0;}
+    imageStore(next_residual,p,vec4(clamp(residual,vec3(-65504),vec3(65504)),confidence));
+    imageStore(next_guide,p,vec4(src.rgb,d));
+}

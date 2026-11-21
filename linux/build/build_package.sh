@@ -18,7 +18,7 @@
 #                       carries -rdna3 in its name
 #   NR_VERSION=...      override the version (default: from the git tags, linux/build/version.sh)
 #   NR_SHADER_PROFILE=z1-extreme  explicit Z1 Extreme shader tuning (NR_GPU=rdna3)
-#                     z1-extreme-fast / z1-extreme-turbo allow image-changing C32 arithmetic
+#                     z1-extreme-turbo allow image-changing C32 arithmetic
 #   NR_LANG_EXTRA=<dir> test packages only: extra language files (and fonts/) into dlssnr-amd/lang
 #   NR_SIGN=1           the package's Windows binaries signed (self-signed, linux/build/sign_pe.py)
 #
@@ -53,7 +53,7 @@ source "linux/build/arch/$gpu.sh"
 profile=${NR_SHADER_PROFILE:-generic}
 case "$profile" in
     generic) ;;
-    z1-extreme|z1-extreme-fast|z1-extreme-turbo) [[ "$gpu" == rdna3 ]] || { echo 'Z1 profiles require NR_GPU=rdna3' >&2; exit 2; };;
+    z1-extreme|z1-extreme-turbo) [[ "$gpu" == rdna3 ]] || { echo 'Z1 profiles require NR_GPU=rdna3' >&2; exit 2; };;
     *) echo 'unknown NR_SHADER_PROFILE' >&2; exit 2;;
 esac
 
@@ -61,6 +61,7 @@ esac
 common=(-std=c++17 -O2 -DNDEBUG -Itoolchain/Vulkan-Headers/include -Ilinux/src -Ilinux/src/core -Ilinux/src/layer -Ilinux/src/pe -I"$out")
 # (NR_RESHADE_ROUTE: these are the ReShade add-on's objects, all of them - the route's defaults, nr_fast_passes.hpp)
 common+=(-DNR_RESHADE_ROUTE=1)
+[[ "$gpu" != rdna3 ]] || common+=(-DNR_ARCH_RDNA3=1)
 [[ "${NR_INT4:-0}" == 1 ]] && common+=(-DNR_INT4=1)   # the build of the programs with the int4 layers (int4/ below)
 "$cxx" "${common[@]}" "${NR_PRODUCT_DEFINES[@]}" -c linux/src/core/nr_runtime.cpp -o "$out/nr_runtime.o"
 "$cxx" "${common[@]}" -c linux/src/core/nr_native_plan.cpp -o "$out/nr_native_plan.o"
@@ -404,7 +405,7 @@ if [[ "$gpu" == rdna3 ]]; then
     [[ ! -f docs/RDNA3-0.0.9-VALIDATION.json ]] || cp -- docs/RDNA3-0.0.9-VALIDATION.json "$pkg/"
     [[ "$profile" != z1-extreme ]] || cp -- docs/RDNA3-Z1-EXTREME.md docs/RDNA3-Z1-VALIDATION.json "$pkg/"
     case "$profile" in
-        z1-extreme-fast|z1-extreme-turbo) cp -- docs/RDNA3-Z1E-AGGRESSIVE.md docs/RDNA3-Z1E-FAST-VALIDATION.json "$pkg/";;
+        z1-extreme-turbo) cp -- docs/RDNA3-Z1E-AGGRESSIVE.md docs/RDNA3-Z1E-FAST-VALIDATION.json "$pkg/";;
     esac
 fi
 chmod +x "$pkg/install.sh" "$mt/extract_model.sh"
@@ -418,7 +419,6 @@ version=$(bash linux/build/version.sh)
 profile_suffix=; [[ "$profile" == generic ]] || profile_suffix="-$profile"
 if [[ "$profile" == z1-extreme* && "$arch" == x86_64 ]]; then
     flavor=
-    [[ "$profile" != z1-extreme-fast ]] || flavor=-Fast
     [[ "$profile" != z1-extreme-turbo ]] || flavor=-Turbo
     archive="DLSS-NR-AMD-Vulcan-Linux-$version-Z1E-Optimized$flavor-RDNA-3.tar.gz"
 else

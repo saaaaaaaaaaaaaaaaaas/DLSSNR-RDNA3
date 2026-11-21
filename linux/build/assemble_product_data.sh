@@ -32,6 +32,7 @@ for f in accumulation.txt swin-bias-storage.txt coherent-act.txt shader-constant
     cp -- "$NR_PRODUCT_SPV/$f" "$dst/shaders/"
 done
 cp -- "$NR_PRODUCT_SPV"/runtime/* "$dst/shaders/runtime/"
+[[ "$gpu" != rdna3 ]] || cp -- linux/shaders/passes/include/seamless/LICENSE.txt "$dst/shaders/runtime/Seamless-MIT-LICENSE.txt"
 cp -- "$NR_PRODUCT_SPV"/temporal/* "$dst/shaders/temporal/"
 [[ ! -f "$NR_PRODUCT_SPV/gpu-profile.txt" ]] || cp -- "$NR_PRODUCT_SPV/gpu-profile.txt" "$dst/shaders/"
 bash linux/build/build_renodx.sh "$dst/shaders/renodx" > /dev/null   # the RenoDX-style option

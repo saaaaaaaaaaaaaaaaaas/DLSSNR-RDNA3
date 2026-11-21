@@ -17,7 +17,7 @@ g++ -std=c++17 -O2 -Ilinux/src/core linux/test/mkplan.cpp \
 python3 linux/build/build_network.py rdna3 --ultra --out "$out/ultra"
 python3 linux/test/check_rdna3_build.py "$out/ultra"
 python3 linux/test/check_rdna3_qkv.py "$out/ultra" --planner "$out/mkplan"
-python3 linux/package/make_ini.py linux/src/pe/nr_pe_config.cpp "$out/ini"
+NR_GPU=rdna3 python3 linux/package/make_ini.py linux/src/pe/nr_pe_config.cpp "$out/ini"
 python3 - "$out/ini" <<'PY'
 import configparser
 import sys
@@ -27,6 +27,7 @@ for name, method in [('optiscaler', 0), ('optiscaler-renodx', 0), ('addon', 1)]:
     cfg.read(Path(sys.argv[1]) / f'dlssnr-amd-{name}.ini')
     assert cfg.getint('RenoDX', 'NRFastMethod') == method, name
     assert cfg.getint('RenoDX', 'NRFastInterleavedPreset') == 1, name
-    assert cfg.has_section('Reuse'), name
+    assert cfg.has_section('Temporal') and not cfg.has_section('Reuse'), name
+    assert cfg.getint('Temporal', 'Interval') == 2, name
 print('INI route defaults, Interleaved preset and temporal reuse: PASS')
 PY

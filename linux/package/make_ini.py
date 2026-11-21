@@ -6,7 +6,7 @@ the format strings are read out of src/pe/nr_pe_config.cpp and every value out o
 reads), <out>/dlssnr-amd-optiscaler-renodx.ini (the same with [RenoDX] Enabled = 1) and <out>/dlssnr-amd-addon.ini (the
 ReShade add-on's whole file). [Network] Model is the default network; install.sh writes the one chosen at install.
 usage: make_ini.py <nr_pe_config.cpp> <out dir>"""
-import re, sys
+import os, re, sys
 from pathlib import Path
 
 cfg_cpp = Path(sys.argv[1])
@@ -175,6 +175,8 @@ preprocess = render("void write_preprocess(", {"p": config["preprocess"], "v": c
 w2 = formats(body_of("void write_wilsjo2("))[0][0]   # no values: every key at auto
 logsec = render("void write_log(", {"enabled": config["log_enabled"], "clear": config["log_clear"]})[0]
 reusesec = render("void write_reuse(", {"every": config["controls"]["reuse_every"], "gate": config["controls"]["reuse_gate"]})[0]
+if os.environ.get('NR_GPU') == 'rdna3':
+    reusesec = render("void write_temporal(", {"t": config["controls"]["temporal"]})[0]
 inspect = render("void write_inspect(", {"i": struct("InspectConfig")})[0]   # every tool off
 hudfix = render("void write_hudfix(", {"h": struct("HudFixConfig")})[0]   # off (the struct's default)
 hudfix_addon = render("void write_hudfix(", {"h": dict(struct("HudFixConfig"), mode=0)})[0]   # off on the ReShade route

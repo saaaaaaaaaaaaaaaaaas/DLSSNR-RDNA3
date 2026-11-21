@@ -61,6 +61,18 @@ float number(const std::string& v, float lo, float hi, float def) {
     return std::isnan(x) ? lo : std::clamp(x, lo, hi);   // finite values are clamped to the key's range
 }
 
+void parse_temporal_key(TemporalSettings& t,const std::string& key,const std::string& value) {
+    if(key=="interval") t.interval=std::clamp(nr::parse_integer<int>(value,t.interval),2,4);
+    else if(key=="depthtolerance") t.depth=number(value,0,1,t.depth);
+    else if(key=="colortolerance") t.color=number(value,0.001f,1,t.color);
+    else if(auto b=parse_bool(value)) {
+        if(key=="enabled") t.enabled=*b;
+        else if(key=="holefill") t.hole_fill=*b;
+        else if(key=="confidence") t.confidence=*b;
+        else if(key=="gputiming") t.gpu_timing=*b;
+    }
+}
+
 uint64_t stamp_of(const std::string& path) {
     WIN32_FILE_ATTRIBUTE_DATA data{};
     if (!nr::u8::attributes_ex(path.c_str(), &data)) return 0;
@@ -322,6 +334,9 @@ bool dlssnr_key(Config& c, int& passes, const std::string& key, const std::strin
 
 // What parse() and layer_config() do once every key is in.
 void finish(Config& c, int passes) {
+#if NR_ARCH_RDNA3
+    c.controls.reuse_every=c.controls.temporal.enabled?c.controls.temporal.interval:0;
+#endif
     c.controls.passes = std::clamp(passes, 1, c.pass_limit());
     c.resolve();
 }
@@ -357,7 +372,10 @@ bool parse(const std::string& path, Config& c, bool& legacy) {
         const std::string value = trim(text.substr(equals + 1));
         if (name == "preprocess") { parse_preprocess_key(c.preprocess, key, value); continue; }
         if (name == "renodx") { parse_renodx_key(c.renodx, key, value); continue; }
-        if (name == "reuse") {
+        if (name == "temporal") {
+            parse_temporal_key(c.controls.temporal,key,value);continue;
+        }
+        if (name == "reuse" && !NR_ARCH_RDNA3) {
             if (key == "every") c.controls.reuse_every = std::clamp(std::atoi(value.c_str()), 0, 8);
             else if (key == "gate") c.controls.reuse_gate = number(value, 1, 400, c.controls.reuse_gate);
             continue;
@@ -452,7 +470,8 @@ bool parse_preprocess_file(const std::string& path, PreprocessConfig& p) {
         if (equals == std::string::npos) continue;
         const std::string key = lower(trim(text.substr(0, equals))), value = trim(text.substr(equals + 1));
         if (name == "preprocess") parse_preprocess_key(p, key, value);
-        else if (name == "reuse") {
+        else if (name == "temporal") parse_temporal_key(p.temporal,key,value);
+        else if (name == "reuse" && !NR_ARCH_RDNA3) {
             if (key == "every") p.reuse_every = std::clamp(std::atoi(value.c_str()), 0, 8);
             else if (key == "gate") p.reuse_gate = number(value, 1, 400, p.reuse_gate);
         }
@@ -1821,6 +1840,9 @@ void write_log(FILE* f, bool enabled, bool clear) {
 }
 
 void write_reuse(FILE* f, int every, float gate) {
+#if NR_ARCH_RDNA3
+    write_temporal(f,TemporalSettings{});return;
+#endif
     std::fprintf(f,
         "\n[Reuse]\n"
         "; Temporal reuse of the network's edit. The network runs on every Every-th frame and the frames between\n"
@@ -1835,6 +1857,24 @@ void write_reuse(FILE* f, int every, float gate) {
         "; how far the picture may have moved since the network last ran, in pixels of a 1080p-wide frame,\n"
         "; for a frame to skip it. Past it the network runs; past twice it the stored edit is dropped.\n",
         every, gate);
+}
+
+void write_temporal(FILE* f, const TemporalSettings& t) {
+    std::fprintf(f,
+        "\n[Temporal]\n"
+        "; Causal reconstruction of the NR enhancement on real frames only. No extra FG or queued frame.\n"
+        "; Motion, camera cuts and rejected history never launch NR outside this strict cadence.\n"
+        "Enabled = %d\n"
+        "Interval = %d\n"
+        "; Full NR every 2..4 real frames. Enabled=0 runs full NR on every real frame.\n"
+        "DepthTolerance = %.3f\n"
+        "ColorTolerance = %.3f\n"
+        "; Zero DepthTolerance disables depth validation. Color is always checked.\n"
+        "HoleFill = %d\n"
+        "Confidence = %d\n"
+        "; Confidence debug view: green detail, red rejected/filled history.\n"
+        "GpuTiming = %d\n",
+        int(t.enabled),t.interval,double(t.depth),double(t.color),int(t.hole_fill),int(t.confidence),int(t.gpu_timing));
 }
 
 bool PreprocessFile::poll(const std::string& path, PreprocessConfig& out) {
@@ -2244,7 +2284,11 @@ void Config::save(const std::string& path, bool whole) {
         write_hudfix(f, hud);
     }
     write_log(f, log_enabled, log_clear);
+#if NR_ARCH_RDNA3
+    write_temporal(f,controls.temporal);
+#else
     write_reuse(f, controls.reuse_every, controls.reuse_gate);
+#endif
     std::fclose(f);
     stamp_ = stamp_of(path);
 }

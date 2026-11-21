@@ -32,6 +32,7 @@ struct PreprocessConfig {
     // The OptiScaler route builds its controls from NGX parameters, which have no key for it.
     int reuse_every = 0;
     float reuse_gate = 40.0f;
+    TemporalSettings temporal{};
 };
 // One key of the section into `p`; false when it is not one of its keys.
 bool parse_preprocess_key(PreprocessConfig& p, const std::string& key, const std::string& value);
@@ -202,6 +203,7 @@ void write_log(FILE* f, bool enabled, bool clear);
 // [Reuse], with its comments: the network on every `every`-th frame (0 or 1: every frame), the frames between
 // carrying its edit forward by the motion; `gate` in pixels of a 1080p-wide frame.
 void write_reuse(FILE* f, int every, float gate);
+void write_temporal(FILE* f, const TemporalSettings& t);
 // [NRControl] (NR Control, the OptiScaler route's menu: its key), with its comments.
 void write_nrcontrol(FILE* f);
 // dlssnr-amd.ini missing in `folder`: the copy install.sh keeps (dlssnr-amd/dlssnr-amd.default.ini, the file as

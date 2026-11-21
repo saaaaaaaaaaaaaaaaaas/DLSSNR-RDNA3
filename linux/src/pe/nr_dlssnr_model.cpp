@@ -161,8 +161,13 @@ const nr::pe::PreprocessConfig& ini_config() {
 // forward by the game's motion vectors (nr::Controls::reuse_every). Zero or one: the network every frame.
 void reuse_now(nr::Controls& c) {
     const auto& ini = ini_config();
+#if NR_ARCH_RDNA3
+    c.temporal=ini.temporal;
+    c.reuse_every=ini.temporal.enabled?ini.temporal.interval:0;
+#else
     c.reuse_every = ini.reuse_every;
     c.reuse_gate = ini.reuse_gate;
+#endif
 }
 
 nr::Preprocess preprocess_now() {

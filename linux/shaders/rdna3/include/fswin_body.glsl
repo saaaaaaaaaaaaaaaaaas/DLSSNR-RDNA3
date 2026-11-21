@@ -856,7 +856,7 @@
                 }
 #elif NR_ACT_F32
                 for (int c = 0; c < 8; c += 2) {
-                    const fe4m3vec2 qp = NR_EQ_PAIR32(vec2(
+                    const fe4m3vec2 qp = nr_quant_pair32(vec2(
                         NR_ACTP(a[p][m][c], c), NR_ACTP_B(a[p][m][c + 1], c + 1)));
                     NR_OPPUT(eqg[m][h + p], c, qp)
                 }
@@ -914,7 +914,7 @@
                 // Same trade as the heads==1 expand: f32 throughout, one
                 // conversion, a different rounding. See nr_quant_pair32.
                 for (int c = 0; c < 8; c += 2) {
-                    const fe4m3vec2 qp = NR_EQ_PAIR32(vec2(
+                    const fe4m3vec2 qp = nr_quant_pair32(vec2(
                         NR_ACTP(a[m][c], c), NR_ACTP_B(a[m][c + 1], c + 1)));
                     NR_OPPUT(eqg[m][h], c, qp)
                 }
@@ -1105,7 +1105,7 @@
             // FMA chain and rounds like one, so this changes the image. See
             // nr_quant_pair32 for why the hop costs what it does.
             for (int c = 0; c < 8; c += 2) {
-                const fe4m3vec2 qp = NR_EQ_PAIR32(vec2(
+                const fe4m3vec2 qp = nr_quant_pair32(vec2(
                     NR_ACTP(a[m][c], c), NR_ACTP_B(a[m][c + 1], c + 1)));
                 NR_OPPUT(NR_EQ(m,h), c, qp)
             }

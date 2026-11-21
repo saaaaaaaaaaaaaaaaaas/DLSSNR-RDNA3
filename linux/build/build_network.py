@@ -28,9 +28,9 @@ lists the differences (exit 1 if any).
 --profile z1-extreme (RDNA3 only) changes the selected pipeline defines after the
 model overlay; derived INT4 pipelines remain untouched. NR_SHADER_PROFILE sets
 the default for package builds. Generic builds retain their existing SPIR-V bytes.
---profile z1-extreme-fast / z1-extreme-turbo explicitly permit image-changing
-C32 arithmetic. Fast relaxes selected internal sites; Turbo relaxes all e4m3
-rounding sites in those pipelines. Both inherit the exact Z1 scheduling profile.
+--profile z1-extreme-turbo explicitly permits image-changing
+C32 arithmetic. Turbo relaxes all e4m3
+rounding sites in those pipelines. It inherits the exact Z1 scheduling profile.
 """
 import argparse
 import json
@@ -46,7 +46,7 @@ R = Path(__file__).resolve().parents[2]
 RUNTIME = ['runtime_alpha', 'runtime_depth', 'runtime_blit',
            'runtime_reuse_store', 'runtime_reuse_motion', 'runtime_reuse_warp', 'runtime_reuse_stat']
 MOTION = ['motion_luma', 'motion_estimate']
-PROFILES = ('generic', 'z1-extreme', 'z1-extreme-fast', 'z1-extreme-turbo')
+PROFILES = ('generic', 'z1-extreme', 'z1-extreme-turbo')
 
 
 def apply_profile(table, changes):
@@ -176,11 +176,12 @@ def main():
             (out / 'block-routes.txt').write_text('\n'.join(lines) + '\n')
         (out / 'runtime').rmdir()
     else:
-        for k in RUNTIME:
+        runtime = [k for k in RUNTIME if not k.startswith('runtime_reuse_')] + ['runtime_seamless'] if a.arch == 'rdna3' else RUNTIME
+        for k in runtime:
             glslang(a.arch, R / 'linux/shaders/passes' / f'{k}.comp', [], out / 'runtime' / f'{k}.spv')
     print(f'{out}: {len(pipelines) + len(grade["pipelines"])} network pipelines, '
           f'{len(table["variants"]) + len(grade["variants"]) + len(MOTION)} temporal, '
-          f'{0 if overlay else len(RUNTIME)} runtime')
+          f'{0 if overlay else len(runtime)} runtime')
 
     if a.check:
         bad = [p.name for p in sorted(out.iterdir()) if p.is_file()

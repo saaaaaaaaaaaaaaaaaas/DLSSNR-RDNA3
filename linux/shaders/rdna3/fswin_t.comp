@@ -1390,31 +1390,6 @@ fe4m3vec2 nr_kscale_fast(vec2 value, float norm) {
 #define NR_QP_CTX(v) NR_QPAIR(v)
 #endif
 
-// Opt-in approximation: retain FP16 at selected internal C32 boundaries.
-// Tensor stores, Q/K, probability quantization and saturation remain unchanged.
-// Bits: 1 activation, 2 contraction input to QKV, 4 attention context.
-#ifndef NR_RELAX_QUANT_MASK
-#define NR_RELAX_QUANT_MASK 0
-#endif
-#if NR_RELAX_QUANT_MASK && (NR_C != 32 || (NR_RELAX_QUANT_MASK & ~7))
-#error "relaxed quantization supports the three internal C32 sites only"
-#endif
-#if NR_RELAX_QUANT_MASK & 1
-#undef NR_QP_EQ
-#define NR_QP_EQ(v) clamp((v),f16vec2(-448.0hf),f16vec2(448.0hf))
-#define NR_EQ_PAIR32(v) f16vec2(clamp((v),vec2(-448.0),vec2(448.0)))
-#else
-#define NR_EQ_PAIR32(v) nr_quant_pair32(v)
-#endif
-#if NR_RELAX_QUANT_MASK & 2
-#undef NR_QP_YQ
-#define NR_QP_YQ(v) clamp((v),f16vec2(-448.0hf),f16vec2(448.0hf))
-#endif
-#if NR_RELAX_QUANT_MASK & 4
-#undef NR_QP_CTX
-#define NR_QP_CTX(v) clamp((v),f16vec2(-448.0hf),f16vec2(448.0hf))
-#endif
-
 // ---- NR_WPF: software prefetch of the weight fragments --------------------
 //
 // Every weight-fed MMA in this kernel loads its A fragment immediately before

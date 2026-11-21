@@ -7,6 +7,9 @@
 #define NR_NO_MAIN 1
 #include "nr_graph.cpp"
 #include "nr_input_check.hpp"
+#if NR_ARCH_RDNA3
+#include "nr_seamless.hpp"
+#endif
 #include <chrono>
 #include <cstddef>
 #include <filesystem>
@@ -568,6 +571,14 @@ struct Runtime::Impl {
     uint32_t reuse_acc_cur{};       // which accumulator holds the latest accumulation
     uint64_t reuse_feature{};       // the feature that owns the stored edit
     bool reuse_owned{};
+#if NR_ARCH_RDNA3
+    std::filesystem::path seamless_shaders;
+    nrvk::Kernel seamless_pipeline;
+    std::map<uint64_t, std::unique_ptr<SeamlessHistory>> seamless;
+    struct RetiredTemporal { std::unique_ptr<SeamlessHistory> history; nr::gpu::Uses uses; };
+    std::vector<RetiredTemporal> retired_temporal;
+    uint64_t temporal_full{}, temporal_reconstructed{}, temporal_unexpected{};
+#endif
     // The post block restores the frame's alpha (and the 8-bit rounding) in its
     // own store, so the alpha pass is skipped: native compose, one pass, no
     // Model Resolution - there the answer is the post block's output as it is.
@@ -596,6 +607,8 @@ struct Runtime::Impl {
     uint32_t timing_stride{2};             // queries per slot: 2 + 2 for the network
     uint32_t slot_passes[kTimingSlots]{};  // passes timed in each slot
     float net_ms{}, net_ms_avg{};
+    bool slot_reconstructed[kTimingSlots]{};
+    float reconstruction_ms{};
     // Read the oldest slot in the ring, if its recording has finished. Called
     // once per recording, from the thread that records.
     void read_timing() {
@@ -609,6 +622,7 @@ struct Runtime::Impl {
             return;   // VK_NOT_READY: still running, ask again next frame
         if (stamps[1] <= stamps[0]) return;
         gpu_ms = float(double(stamps[1] - stamps[0]) * timestamp_ns / 1e6);
+        if(slot_reconstructed[oldest]) reconstruction_ms=gpu_ms;
         if (slot_passes[oldest]) {
             uint64_t net = 0;
             for (uint32_t p = 0; p < slot_passes[oldest]; ++p)
@@ -1250,6 +1264,10 @@ struct Runtime::Impl {
         // Caller has already completed its submitted command buffers.
         auto& s = session;
         if (!s.ctx.device) return;
+#if NR_ARCH_RDNA3
+        seamless.clear(); retired_temporal.clear();
+        if(seamless_pipeline.device) seamless_pipeline.destroy();
+#endif
         for (auto& d : direct_ring) {
             direct_slot_release(d);
         d.gpu = nr::gpu::current();
@@ -1852,6 +1870,11 @@ Runtime::Runtime(const HostDevice& host, const RuntimeConfig& config, const Cont
         t.original_post = &s.kern.at("fswinimagepost32");
         t.lw[0] = (mw + kTemporalBase - 1) / kTemporalBase;
         t.lh[0] = (mh + kTemporalBase - 1) / kTemporalBase;
+#if NR_ARCH_RDNA3
+        // Thin objects need their own vector, not a bilinear mixture of the
+        // foreground and background. Only the new temporal path pays for this.
+        if (config.reuse) { t.lw[0]=mw; t.lh[0]=mh; }
+#endif
         for (unsigned k = 1; k < kTemporalLevels; ++k) {
             t.lw[k] = (t.lw[k - 1] + 1) / 2;
             t.lh[k] = (t.lh[k - 1] + 1) / 2;
@@ -1914,7 +1937,7 @@ Runtime::Runtime(const HostDevice& host, const RuntimeConfig& config, const Cont
         // the blit converts whatever the game hands over. With Motion Without Depth (the default, as NVIDIA's DLLs,
         // which never bind a depth) nothing copies into it or samples it (game_depth is false, the pre block's depth
         // branch is off): a 1x1 image fills the descriptor (4K: 33 MB).
-        t.depth = impl_->motion_without_depth ? s.ctx.image(1, 1, VK_FORMAT_R32_SFLOAT, true)
+        t.depth = (impl_->motion_without_depth && !(NR_ARCH_RDNA3 && config.reuse)) ? s.ctx.image(1, 1, VK_FORMAT_R32_SFLOAT, true)
                                               : s.ctx.image(mw, mh, VK_FORMAT_R32_SFLOAT, true);
         vkDestroySampler(s.ctx.device, t.depth.sampler, nullptr);
         t.depth.sampler = linear_sampler();
@@ -2058,6 +2081,14 @@ Runtime::Runtime(const HostDevice& host, const RuntimeConfig& config, const Cont
             throw std::invalid_argument("temporal reuse needs the temporal path and no control mask");
         auto& t = impl_->temporal;
         impl_->reuse = true;
+#if NR_ARCH_RDNA3
+        impl_->seamless_shaders=adapters;
+        // Compile the shared pipeline while the Runtime is built, rather than
+        // on its first real frame. These descriptors are never dispatched;
+        // feature histories bind actual-sized images after materialization.
+        impl_->seamless_pipeline.create(s.ctx,(adapters/"runtime_seamless.spv").string(),{},sizeof(SeamlessHistory::Push),
+            {&s.tex_in,&s.surf0,&t.flow[0],&t.depth,&t.depth,&t.depth,&s.surf0,&s.surf0,&s.surf0});
+#else
         impl_->reuse_edit = s.ctx.image(mw, mh, VK_FORMAT_R16G16B16A16_SFLOAT, false);
         s.ctx.transition(impl_->reuse_edit, VK_IMAGE_LAYOUT_GENERAL);
         for (auto& a : impl_->reuse_acc) {
@@ -2081,6 +2112,7 @@ Runtime::Runtime(const HostDevice& host, const RuntimeConfig& config, const Cont
                                         {impl_->reuse_stat_buffer.handle}, 24,
                                         {&s.tex_in, &s.surf0, &impl_->reuse_edit, &impl_->reuse_acc[k]});
         }
+#endif
     }
     impl_->post_alpha = NR_POST_ALPHA && s.kern.count("fswinimagepost32");
     timer.mark("adapters");
@@ -2365,6 +2397,17 @@ bool Runtime::owns_image_memory() const {
 }
 
 bool Runtime::carry_history(VkCommandBuffer cmd, const Runtime& from, uint64_t feature) {
+#if NR_ARCH_RDNA3
+    if(cmd && feature && impl_->reuse && from.impl_->reuse) {
+        const auto previous=from.impl_->seamless.find(feature);
+        if(previous!=from.impl_->seamless.end()) {
+            auto& state=impl_->seamless[feature];
+            if(!state) state=std::make_unique<SeamlessHistory>();
+            state->cadence=previous->second->cadence;
+            state->have=false; // changed extent: reject history without extra NR
+        }
+    }
+#endif
     auto& t = impl_->temporal;
     auto& ft = from.impl_->temporal;
     if (!cmd || !feature || !t.enabled || !ft.enabled || from.stale() || stale())
@@ -2475,6 +2518,13 @@ void Runtime::set_history_strength(float v) {
 
 void Runtime::release_feature(uint64_t feature) {
     if (!feature) return;
+#if NR_ARCH_RDNA3
+    auto si=impl_->seamless.find(feature);
+    if(si!=impl_->seamless.end()) {
+        impl_->retired_temporal.push_back({std::move(si->second),impl_->gpu_uses});
+        impl_->seamless.erase(si);
+    }
+#endif
     impl_->plain_seeds.erase(feature);
     // Temporal reuse belongs to the feature that first used it; a host that rebuilds its feature (OptiScaler
     // does when a setting changes) would otherwise find the stored edit owned by a feature that is gone, and
@@ -2522,6 +2572,9 @@ void Runtime::release_feature(uint64_t feature) {
 }
 
 void Runtime::forget_history() {
+#if NR_ARCH_RDNA3
+    for(auto& f:impl_->seamless) f.second->have=false;
+#endif
     impl_->temporal.latch = false;
     for (auto& f : impl_->features) f.second.latch = false;
 }
@@ -2577,6 +2630,7 @@ bool Runtime::takes_target(const Controls& c) const {
 
 EngineResult Runtime::record_engine(VkCommandBuffer cmd, const EngineFrame& frame,
                                     const Controls& c) {
+    if(frame.generated) return {};
     auto& t = impl_->temporal;
     if (!t.enabled)
         throw std::invalid_argument("this NR runtime was not built with the temporal path");
@@ -2749,11 +2803,26 @@ ControlMaskResult Runtime::record_all(VkCommandBuffer cmd, const ColourFrame& fr
     // The motion is the engine's, or the fallback estimator's when the game provides none (record_temporal).
     bool reuse_frame = impl_->reuse && temporal && c.reuse_every >= 2 && c.apply_model && passes == 1 &&
                        !mask;
-    if (reuse_frame) {
+    if (reuse_frame && !NR_ARCH_RDNA3) {
         if (!impl_->reuse_owned) { impl_->reuse_owned = true; impl_->reuse_feature = temporal->feature; }
         else if (impl_->reuse_feature != temporal->feature) reuse_frame = false;
     }
     bool reuse_skip = false;
+#if NR_ARCH_RDNA3
+    // Each NR evaluation is one real frame of this feature. Present and FG
+    // callbacks never enter here. Reset/camera movement do not change cadence.
+    SeamlessHistory* seamless=nullptr;
+    reuse_frame=impl_->reuse && temporal && c.reuse_every>=2 && c.apply_model && !mask;
+    if(reuse_frame) {
+        auto& state=impl_->seamless[temporal->feature];
+        if(!state) state=std::make_unique<SeamlessHistory>();
+        seamless=state.get();
+        reuse_skip=!seamless->cadence.next(c.reuse_every);
+    } else if(temporal) {
+        auto i=impl_->seamless.find(temporal->feature);
+        if(i!=impl_->seamless.end()) { i->second->have=false;i->second->cadence.phase=0; }
+    }
+#else
     if (reuse_frame) {
         reuse_skip = impl_->reuse_have && !temporal->reset && impl_->reuse_since + 1 < uint32_t(c.reuse_every);
         // The motion of the previous frames, as the last finished stat dispatch left it, carried for as many
@@ -2779,9 +2848,11 @@ ControlMaskResult Runtime::record_all(VkCommandBuffer cmd, const ColourFrame& fr
         impl_->reuse_have = false;
         impl_->reuse_since = 0;
     }
+#endif
     // The network frame after skipped ones has no usable history: its predecessor in the history image is
     // the last network frame, several frames of motion back.
-    const bool reuse_after_skip = reuse_frame && !reuse_skip && impl_->reuse_since > 0;
+    const bool reuse_after_skip = reuse_frame && !reuse_skip &&
+        (NR_ARCH_RDNA3 ? true : impl_->reuse_since > 0);
     // The caller's colour (and depth) sampled in place, when this frame allows
     // it: see Impl::DirectSrc. Null means the copies below, as always.
     const Impl::DirectSrc* ds = nullptr;
@@ -2796,7 +2867,7 @@ ControlMaskResult Runtime::record_all(VkCommandBuffer cmd, const ColourFrame& fr
     // t.depth as before, and the colour is sampled in place (and the answer stored) anyway.
     // The game's depth, when the network reads it: with Motion Without Depth (the default, as NVIDIA's DLL) it is
     // neither bound nor copied.
-    const bool game_depth = engine && engine->depth.image && !impl_->motion_without_depth;
+    const bool game_depth = engine && engine->depth.image && (!impl_->motion_without_depth || (NR_ARCH_RDNA3 && reuse_frame));
     const bool depth_in_place = colour_direct && game_depth &&
         engine->depth.format == VK_FORMAT_R32_SFLOAT && (engine->depth.usage & VK_IMAGE_USAGE_SAMPLED_BIT) &&
         engine->depth_x == 0 && engine->depth_y == 0 &&
@@ -3227,6 +3298,18 @@ ControlMaskResult Runtime::record_all(VkCommandBuffer cmd, const ColourFrame& fr
                 VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT);
     }
     // The pass (one: a caller stacks passes as runs of its own).
+#if NR_ARCH_RDNA3
+    SeamlessHistory::Push seamless_push{};
+    if(seamless) {
+        if(!seamless->ctx) seamless->create(s.ctx,impl_->seamless_shaders,s.tex_in,s.surf0,t.flow[0],t.depth);
+        seamless_push={s.tex_in.w,s.tex_in.h,0,uint32_t(seamless->have && flow_open && !temporal->reset),
+            engine?engine->motion_scale_x:1.f,engine?engine->motion_scale_y:1.f,c.temporal.depth,c.temporal.color,
+            uint32_t(game_depth && !impl_->depth_unread),uint32_t(engine && engine->depth_inverted),
+            uint32_t(c.temporal.hole_fill),uint32_t(c.temporal.confidence),uint32_t(impl_->round_u8),uint32_t(seamless->cadence.phase)};
+        if(c.reconstruction_timestamp) c.reconstruction_timestamp(cmd,true);
+        seamless->project(cmd,seamless_push);
+    }
+#else
     if (reuse_frame) {
         struct { uint32_t w, h; float sx, sy, px, py; uint32_t word; } sp{t.lw[0], t.lh[0], engine ? engine->motion_scale_x : 1.0f,
                                                                          engine ? engine->motion_scale_y : 1.0f, float(nw), float(nh), 0u};
@@ -3254,7 +3337,10 @@ ControlMaskResult Runtime::record_all(VkCommandBuffer cmd, const ColourFrame& fr
         ++impl_->reuse_since;
         info.reused = true;
     }
+#endif
+    uint32_t executed_network=0;
     for (uint32_t pass = 0; pass < (reuse_skip ? 0u : passes); ++pass) {
+        ++executed_network;
         ColourFrame shot_in{}, shot_out{};
         const bool snapshot = c.model_capture && pass + 1 == passes;
         if (snapshot) {
@@ -3335,6 +3421,17 @@ ControlMaskResult Runtime::record_all(VkCommandBuffer cmd, const ColourFrame& fr
         if (c.network_timestamp) c.network_timestamp(cmd, false);
         if (snapshot) c.model_capture(cmd, shot_in, shot_out, true);
     }
+#if NR_ARCH_RDNA3
+    if(seamless) {
+        if(executed_network) ++impl_->temporal_full; else ++impl_->temporal_reconstructed;
+        if(executed_network != (reuse_skip?0u:1u)) ++impl_->temporal_unexpected;
+        seamless->finish(cmd,seamless_push,!reuse_skip);
+        if(c.reconstruction_timestamp) c.reconstruction_timestamp(cmd,false);
+        info.reused=reuse_skip;
+    }
+    for(size_t i=impl_->retired_temporal.size();i-->0;)
+        if(impl_->retired_temporal[i].uses.ready()) impl_->retired_temporal.erase(impl_->retired_temporal.begin()+long(i));
+#else
     if (reuse_frame && !reuse_skip) {
         // Keep this network frame's edit for the frames that skip it.
         struct { uint32_t w, h; } sp{nw, nh};
@@ -3343,6 +3440,7 @@ ControlMaskResult Runtime::record_all(VkCommandBuffer cmd, const ColourFrame& fr
         impl_->reuse_have = true;
         impl_->reuse_since = 0;
     }
+#endif
     if (temporal) {
         // The latch is set after every recorded frame and `reset` never clears
         // it: reset suppresses consumption, it does not un-write the buffer.
@@ -3455,7 +3553,8 @@ ControlMaskResult Runtime::record_all(VkCommandBuffer cmd, const ColourFrame& fr
     if (impl_->timing_ok) {
         vkCmdWriteTimestamp(cmd, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, impl_->timing,
                             timing_slot * impl_->timing_stride + 1);
-        impl_->slot_passes[timing_slot] = impl_->split_timing ? passes : 0;
+        impl_->slot_passes[timing_slot] = impl_->split_timing && !reuse_skip ? passes : 0;
+        impl_->slot_reconstructed[timing_slot]=reuse_skip;
         ++impl_->timings_recorded;
         impl_->timing_slot = (timing_slot + 1) % Impl::kTimingSlots;
         // Collect whatever has finished. Never waits; the caller is a render
@@ -3475,6 +3574,14 @@ void set_input_check(bool on, const std::string& folder, int pictures) {
 }
 
 bool Runtime::reuse_allowed() const { return impl_->reuse; }
+float Runtime::reconstruction_gpu_ms() const { return impl_->reconstruction_ms; }
+Runtime::TemporalCounts Runtime::temporal_counts() const {
+#if NR_ARCH_RDNA3
+    return {impl_->temporal_full,impl_->temporal_reconstructed,impl_->temporal_unexpected};
+#else
+    return {};
+#endif
+}
 Runtime::ReuseCounts Runtime::reuse_counts() {
     const ReuseCounts n{impl_->reuse_ran, impl_->reuse_skipped, impl_->reuse_gate_trips, impl_->reuse_motion_sum,
                         impl_->reuse_motion_samples, impl_->reuse_motion_peak};

@@ -1930,6 +1930,12 @@ bool Session::Impl::ensure_runtime(const Controls& controls, uint32_t w, uint32_
         const auto now = std::chrono::steady_clock::now();
         if (now - reuse_logged > std::chrono::seconds(5)) {
             reuse_logged = now;
+#if NR_ARCH_RDNA3
+            const auto n=runtime->temporal_counts();
+            log("[nr] seamless N=%d: full %llu, reconstructed %llu, unexpected launches %llu; reconstruction frame GPU %.3f ms",
+                controls.reuse_every,(unsigned long long)n.full,(unsigned long long)n.reconstructed,
+                (unsigned long long)n.unexpected,double(controls.temporal.gpu_timing?runtime->reconstruction_gpu_ms():0.f));
+#else
             const auto n = runtime->reuse_counts();
             const double frames = double(n.ran + n.skipped);
             log("[nr] temporal reuse, every %d: %llu frames ran the network, %llu skipped it (%.0f %%), the motion gate "
@@ -1938,6 +1944,7 @@ bool Session::Impl::ensure_runtime(const Controls& controls, uint32_t w, uint32_
                 frames > 0 ? 100.0 * double(n.skipped) / frames : 0.0, (unsigned long long)n.gated,
                 n.motion_samples ? n.motion_sum / double(n.motion_samples) : 0.0, double(n.motion_peak),
                 double(controls.reuse_gate));
+#endif
         }
     }
     ++(ok ? ran : passed);
@@ -1998,7 +2005,7 @@ bool Session::Impl::ensure_runtime_(const Controls& controls, uint32_t w, uint32
     net_want = wanted_network();
     if (controls.reuse_every >= 2 && !reuse_want) {
         reuse_want = true;
-        log("[nr] ReuseEvery %d asked for: networks are rebuilt able to reuse the network's edit (once)", controls.reuse_every);
+        log(NR_ARCH_RDNA3 ? "[nr] Seamless N=%d enabled: preparing causal reconstruction resources" : "[nr] ReuseEvery %d asked for: networks are rebuilt able to reuse the network's edit (once)", controls.reuse_every);
     }
     // Adopt a finished background build first.
     {

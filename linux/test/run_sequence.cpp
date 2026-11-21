@@ -22,7 +22,7 @@ static uint16_t to_half(float f) {      // round to nearest even, signed, flushe
     const uint32_t sign = (u >> 16) & 0x8000u;
     const int exponent = int((u >> 23) & 0xFF) - 127 + 15;
     if (exponent <= 0) return uint16_t(sign);
-    if (exponent >= 31) return uint16_t(sign | 0x7BFFu);
+    if (exponent >= 31) return uint16_t(sign | (((u >> 23) & 255u) == 255u ? 0x7e00u : 0x7bffu));
     uint32_t h = (uint32_t(exponent) << 10) | ((u & 0x7FFFFFu) >> 13);
     const uint32_t rest = u & 0x1FFFu;
     if (rest > 0x1000u || (rest == 0x1000u && (h & 1u))) ++h;
@@ -51,6 +51,12 @@ int main(int argc, char** argv) try {
     const VkFormat format = VK_FORMAT_R16G16B16A16_SFLOAT;
     auto image = ctx.image(width, height, format, true, true, true);
     auto motion_image = ctx.image(width, height, VK_FORMAT_R16G16_SFLOAT, true, true, true);
+    auto depth_image = ctx.image(width,height,VK_FORMAT_R32_SFLOAT,true,true,true);
+    VkQueryPool queries{};
+    VkQueryPoolCreateInfo qi{VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO};
+    qi.queryType=VK_QUERY_TYPE_TIMESTAMP;qi.queryCount=4;
+    NRVK_CHECK(vkCreateQueryPool(ctx.device,&qi,nullptr,&queries));
+    VkPhysicalDeviceProperties properties{};vkGetPhysicalDeviceProperties(ctx.physical,&properties);
 
     nr::HostDevice host;
     host.instance = ctx.instance; host.physical = ctx.physical; host.device = ctx.device;
@@ -58,7 +64,6 @@ int main(int argc, char** argv) try {
     nr::RuntimeConfig config;
     config.root = argv[1]; config.width = width; config.height = height;
     config.colour_format = format;
-    config.native_compose = std::getenv("RUN_SEQUENCE_NATIVE") != nullptr;
     // RUN_SEQUENCE_NOREUSE=1 builds the runtime as it was before temporal reuse (direct sampling and storing
     // on), to price what allowing reuse costs the frames that run the network.
     config.reuse = !std::getenv("RUN_SEQUENCE_NOREUSE");
@@ -79,6 +84,16 @@ int main(int argc, char** argv) try {
     frame.feature = 1;
     nr::Controls controls;
     controls.reuse_every = reuse_every;
+    if(std::getenv("RUN_SEQUENCE_CONFIDENCE")) controls.temporal.confidence=true;
+    if(std::getenv("RUN_SEQUENCE_NOFILL")) controls.temporal.hole_fill=false;
+    const bool use_depth=std::getenv("RUN_SEQUENCE_DEPTH")!=nullptr;
+    if(use_depth) {
+        frame.depth.image=depth_image.handle;frame.depth.format=depth_image.format;
+        frame.depth.width=width;frame.depth.height=height;
+        frame.depth.before=frame.depth.after=depth_image.layout;
+        frame.depth.usage=VK_IMAGE_USAGE_SAMPLED_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+        frame.depth_inverted=std::getenv("RUN_SEQUENCE_REVERSE")!=nullptr;
+    }
     if (const char* gate = std::getenv("RUN_SEQUENCE_GATE")) controls.reuse_gate = float(atof(gate));
 
     // RUN_SEQUENCE_ESTIMATOR=1: no motion from the "engine" - the runtime's own estimator finds it from successive
@@ -112,13 +127,37 @@ int main(int argc, char** argv) try {
             for (size_t k = 0; k < mv.size(); ++k) mv[k] = to_half(f[k]);
         }
         ctx.upload(motion_image, mv.data(), mv.size() * 2);
+        if(use_depth) {
+            const auto raw=slurp(std::getenv("RUN_SEQUENCE_DEPTH"),i);
+            if(raw.size()!=size_t(width)*height*4) throw std::runtime_error("depth extent");
+            ctx.upload(depth_image,raw.data(),raw.size());
+        }
         frame.reset = i == 0 || new_feature;
+        if(const char* cut=std::getenv("RUN_SEQUENCE_CUT")) frame.reset|=i==atoi(cut);
+        if(std::getenv("RUN_SEQUENCE_FG4")) {
+            const auto counts=runtime.temporal_counts();
+            for(int fg=0;fg<3;++fg) {
+                auto generated=frame;generated.generated=true;
+                const auto ignored=runtime.record_engine(VK_NULL_HANDLE,generated,controls);
+                if(ignored.frame.applied || ignored.frame.network_dispatches) throw std::runtime_error("FG frame executed NR");
+            }
+            const auto after=runtime.temporal_counts();
+            if(counts.full!=after.full || counts.reconstructed!=after.reconstructed) throw std::runtime_error("FG advanced cadence");
+        }
         nr::EngineResult result{};
         const auto begin = std::chrono::steady_clock::now();
-        ctx.one_shot([&](VkCommandBuffer cmd) { result = record(cmd); });
+        ctx.one_shot([&](VkCommandBuffer cmd) {
+            vkCmdResetQueryPool(cmd,queries,0,4);
+            vkCmdWriteTimestamp(cmd,VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,queries,0);
+            result = record(cmd);
+            vkCmdWriteTimestamp(cmd,VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,queries,1);
+        });
         const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - begin).count();
         std::printf("%5d %8s %6s %6u %9.3f\n", i, result.frame.reused ? "yes" : "no", result.frame.reuse_gated ? "yes" : "no",
                     result.frame.network_dispatches, ms);
+        uint64_t times[2]{};
+        NRVK_CHECK(vkGetQueryPoolResults(ctx.device,queries,0,2,sizeof(times),times,sizeof(uint64_t),VK_QUERY_RESULT_64_BIT));
+        std::printf("gpu frame %d %.6f ms\n",i,double(times[1]-times[0])*properties.limits.timestampPeriod/1e6);
         std::vector<uint16_t> out(rgba.size());
         ctx.download(image, out.data(), out.size() * 2);
         std::vector<uint8_t> bytes(rgba.size());
@@ -149,6 +188,10 @@ int main(int argc, char** argv) try {
                     loops * frames, network_count ? network_ms / network_count : 0.0, network_count,
                     skip_count ? skip_ms / skip_count : 0.0, skip_count, total_ms / (loops * frames));
     }
+    const auto counts=runtime.temporal_counts();
+    std::printf("cadence full %llu reconstructed %llu unexpected %llu\n",(unsigned long long)counts.full,
+        (unsigned long long)counts.reconstructed,(unsigned long long)counts.unexpected);
+    vkDestroyQueryPool(ctx.device,queries,nullptr);
     return 0;
 } catch (const std::exception& error) {
     std::fprintf(stderr, "error: %s\n", error.what());

@@ -7,8 +7,21 @@
 #include <functional>
 #include <memory>
 #include <string>
+#ifndef NR_ARCH_RDNA3
+#define NR_ARCH_RDNA3 0
+#endif
 
 namespace nr {
+
+struct TemporalSettings {
+    bool enabled = true;
+    int interval = 2;
+    float depth = 0.05f;
+    float color = 0.08f;
+    bool hole_fill = true;
+    bool confidence = false;
+    bool gpu_timing = true;
+};
 
 struct RuntimeCore;   // Runtime::share_for
 struct ImageHeapRef;  // Runtime::image_heap_wanted
@@ -162,6 +175,11 @@ struct Controls {
     // always runs the network. Needs the temporal path - the engine's motion vectors, or the fallback estimator's
     // when there are none - and one pass, no preprocess.
     int reuse_every = 0;
+    // RDNA3: replaces legacy reuse. 0/1 full NR, 2..4 strict causal cadence.
+    // Motion, reset and invalid history affect confidence only. The old names
+    // remain internal for source compatibility; INI uses [Temporal].
+    TemporalSettings temporal{};
+    std::function<void(VkCommandBuffer, bool)> reconstruction_timestamp;
     // The most the picture may have moved, in pixels of a 1080p-wide frame (scaled with the frame's width),
     // for the network to be skipped: a frame whose predicted accumulated motion is larger runs the network
     // instead. The motion is the mean of the previous frame's, times the frames since the network ran.
@@ -372,6 +390,9 @@ struct TemporalResult {
 // network sees the frame before the upscaler and before the UI, which is where
 // the original runs and is not where a Present-time adapter can reach.
 struct EngineFrame {
+    // Normal integrations evaluate NR on real frames before SR and FG. Hosts
+    // which also forward generated frames must tag them; they record no work.
+    bool generated = false;
     ColourFrame colour;        // render-resolution, modified in place
     // Backward motion vectors. Any 2-channel format; `motion_scale` converts
     // the texture's units into normalized screen units, exactly as the
@@ -473,6 +494,9 @@ public:
     struct ReuseCounts { uint64_t ran{}, skipped{}, gated{}; double motion_sum{}; uint64_t motion_samples{}; float motion_peak{}; };
     bool reuse_allowed() const;
     ReuseCounts reuse_counts();
+    struct TemporalCounts { uint64_t full{}, reconstructed{}, unexpected{}; };
+    TemporalCounts temporal_counts() const;
+    float reconstruction_gpu_ms() const;
     // whether record_engine can take EngineFrame::target with these controls
     // (the model applied, one pass). A host asks before it skips its own seed copy.
     bool takes_target(const Controls&) const;
