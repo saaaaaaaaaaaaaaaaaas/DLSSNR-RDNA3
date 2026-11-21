@@ -52,6 +52,8 @@ It changes the picture and keeps the original weights and saturation. Fast has
 been removed. Turbo's causal temporal reconstruction replaces the old RDNA3
 [Reuse] mode; see [configuration and Motion validation](docs/RDNA3-SEAMLESS.md).
 The precise Z1/generic profiles remain available for full-NR comparison.
+The [Turbo temporal artifact record](docs/RDNA3-SEAMLESS-ARTIFACT.md) lists the
+local package checksum, component provenance, defaults and remaining limits.
 
 ## Previous port to 0.0.8.3
 
