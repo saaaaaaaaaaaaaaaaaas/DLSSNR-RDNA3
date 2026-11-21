@@ -1,5 +1,73 @@
 {
-  "status": "GPU Motion passed; packaging and full-NR regression in progress",
+  "status": "GPU Motion qualified; real-game and actual FG presentation unverified",
+  "date": "2026-11-21",
+  "base_source": "ff5fff22ad8c45fce13ee2c0901dc7547eb9d48c",
+  "implementation_source": "ac2eba9",
+  "reference_source": "BeliyG3/optimizer-fps-dlss5@fe67a80cf462bad1409968bda2eb6fd4ea265342 (MIT)",
+  "target": {
+    "gpu": "AMD Ryzen Z1 Extreme (RADV PHOENIX)",
+    "vendor_device": "1002:15bf",
+    "driver": "Mesa 26.2.6-arch3.1"
+  },
+  "scope": "Turbo only; Fast production profile removed; RDNA3 legacy reuse replaced; separate Windows tree and RDNA4 behavior preserved",
+  "latency": {
+    "future_frames": false,
+    "additional_presentation_queue": false,
+    "additional_fg_stage": false,
+    "history_readbacks_for_scheduling": false,
+    "commands": "same host command buffer, deferred image barriers; existing nonblocking timestamps",
+    "generated_frame_test": "three tagged calls per real evaluation return before any commands/state update",
+    "physical_input_to_display_latency": "not measured; processing overhead still exists"
+  },
+  "shader_checks": {
+    "spirv_val_passed": 422,
+    "profile_files": 517,
+    "variants": [
+      "base",
+      "experimental",
+      "optimized",
+      "int4",
+      "performance",
+      "ultra"
+    ],
+    "network_and_temporal_shader_bytes": "identical to pre-change Turbo baseline",
+    "runtime_change": "four runtime_reuse passes removed; one runtime_seamless pass added",
+    "rdna4_compiled": false,
+    "fast_compiled": false,
+    "glslang": "16.5.0",
+    "slang": "2026.19"
+  },
+  "models": {
+    "CC_SMALL_FP8.bin": "7e966e2639dbec6596aa0bac3b8761137d2c40ca8cb4aca30df7ca10043c6e33",
+    "CC_SILVER_AARDWOLD.bin": "2b41c888cf4155b8958c665ba64018ab0bd25c85fc71a2b6db86d0d04d1f7fbd"
+  },
+  "strict_full_nr": {
+    "before_exit": {
+      "silver": 1,
+      "small": 1
+    },
+    "after_exit": {
+      "silver": 1,
+      "small": 1
+    },
+    "identical_before_after_logs": true,
+    "reason_for_nonzero_exit": "Turbo already differs from original-model historical goldens; no goldens overwritten",
+    "exact_13_outputs": {
+      "out_1080p_0.rgba8": "d67fb34f2d200cfafa98adfcd0676fb67f7c62557293affe24ce792c9e4fff7c",
+      "out_1080p_1.rgba8": "d67fb34f2d200cfafa98adfcd0676fb67f7c62557293affe24ce792c9e4fff7c",
+      "out_1440p_0.rgba8": "c4c6cc082299a0aa68485a83a0f0b3b47fe4238a058cbf295d155b67260ef24b",
+      "out_1440p_1.rgba8": "c4c6cc082299a0aa68485a83a0f0b3b47fe4238a058cbf295d155b67260ef24b",
+      "out_4k_0.rgba8": "ac28668d1be6274d8e7b94f6a529b304023e092e6e9690acdaf5355551123f84",
+      "out_4k_1.rgba8": "ac28668d1be6274d8e7b94f6a529b304023e092e6e9690acdaf5355551123f84",
+      "out_engine_1080p.rgba8": "0f8ba37d38fa7ac87fd41f39c925535b8399b6f287f82ae36bc110741dc61bd4",
+      "out_small_1080p_0.rgba8": "ff6f973819f6fd39d4470201a3aa733c5cd744a021d38ac3cee80979ca304f85",
+      "out_small_1080p_1.rgba8": "ff6f973819f6fd39d4470201a3aa733c5cd744a021d38ac3cee80979ca304f85",
+      "out_small_1440p_0.rgba8": "7fcbf0c31278f8964052e1e9adfab6e3a04d6549382b5438342baf525e36cc7d",
+      "out_small_1440p_1.rgba8": "7fcbf0c31278f8964052e1e9adfab6e3a04d6549382b5438342baf525e36cc7d",
+      "out_small_4k_0.rgba8": "f19c31baf4aba8cb38edd754497c3ca6073bd65c3f3b07dc86953502d665ec44",
+      "out_small_4k_1.rgba8": "f19c31baf4aba8cb38edd754497c3ca6073bd65c3f3b07dc86953502d665ec44"
+    }
+  },
   "motion": {
     "640x360": {
       "scene": {
@@ -241,9 +309,10 @@
         "motion-full": {
           "full_launches": 24,
           "motion_gated": 0,
-          "warmup_frames_excluded": 4,
-          "gpu_average_ms": 25.53967555,
-          "gpu_full_average_ms": 25.53967555,
+          "warmup_frames_excluded": 12,
+          "quality_first_frame": 4,
+          "gpu_average_ms": 25.538663583333335,
+          "gpu_full_average_ms": 25.538663583333335,
           "gpu_reconstruction_average_ms": null,
           "exposed_blue_mean_rgb8": 0.0,
           "exposed_mae_mean_rgb8": 0.0,
@@ -493,10 +562,11 @@
         "motion-n2": {
           "full_launches": 12,
           "motion_gated": 0,
-          "warmup_frames_excluded": 4,
-          "gpu_average_ms": 13.36516205,
-          "gpu_full_average_ms": 25.9952233,
-          "gpu_reconstruction_average_ms": 0.7351008,
+          "warmup_frames_excluded": 12,
+          "quality_first_frame": 4,
+          "gpu_average_ms": 13.28865875,
+          "gpu_full_average_ms": 25.913242333333333,
+          "gpu_reconstruction_average_ms": 0.6640751666666667,
           "exposed_blue_mean_rgb8": 1.2129894535084622,
           "exposed_mae_mean_rgb8": 2.0052608601616457,
           "frames": [
@@ -745,10 +815,11 @@
         "motion-n3": {
           "full_launches": 8,
           "motion_gated": 0,
-          "warmup_frames_excluded": 4,
-          "gpu_average_ms": 8.43736315,
-          "gpu_full_average_ms": 26.256026833333333,
-          "gpu_reconstruction_average_ms": 0.800793,
+          "warmup_frames_excluded": 12,
+          "quality_first_frame": 4,
+          "gpu_average_ms": 9.354754166666668,
+          "gpu_full_average_ms": 26.346248250000002,
+          "gpu_reconstruction_average_ms": 0.859007125,
           "exposed_blue_mean_rgb8": 1.4807709975356733,
           "exposed_mae_mean_rgb8": 2.3347974456971095,
           "frames": [
@@ -997,10 +1068,11 @@
         "motion-n4": {
           "full_launches": 6,
           "motion_gated": 0,
-          "warmup_frames_excluded": 4,
-          "gpu_average_ms": 7.1459975,
-          "gpu_full_average_ms": 26.075592,
-          "gpu_reconstruction_average_ms": 0.8361326666666666,
+          "warmup_frames_excluded": 12,
+          "quality_first_frame": 4,
+          "gpu_average_ms": 7.156550916666666,
+          "gpu_full_average_ms": 26.058805666666668,
+          "gpu_reconstruction_average_ms": 0.8557993333333334,
           "exposed_blue_mean_rgb8": 1.6621051383641465,
           "exposed_mae_mean_rgb8": 2.5330937078937192,
           "frames": [
@@ -1249,10 +1321,11 @@
         "motion-legacy": {
           "full_launches": 16,
           "motion_gated": 6,
-          "warmup_frames_excluded": 4,
-          "gpu_average_ms": 18.00502175,
-          "gpu_full_average_ms": 25.563236214285716,
-          "gpu_reconstruction_average_ms": 0.369188,
+          "warmup_frames_excluded": 12,
+          "quality_first_frame": 4,
+          "gpu_average_ms": 17.159630083333333,
+          "gpu_full_average_ms": 25.54525625,
+          "gpu_reconstruction_average_ms": 0.38837775,
           "exposed_blue_mean_rgb8": 6.5883449074121625,
           "exposed_mae_mean_rgb8": 7.143593149512491,
           "frames": [
@@ -1498,7 +1571,22 @@
             }
           ]
         }
-      }
+      },
+      "common_skipped_comparison": {
+        "frames": [
+          5,
+          7,
+          15,
+          17
+        ],
+        "motion-n2": 2.3732472928518114,
+        "motion-legacy": 23.956290471743497
+      },
+      "motion_without_faults": {
+        "motion-n2": 0.3828373507475388,
+        "motion-legacy": 10.763066476524337
+      },
+      "n2_deterministic": true
     },
     "1280x720": {
       "scene": {
@@ -1740,9 +1828,10 @@
         "motion-full": {
           "full_launches": 24,
           "motion_gated": 0,
-          "warmup_frames_excluded": 4,
-          "gpu_average_ms": 73.04049185,
-          "gpu_full_average_ms": 73.04049185,
+          "warmup_frames_excluded": 12,
+          "quality_first_frame": 4,
+          "gpu_average_ms": 70.61653225,
+          "gpu_full_average_ms": 70.61653225,
           "gpu_reconstruction_average_ms": null,
           "exposed_blue_mean_rgb8": 0.0,
           "exposed_mae_mean_rgb8": 0.0,
@@ -1992,10 +2081,11 @@
         "motion-n2": {
           "full_launches": 12,
           "motion_gated": 0,
-          "warmup_frames_excluded": 4,
-          "gpu_average_ms": 40.42549475,
-          "gpu_full_average_ms": 78.3251546,
-          "gpu_reconstruction_average_ms": 2.5258349,
+          "warmup_frames_excluded": 12,
+          "quality_first_frame": 4,
+          "gpu_average_ms": 40.467238083333335,
+          "gpu_full_average_ms": 78.45233366666668,
+          "gpu_reconstruction_average_ms": 2.4821425,
           "exposed_blue_mean_rgb8": 0.9937538600303409,
           "exposed_mae_mean_rgb8": 1.7858952597024043,
           "frames": [
@@ -2244,10 +2334,11 @@
         "motion-n3": {
           "full_launches": 8,
           "motion_gated": 0,
-          "warmup_frames_excluded": 4,
-          "gpu_average_ms": 25.3864967,
-          "gpu_full_average_ms": 78.36781333333333,
-          "gpu_reconstruction_average_ms": 2.680218142857143,
+          "warmup_frames_excluded": 12,
+          "quality_first_frame": 4,
+          "gpu_average_ms": 28.0281205,
+          "gpu_full_average_ms": 78.6796725,
+          "gpu_reconstruction_average_ms": 2.7023445,
           "exposed_blue_mean_rgb8": 1.3295496046083983,
           "exposed_mae_mean_rgb8": 2.049595692278123,
           "frames": [
@@ -2496,10 +2587,11 @@
         "motion-n4": {
           "full_launches": 6,
           "motion_gated": 0,
-          "warmup_frames_excluded": 4,
-          "gpu_average_ms": 21.7662861,
-          "gpu_full_average_ms": 78.345874,
-          "gpu_reconstruction_average_ms": 2.906423466666667,
+          "warmup_frames_excluded": 12,
+          "quality_first_frame": 4,
+          "gpu_average_ms": 21.772204,
+          "gpu_full_average_ms": 78.297967,
+          "gpu_reconstruction_average_ms": 2.930283,
           "exposed_blue_mean_rgb8": 1.3723498228974196,
           "exposed_mae_mean_rgb8": 2.2626203354883807,
           "frames": [
@@ -2748,10 +2840,11 @@
         "motion-legacy": {
           "full_launches": 16,
           "motion_gated": 6,
-          "warmup_frames_excluded": 4,
-          "gpu_average_ms": 54.056828700000004,
-          "gpu_full_average_ms": 76.70111885714286,
-          "gpu_reconstruction_average_ms": 1.2201516666666667,
+          "warmup_frames_excluded": 12,
+          "quality_first_frame": 4,
+          "gpu_average_ms": 51.6685375,
+          "gpu_full_average_ms": 76.931545875,
+          "gpu_reconstruction_average_ms": 1.14252075,
           "exposed_blue_mean_rgb8": 7.010622066334365,
           "exposed_mae_mean_rgb8": 7.788646029409646,
           "frames": [
@@ -2997,7 +3090,3157 @@
             }
           ]
         }
+      },
+      "common_skipped_comparison": {
+        "frames": [
+          5,
+          7,
+          15,
+          17
+        ],
+        "motion-n2": 2.0653750990136217,
+        "motion-legacy": 25.482365276428688
+      },
+      "motion_without_faults": {
+        "motion-n2": 0.32352266950658476,
+        "motion-legacy": 11.144504307962974
+      },
+      "n2_deterministic": true
+    }
+  },
+  "stress": {
+    "current": {
+      "status": "PASS",
+      "counts": [
+        12,
+        12,
+        0
+      ],
+      "outputs_sha256": {
+        "out-00.rgba8": "4f26ab38e0d2a9b419ee37aafa6084f60d7260aa067ea460969c7a78fec121e5",
+        "out-01.rgba8": "1a3ebe0849110ebedec8bd159ca2e76530711b7314d25dae0c4f12dcf26e744a",
+        "out-02.rgba8": "319a4903f64797bc559292415a53f673c101a5c29c150cfd13762f9646222930",
+        "out-03.rgba8": "34f02595f6c2f834348560ce0c086496efb69f9150227960935e0a8205f23d54",
+        "out-04.rgba8": "fb59a14472aa6030190bba21ce6d2c4fd35f8a6809788887ee394a7e916a2685",
+        "out-05.rgba8": "9a58040a19b53d86ffe2a2a969dc2a3aa967cb32468466de6b9adbb8d94f9647",
+        "out-06.rgba8": "1ee1d1d17441b28361044f299e90a255d0576c48476d3dc39208c3278ff908e8",
+        "out-07.rgba8": "43007cba0a2f797a9f15891dde1c5803915486e2f41e1600279f892e7e954084",
+        "out-08.rgba8": "852e64697206c7ebbf157a96e1219a6b341cf3e25375cdede94370e6acefd6fd",
+        "out-09.rgba8": "bfe26481d3a6dbe9b4c638e36f4d82abae0b6320ba7e15b55f07772aff9ea549",
+        "out-10.rgba8": "90373b808fa34239bffca69106370b67952689a65c36805a00dc8e3836b4d3a7",
+        "out-11.rgba8": "aacb2e1b52d84e58bb80683dcbdf19b428f56e65255fe1ea973575e8a648aad9",
+        "out-12.rgba8": "f6f0f4b0710defd04bfd0685dfe6936b17311ca51406b5146a6075921659982f",
+        "out-13.rgba8": "877adcf18a816b52c9c2968a4a8615b5a1bea19aeb67bffb088c3a02b0ca5c16",
+        "out-14.rgba8": "1dbc107318480c4ad8f12a81c505d36bd3aef1bba1a6b5a0fef1cc024021f992",
+        "out-15.rgba8": "44a4ff9debb3ae9d6179c23fc105b4a1dc0e848ec223ca2f919c89293a55fab5",
+        "out-16.rgba8": "6bfe4ea6a2edc097fd5dd9be8505dea077f1208ec70062d1fb6c00b91f346ce1",
+        "out-17.rgba8": "3cab159fb00db764abc82c413668c199a09a6e7f011099f93911286af242b888",
+        "out-18.rgba8": "219e704d122f6083ff504d146b51345cbc1e207258dd0d81d389a5dfcdc81563",
+        "out-19.rgba8": "219e704d122f6083ff504d146b51345cbc1e207258dd0d81d389a5dfcdc81563",
+        "out-20.rgba8": "9259456eb7eece989e18d003584b2330b14375acd6461624cf053920988f40d5",
+        "out-21.rgba8": "9259456eb7eece989e18d003584b2330b14375acd6461624cf053920988f40d5",
+        "out-22.rgba8": "bb65625064dbf8e42aaf8b63be2baf476157e16e5f9e3037d7b42934ef57e463",
+        "out-23.rgba8": "bb65625064dbf8e42aaf8b63be2baf476157e16e5f9e3037d7b42934ef57e463"
+      },
+      "matches_earlier_recorded_motion": true
+    },
+    "reverse": {
+      "status": "PASS",
+      "counts": [
+        12,
+        12,
+        0
+      ],
+      "outputs_sha256": {
+        "out-00.rgba8": "4f26ab38e0d2a9b419ee37aafa6084f60d7260aa067ea460969c7a78fec121e5",
+        "out-01.rgba8": "1a3ebe0849110ebedec8bd159ca2e76530711b7314d25dae0c4f12dcf26e744a",
+        "out-02.rgba8": "319a4903f64797bc559292415a53f673c101a5c29c150cfd13762f9646222930",
+        "out-03.rgba8": "34f02595f6c2f834348560ce0c086496efb69f9150227960935e0a8205f23d54",
+        "out-04.rgba8": "fb59a14472aa6030190bba21ce6d2c4fd35f8a6809788887ee394a7e916a2685",
+        "out-05.rgba8": "9a58040a19b53d86ffe2a2a969dc2a3aa967cb32468466de6b9adbb8d94f9647",
+        "out-06.rgba8": "1ee1d1d17441b28361044f299e90a255d0576c48476d3dc39208c3278ff908e8",
+        "out-07.rgba8": "43007cba0a2f797a9f15891dde1c5803915486e2f41e1600279f892e7e954084",
+        "out-08.rgba8": "852e64697206c7ebbf157a96e1219a6b341cf3e25375cdede94370e6acefd6fd",
+        "out-09.rgba8": "bfe26481d3a6dbe9b4c638e36f4d82abae0b6320ba7e15b55f07772aff9ea549",
+        "out-10.rgba8": "90373b808fa34239bffca69106370b67952689a65c36805a00dc8e3836b4d3a7",
+        "out-11.rgba8": "aacb2e1b52d84e58bb80683dcbdf19b428f56e65255fe1ea973575e8a648aad9",
+        "out-12.rgba8": "f6f0f4b0710defd04bfd0685dfe6936b17311ca51406b5146a6075921659982f",
+        "out-13.rgba8": "877adcf18a816b52c9c2968a4a8615b5a1bea19aeb67bffb088c3a02b0ca5c16",
+        "out-14.rgba8": "1dbc107318480c4ad8f12a81c505d36bd3aef1bba1a6b5a0fef1cc024021f992",
+        "out-15.rgba8": "44a4ff9debb3ae9d6179c23fc105b4a1dc0e848ec223ca2f919c89293a55fab5",
+        "out-16.rgba8": "6bfe4ea6a2edc097fd5dd9be8505dea077f1208ec70062d1fb6c00b91f346ce1",
+        "out-17.rgba8": "3cab159fb00db764abc82c413668c199a09a6e7f011099f93911286af242b888",
+        "out-18.rgba8": "219e704d122f6083ff504d146b51345cbc1e207258dd0d81d389a5dfcdc81563",
+        "out-19.rgba8": "219e704d122f6083ff504d146b51345cbc1e207258dd0d81d389a5dfcdc81563",
+        "out-20.rgba8": "9259456eb7eece989e18d003584b2330b14375acd6461624cf053920988f40d5",
+        "out-21.rgba8": "9259456eb7eece989e18d003584b2330b14375acd6461624cf053920988f40d5",
+        "out-22.rgba8": "bb65625064dbf8e42aaf8b63be2baf476157e16e5f9e3037d7b42934ef57e463",
+        "out-23.rgba8": "bb65625064dbf8e42aaf8b63be2baf476157e16e5f9e3037d7b42934ef57e463"
       }
+    },
+    "two-features": {
+      "status": "PASS",
+      "counts": [
+        12,
+        12,
+        0
+      ],
+      "outputs_sha256": {
+        "out-00.rgba8": "4f26ab38e0d2a9b419ee37aafa6084f60d7260aa067ea460969c7a78fec121e5",
+        "out-01.rgba8": "8ea3991288592efd7ad66f5fefd34eeb83ede54ee9156fc2d5183f5286d69308",
+        "out-02.rgba8": "c224b902708b65df40afd5041cf98453148678c2c95b8745c3492608be021f97",
+        "out-03.rgba8": "be882ada62b6ac541dcdbbb82e51112dd2ff301b4276a33fbf1a5134e5b8c050",
+        "out-04.rgba8": "b73669599743e764b6111b07b0d3c58a7cba478523166a3f17125275db60c3c9",
+        "out-05.rgba8": "0082b206b4fb647b2c6c9224c7661f8c4d6fcaeceeb56eb1bd7cd3145ba1c48d",
+        "out-06.rgba8": "b192a0e2c76ce55416ef4ae0c647a78bc6ff12086c35533e101717f713d69431",
+        "out-07.rgba8": "17621fe80b3598904036485508ac49ca66841aff711092705b19731b979ff4a9",
+        "out-08.rgba8": "ca42dc3cb933ab26917a03bed2b439998f25512602f1f1fd94b5a5917741c01a",
+        "out-09.rgba8": "bf96b1171917c6b8efc607807a611149ff82c52ab9db1c494a676615d68ebb23",
+        "out-10.rgba8": "99714e4ec51fa2af925148b0874ed99920dce9930aa80ffc8d528a84371c5131",
+        "out-11.rgba8": "0bf76a8f95da8f46cf36fd2c6e09a94e3d6efad51ac895303cd87591a5d791bc",
+        "out-12.rgba8": "5f2a85bb123668256b89175ebc59e451f98b547cf266bee7364bceec1a71a15b",
+        "out-13.rgba8": "ac95960ee6e6954f08e5da4ce9786a78ff47072bd5ae2d9bd8f6c098261620b6",
+        "out-14.rgba8": "cda5445049eca33b2f621f08965973b61c82729faddbc529d995b89a25b3bce8",
+        "out-15.rgba8": "d78dcc3957a9a17f354ebdf083ccaa620258579b7202a2f577e138f138fd17fd",
+        "out-16.rgba8": "a01f84746ccc43309221713666c66883a6cb9246a1b0b24a9445169d74d7ba4f",
+        "out-17.rgba8": "ce3bcb6734d3160615ad2a516199fa8817e58f96f6a05b2eeff42a2ec247244c",
+        "out-18.rgba8": "9c292583c1083d2bac521f93f8be1e7f7e9d7c68f68c4f6c28616c18ea1c8f08",
+        "out-19.rgba8": "b234ce286e6c4379e786182b57f4ac29b73ccfc63db06bceac54745126c6d3cd",
+        "out-20.rgba8": "fef4078c6755aec3870c2ea665cf252af0fe50ee97cab44759367bc8dd09c1b3",
+        "out-21.rgba8": "7659c3b4029341ca3f40e90ec9e8e0d14c9152531995de531a5a007f01933d61",
+        "out-22.rgba8": "fef4078c6755aec3870c2ea665cf252af0fe50ee97cab44759367bc8dd09c1b3",
+        "out-23.rgba8": "7659c3b4029341ca3f40e90ec9e8e0d14c9152531995de531a5a007f01933d61"
+      }
+    },
+    "odd": {
+      "status": "PASS",
+      "counts": [
+        12,
+        12,
+        0
+      ],
+      "outputs_sha256": {
+        "out-00.rgba8": "9fc6498f94002c5a60bc457ed58c1ef63a127f605955e9ce2dac988dc31e383a",
+        "out-01.rgba8": "ae0a0d63e93f99ff0e9cd6f60756f1b25c1c2e803349e4eec050c0c3ceb3b732",
+        "out-02.rgba8": "3d31d70419902ee7734b91b62b0018a30f85b4850e3a53752e25203689510ef8",
+        "out-03.rgba8": "711371e5ba6a0e80ebcbc265c54689850ae1421397604b497e2d273090c3e8fd",
+        "out-04.rgba8": "3ddbe180e191cb4e8ed8c78777b62444842d59c76f96c31e3c791f8a2c3d01a4",
+        "out-05.rgba8": "4c7909ee95ba90a67a185d38300fc4b79f15fc2bc4b7d0d800ae23e8bdd81969",
+        "out-06.rgba8": "595cd7b8f0805c5b0506ea9b2d237f5227716f5bcc950e746caec7b35fc72432",
+        "out-07.rgba8": "6ed5a202612cb4b4bf1b791c105d924fe4304a8f12bfc0179e2e18c177c09d44",
+        "out-08.rgba8": "a345f398ad7e1564d0f7168192782ebd93053e1f6d8e9cc2d20e4a1ef9735bc2",
+        "out-09.rgba8": "620020c4a7da0bf5581a799d4d3aa56f133e54e4c8ac3968b5457bbad9424c3a",
+        "out-10.rgba8": "72717ab8432ae0f3de27ec2bc5e60acf83f30a956d5e212a8d831d249ad10302",
+        "out-11.rgba8": "7210ac80a84b029948d6c6b094b160aab45760c31de455cf3dfc9794c202d545",
+        "out-12.rgba8": "780a25ab778873f8389069bd580041ef268d63f2deca178702b5810b61258e33",
+        "out-13.rgba8": "ea7addaf54343f9a10bda4deae6ae7f94558f0e557a7c61db4a0b9ac6f60dba0",
+        "out-14.rgba8": "cd6d7ba5287417e01dbfc811a5fa45452e6ce526a48eecde5907e72615390027",
+        "out-15.rgba8": "9a15be8116f5c68ea4f45be34fc2ae58de61efa4fa68317eda1bb9591581308a",
+        "out-16.rgba8": "45693a5f7657cbd084f45db37b1070e99a7c9f1bc46d18a78b3936737181be4f",
+        "out-17.rgba8": "a218850d877dc9c1d2d76225c945b864698555ba8fb0fa518c8ba427e5c18d53",
+        "out-18.rgba8": "2f47545b2770d2850c703b19df267b65193bc776fda14fbe331de4b129f61c55",
+        "out-19.rgba8": "2f47545b2770d2850c703b19df267b65193bc776fda14fbe331de4b129f61c55",
+        "out-20.rgba8": "32a268b8ee69f1bf01e25ea0dd525d31844a88cdd59bf00cb3553b20fb2c79c3",
+        "out-21.rgba8": "32a268b8ee69f1bf01e25ea0dd525d31844a88cdd59bf00cb3553b20fb2c79c3",
+        "out-22.rgba8": "1be319d80618522ccb0a497b54df6bec2c834a3c1fb5f0dde0031e06f4e3e576",
+        "out-23.rgba8": "1be319d80618522ccb0a497b54df6bec2c834a3c1fb5f0dde0031e06f4e3e576"
+      }
+    },
+    "confidence": {
+      "status": "PASS",
+      "counts": [
+        12,
+        12,
+        0
+      ],
+      "outputs_sha256": {
+        "out-00.rgba8": "0b467a0058848c26262070f7568451b7bae9724433573e1366836eb16396501f",
+        "out-01.rgba8": "508f66c44f4aaeec22a5b9386306062cb8ce8d7cfb8776448493013cef2f8ffc",
+        "out-02.rgba8": "0b467a0058848c26262070f7568451b7bae9724433573e1366836eb16396501f",
+        "out-03.rgba8": "8029c3c9ec8cc4eca5d86edd5c8b6405ae06df582b34c54a0f26ece864992cdf",
+        "out-04.rgba8": "0b467a0058848c26262070f7568451b7bae9724433573e1366836eb16396501f",
+        "out-05.rgba8": "0ba945e3cad63a67d6293f202d0c62cc90aa328df2b98a1bf5ad1f99721ed117",
+        "out-06.rgba8": "0b467a0058848c26262070f7568451b7bae9724433573e1366836eb16396501f",
+        "out-07.rgba8": "7c860b86056f0156d20c590fe37daaee0c21f9c6f10404cebdfc37ab5d842cba",
+        "out-08.rgba8": "0b467a0058848c26262070f7568451b7bae9724433573e1366836eb16396501f",
+        "out-09.rgba8": "b6eef8d3ef4b52c32b4836903a8804a577c8f45b5260efbef2cdcf16809c7e6c",
+        "out-10.rgba8": "0b467a0058848c26262070f7568451b7bae9724433573e1366836eb16396501f",
+        "out-11.rgba8": "10ac22c2501d932f83505567e3906b0307c46147e4245640af9b86f9cfb00f9f",
+        "out-12.rgba8": "0b467a0058848c26262070f7568451b7bae9724433573e1366836eb16396501f",
+        "out-13.rgba8": "0f29a3fc9a39c1a5bbdedbbbb43dd97136c24ed03af690278c8c3395527a43a2",
+        "out-14.rgba8": "0b467a0058848c26262070f7568451b7bae9724433573e1366836eb16396501f",
+        "out-15.rgba8": "0d0e32d32d74ae9b28859120de5280e1f6d07ec584cced4a8f059b259efee58e",
+        "out-16.rgba8": "0b467a0058848c26262070f7568451b7bae9724433573e1366836eb16396501f",
+        "out-17.rgba8": "8d2beb1158b20f2a8a776dc88821c3aff03f444252bc7bf4e481bc9df63e9309",
+        "out-18.rgba8": "0b467a0058848c26262070f7568451b7bae9724433573e1366836eb16396501f",
+        "out-19.rgba8": "0b467a0058848c26262070f7568451b7bae9724433573e1366836eb16396501f",
+        "out-20.rgba8": "0b467a0058848c26262070f7568451b7bae9724433573e1366836eb16396501f",
+        "out-21.rgba8": "0b467a0058848c26262070f7568451b7bae9724433573e1366836eb16396501f",
+        "out-22.rgba8": "0b467a0058848c26262070f7568451b7bae9724433573e1366836eb16396501f",
+        "out-23.rgba8": "0b467a0058848c26262070f7568451b7bae9724433573e1366836eb16396501f"
+      }
+    },
+    "no-depth": {
+      "status": "PASS",
+      "counts": [
+        12,
+        12,
+        0
+      ],
+      "outputs_sha256": {
+        "out-00.rgba8": "4f26ab38e0d2a9b419ee37aafa6084f60d7260aa067ea460969c7a78fec121e5",
+        "out-01.rgba8": "2aaffb2153bada07cccd42743a2e77afb856a571354eb2abd84252db58e94a0d",
+        "out-02.rgba8": "41f50293d955e5c40cb5718401244660e5be39303dd67e85cfdfff7c70100aea",
+        "out-03.rgba8": "cb0e10e71c31cfbc1a30fcf4d9c08aca79fd5598de81a4834ee27e43b208ce69",
+        "out-04.rgba8": "6a036d2809cf9cb3c1ebe3ca786acb82139929429b3ea7b6b5619ab5bd464c35",
+        "out-05.rgba8": "3735ac1c72e79a6185a183b04b4d40ac77333aaf10739b9591ff5544ed55e683",
+        "out-06.rgba8": "64671f0e89f4e91f235e624a9130abc928edea25336ba786694c46e669f090c8",
+        "out-07.rgba8": "5b8b5dcbc08ad9978c6721066c417c77030d4d180a74983dc2a2aed6c1659d9e",
+        "out-08.rgba8": "852e64697206c7ebbf157a96e1219a6b341cf3e25375cdede94370e6acefd6fd",
+        "out-09.rgba8": "7f71fab1541e9159a832e1e48c941d61eab923e4b07abd95eaf1c1e785a2301c",
+        "out-10.rgba8": "90373b808fa34239bffca69106370b67952689a65c36805a00dc8e3836b4d3a7",
+        "out-11.rgba8": "f4a62e4d1c78b9cb683755b8fcc5e700f6d0a165fedf2336c4cc535fc913fdf1",
+        "out-12.rgba8": "f6f0f4b0710defd04bfd0685dfe6936b17311ca51406b5146a6075921659982f",
+        "out-13.rgba8": "877adcf18a816b52c9c2968a4a8615b5a1bea19aeb67bffb088c3a02b0ca5c16",
+        "out-14.rgba8": "1dbc107318480c4ad8f12a81c505d36bd3aef1bba1a6b5a0fef1cc024021f992",
+        "out-15.rgba8": "3215fbee323487ebb9f5a60f6f9b359017a831c5e5d0dd5a46ffdbeedb88c9b9",
+        "out-16.rgba8": "2746dc1429d50be297e8f088e4f64781193fce4d32bae6dba4827f1361fe0331",
+        "out-17.rgba8": "a717d6c58682e7fa6bf51856e699df501531b81504115bfc2599f6c6dee3a784",
+        "out-18.rgba8": "219e704d122f6083ff504d146b51345cbc1e207258dd0d81d389a5dfcdc81563",
+        "out-19.rgba8": "219e704d122f6083ff504d146b51345cbc1e207258dd0d81d389a5dfcdc81563",
+        "out-20.rgba8": "9259456eb7eece989e18d003584b2330b14375acd6461624cf053920988f40d5",
+        "out-21.rgba8": "9259456eb7eece989e18d003584b2330b14375acd6461624cf053920988f40d5",
+        "out-22.rgba8": "bb65625064dbf8e42aaf8b63be2baf476157e16e5f9e3037d7b42934ef57e463",
+        "out-23.rgba8": "bb65625064dbf8e42aaf8b63be2baf476157e16e5f9e3037d7b42934ef57e463"
+      }
+    }
+  },
+  "input_hashes": {
+    "640x360": {
+      "depth-00.f32": "9fc50691358ebae62730c9fd532276980c9703aa110b8e8fbb4c26a422188a88",
+      "depth-01.f32": "0b26c6e9995c27c79f87c7ff2ced892052df971ac389b7f2456c3652f497335e",
+      "depth-02.f32": "2591f0b45a405da62bfc760c8fb8ac3857a37791cc13b80d573bf4f5029e3ba0",
+      "depth-03.f32": "f36d0ae3da4a77e3e40cc1d4912b2ace1350eb8349d4c27be49aa559709a9e59",
+      "depth-04.f32": "7d850896d461df7878d28c6c7dad0f726bd1a6155a93163464eac1a70a2892e9",
+      "depth-05.f32": "352ce8e24f3f5ef64642f0584b4d23bb331681a514c345f931b5e374092ae2d9",
+      "depth-06.f32": "d1b55aa0362b11a650cd5e688336802baea457db687ffe4f8a025bd6a9a398a6",
+      "depth-07.f32": "de8b9f7b22acc0bf87ec7ced4617ee47c8efc3b162fb16b76fbf2f56c4594d0b",
+      "depth-08.f32": "5b999dae004d0f67f924c49cead460aa042bed51d3095ecedaf5d72960723788",
+      "depth-09.f32": "19bb5b749be0dda9098f47734b81f13059cc620da9e33460ce489b389062d01e",
+      "depth-10.f32": "f9f6103c2ac1e5517e1edf715cb1d2e2d75e8663352712e9507f3e4d9a00097a",
+      "depth-11.f32": "eebb67bc2993b03a8e9d0e4033f2ce10772438e3d72905dbed9b0be0a9628cbe",
+      "depth-12.f32": "537bd0260b6f7db12a7d7cb298707a002d126f2e5e1f5f5510c6c46a6fb0d0e6",
+      "depth-13.f32": "ccfe14cfeb1262b3041af0ef7890c13bd618b470f55ecf48961e4892a043ba2d",
+      "depth-14.f32": "eef68697b5e9c60c2e3800641d0ba7c99ff825a9f8f61dcf7069101d4db9fb71",
+      "depth-15.f32": "c845fe2c12d4a8b2694c81c36bff8a5f5501bae31cba2316053d98be80d2c955",
+      "depth-16.f32": "4bb2a32956bbbbc94f6f5302a8aa079553dd938d5e5838058c239641e074360f",
+      "depth-17.f32": "d76d4d424f2bc6541e2963435e0d1762bb53a07b6bf2a0b9765786e5b4e640ff",
+      "depth-18.f32": "529866e67038aba336329b4dfc4ead4728163c17bd460927740f5858af05d726",
+      "depth-19.f32": "529866e67038aba336329b4dfc4ead4728163c17bd460927740f5858af05d726",
+      "depth-20.f32": "529866e67038aba336329b4dfc4ead4728163c17bd460927740f5858af05d726",
+      "depth-21.f32": "529866e67038aba336329b4dfc4ead4728163c17bd460927740f5858af05d726",
+      "depth-22.f32": "529866e67038aba336329b4dfc4ead4728163c17bd460927740f5858af05d726",
+      "depth-23.f32": "529866e67038aba336329b4dfc4ead4728163c17bd460927740f5858af05d726",
+      "exposed-00.u8": "2a589ae1f2fa2a6328223ff195a29c9244bec633dca49139f6f231e1d79c0eb2",
+      "exposed-01.u8": "0981504bc0acb94de5bb9eb2b22ea639bb440a1a534781630a83b6bcf84f88fc",
+      "exposed-02.u8": "eefaa39c8b82b3f708e36626cebf128043ae2884b6dffb1b5a816e3eff51c6ca",
+      "exposed-03.u8": "f89753504dc2069fc370404e1d8ecc82a9eb93e44b460b9f9a143ff26ad6d637",
+      "exposed-04.u8": "2145bd2c9009d1f1ac8ddf5263498d0b5aeb7a273a46d065fd2bc596caf2042d",
+      "exposed-05.u8": "47a9f66c707b539d9238ac54bf383e74283ce8fdd306999eeaf70e19545af2af",
+      "exposed-06.u8": "eaa556752a4dc67dac0f50efc218ed73ee80dcdc429ca3788f3a8689a4a2b4fb",
+      "exposed-07.u8": "6fae668572e221aa7968d0c965476c29c627f4a8616ddb81b4e6fe3245908003",
+      "exposed-08.u8": "a6ec1ffdfcdc28b790636fb85955801cd2cc38b93ad14753403af835d4087fd0",
+      "exposed-09.u8": "85f2cdca0a72c90caa93fc80ba09052c095442e198cceaaf4934cf340a394e61",
+      "exposed-10.u8": "7f9f9bafb1ed45dbcdc54fd4bb81583a8853f6c317c9af5ebe47ebb139279ff1",
+      "exposed-11.u8": "caa87e6403be999dc9b4f7f82968ac1b96101e8c94ce6e80cb696c0195fe933d",
+      "exposed-12.u8": "1236e082a186071d81eb4f3e03175246d5dd6b168cbdd9711fcccd9776d96d20",
+      "exposed-13.u8": "2ff6df0001097050dd3695e05d3727e419bc040da3fbb8f5ea1204ea5d56a844",
+      "exposed-14.u8": "32d18673904fe95fdeff04708cb40eff3ca05aa59c75e72713a9d496955b545f",
+      "exposed-15.u8": "2ea4f93ac83437b8531d5363f46203b12ef2292c70169ff61f559be3b96a061c",
+      "exposed-16.u8": "1f948791150cbf3e977115f8045e4ca912ea948a10fcb84f0386af4d42f09e89",
+      "exposed-17.u8": "a61d35cf052d0cf8ddca6692a7542600eed3eeffcf3d26004265b52b38c1d07f",
+      "exposed-18.u8": "a4bab26ae12752110b174d0af2f4ed37f0c17b682c479490140694db9b8f2bce",
+      "exposed-19.u8": "2a589ae1f2fa2a6328223ff195a29c9244bec633dca49139f6f231e1d79c0eb2",
+      "exposed-20.u8": "2a589ae1f2fa2a6328223ff195a29c9244bec633dca49139f6f231e1d79c0eb2",
+      "exposed-21.u8": "2a589ae1f2fa2a6328223ff195a29c9244bec633dca49139f6f231e1d79c0eb2",
+      "exposed-22.u8": "2a589ae1f2fa2a6328223ff195a29c9244bec633dca49139f6f231e1d79c0eb2",
+      "exposed-23.u8": "2a589ae1f2fa2a6328223ff195a29c9244bec633dca49139f6f231e1d79c0eb2",
+      "in-00.rgba8": "9fea115151629e5fc297c1520e3c7907ca2c8bc94303fa5354e549f714d93dc6",
+      "in-01.rgba8": "ddf7cc1c8f0709826dc500215a5df4d5a98797ba7a64dbec78c50af94588d455",
+      "in-02.rgba8": "16e1050c9f7aa32fa1ee940372adcfb4679ebf652ceca16d5a07289ac83846fb",
+      "in-03.rgba8": "6c669fd44906c9bb614d6620ee51630fdf5c2382cb86d172ba43c55a50b6ef90",
+      "in-04.rgba8": "ad399ccc2bf40a33920e6584cba80c8a28af8c56112a4342b048b5e3f039a0a9",
+      "in-05.rgba8": "458397521f72dfc5f7a373f30e5dc55c5c0426b8d7b4dfe747c3aa87eabf9cd9",
+      "in-06.rgba8": "4508ab96403cd10ebdbcd82915b5d45f0bb10c292fc50749e02ca937c92e0399",
+      "in-07.rgba8": "d4ecdeb15d5d74fc5a688977d44916a884a95e3472e27425d80baca26fe7041f",
+      "in-08.rgba8": "64dfc7abada24a568871a5ffadd1c98f73136944a877c3ef7b5ebcd624e4d5f4",
+      "in-09.rgba8": "5037423ec1b2d878faa38ae35d6c1d23c4846b108601d2dab49c2a12e72c5189",
+      "in-10.rgba8": "fc918ba6ac9abf5e48584691ddc4c30b5da091f0239062775ac246b819954a05",
+      "in-11.rgba8": "23176dd1b63d98f3270f7e38ddcecfd3d46b49e416b5c932646abe8e2fdd4e23",
+      "in-12.rgba8": "6d393ae9059cb06dd2ed7b697d5e0eaaea11aba2704430bc81375f4d6a8b9958",
+      "in-13.rgba8": "877adcf18a816b52c9c2968a4a8615b5a1bea19aeb67bffb088c3a02b0ca5c16",
+      "in-14.rgba8": "cda5445049eca33b2f621f08965973b61c82729faddbc529d995b89a25b3bce8",
+      "in-15.rgba8": "1ba30915eca0f6ac3602d6b63083159aec55ecb3948ab6024d35386fffcdb5ac",
+      "in-16.rgba8": "6861e17734dfe7c27311c432d718cad9c8cd484775e7b262b0094095b8a5ab23",
+      "in-17.rgba8": "238199c75582b3d9d8613c3aae5fe8ac0d8d1c91db3ebe0392475ad7b5a8f4e5",
+      "in-18.rgba8": "1de8c7a98bd9023814a8597bea04f7e44c9f71fdddcebb1385c9eb4025669302",
+      "in-19.rgba8": "1de8c7a98bd9023814a8597bea04f7e44c9f71fdddcebb1385c9eb4025669302",
+      "in-20.rgba8": "1de8c7a98bd9023814a8597bea04f7e44c9f71fdddcebb1385c9eb4025669302",
+      "in-21.rgba8": "1de8c7a98bd9023814a8597bea04f7e44c9f71fdddcebb1385c9eb4025669302",
+      "in-22.rgba8": "1de8c7a98bd9023814a8597bea04f7e44c9f71fdddcebb1385c9eb4025669302",
+      "in-23.rgba8": "1de8c7a98bd9023814a8597bea04f7e44c9f71fdddcebb1385c9eb4025669302",
+      "motion-00.f32": "7f55e8a8cd50738961110ec5c7166504f8b1313d038f8655fe395ac5da585a6e",
+      "motion-01.f32": "62b88c3c0fb627cfd9ee0aa5083f8705c89158fe9386d6c43eb014aaf9cffd6a",
+      "motion-02.f32": "cbc1eaaebbd3e72fc6f67039c99163c4080246667e049affb83f899b64b683d2",
+      "motion-03.f32": "bfca4bf4ac92cb0436cc0308b5479fb05bc3a75263e5616234c9d68cc6d00cd7",
+      "motion-04.f32": "1abcb249493ebc230d052897713aedd720f0805a9b5d136e0a688ae39a616c95",
+      "motion-05.f32": "bd2669b565037e28349a7904d5bf0eefe0e53d623a85ed85a3c2e7601a42e59d",
+      "motion-06.f32": "f9780ca74dedc31017d343fba2ce38ebffe26d697e3150b291724f1e356b503a",
+      "motion-07.f32": "02c39118d55b6bcf36ebd17c7cfe5965bebf1c627d8d928b6856fa843ab38511",
+      "motion-08.f32": "3357feb5651cbe5f18955658461f80b0ca25d960026a6507189ca790c3c8bc31",
+      "motion-09.f32": "6d2ad35b69d35b045668b437ec313d9482c033eef336e18ac358e2201bc3c555",
+      "motion-10.f32": "1becc5863233c73565bd63ee2103184bb65cac2026d33011317004476d7eddd1",
+      "motion-11.f32": "266c5f7a86eede87a988dcf84ccf88e7031b7a57d3fa6506108c3c119e93bb48",
+      "motion-12.f32": "517bb6c38e233d44307c7ae91cb2c10074e23d1342b5c5f4df9ec41dcbaa31d5",
+      "motion-13.f32": "d5193d7c0f6b35d115c8e848d117f94c43a2ba73cd2bd1e0c835166fc2247e6c",
+      "motion-14.f32": "90f70ab533c82a61c442890a02435a4486e78e7d41a757cdf66d95e46ae07c0d",
+      "motion-15.f32": "588487cce3cf74d3b4872ba1cf4a2a741d9e88e4c875606fd30c787597cfa3cc",
+      "motion-16.f32": "7a167109f235365fa31b9945d312de710a467a7d182797e960592b8750224e08",
+      "motion-17.f32": "8d5d5397a50427c16fb716cee4cfedfa998d64416c1ecb7d1a59f787671e0d7a",
+      "motion-18.f32": "51fbb0d2574d81bc39c41a6e0cc4b0e94bf3b128b65ee035d0cf0acbc0659715",
+      "motion-19.f32": "3d259dc704b83d00842e8fe0f08eee3c64aee30b0f66646bf35d34958dd01145",
+      "motion-20.f32": "3d259dc704b83d00842e8fe0f08eee3c64aee30b0f66646bf35d34958dd01145",
+      "motion-21.f32": "3d259dc704b83d00842e8fe0f08eee3c64aee30b0f66646bf35d34958dd01145",
+      "motion-22.f32": "3d259dc704b83d00842e8fe0f08eee3c64aee30b0f66646bf35d34958dd01145",
+      "motion-23.f32": "3d259dc704b83d00842e8fe0f08eee3c64aee30b0f66646bf35d34958dd01145"
+    },
+    "1280x720": {
+      "depth-00.f32": "cbe83cbaeb3234c898e08c4b6726a169d19655ddc59b64c386894043b17b773b",
+      "depth-01.f32": "263ff3ec6c5aaaf8b578dbddd51e72f36287a99cb2eb36062d2fefa3586903e0",
+      "depth-02.f32": "cfa9aba903ae74b26f73c65bcd9f781599f4f65e100aeff9a05a8fdbf1f8b9b8",
+      "depth-03.f32": "38e526dc5a82e6e78ed8f2f7e8eecdbf8bf65ac95451f8dbf157e60ae643217a",
+      "depth-04.f32": "daea547591d10a01449747ecb41a6049181b703fcd9f0837c796ff4f0defe006",
+      "depth-05.f32": "eb5e1f7112046c6d32addf2a1041006e12d41a0ccbd44ab8d0f35651c8f52478",
+      "depth-06.f32": "f9aaf117178b558acc4e04657d03341ee5e11827cc89521752ab06a99a2c09e1",
+      "depth-07.f32": "db4aa8dbb91697b4a791f916b9e69f9e2b0d71dca72614e1d10e26c3fcce469b",
+      "depth-08.f32": "09edd7da3d6b807077a650a79ccb9bc36b7f4c9e78b511a8e134844ec3f2d268",
+      "depth-09.f32": "38274f63e55a473b5b9da13b9f92d5fbb370b992b63f529e32d7a19d011d99e2",
+      "depth-10.f32": "68e70acd5f2555a291a2717d7e6a53593bda3d0b008e69f0ecf815c397a4104f",
+      "depth-11.f32": "4a0150383ea0d99a7ef8be39c53397e6695bd3436237df4f62b6baf96404f0a6",
+      "depth-12.f32": "baf3d0b241a8548eacc3a7b5d58d70dd53b5220f18e5efd47180fd7be66b08ef",
+      "depth-13.f32": "076957f2f99f92d08fdce369d61403ac325644e6efb0a16d8ccec34da0169e01",
+      "depth-14.f32": "aef706d844e58cc80243c1de5a7786f9ad88ab97feb88195246c1bb373fdf07b",
+      "depth-15.f32": "5711eb209d4512a856c3c4d2a78554ae93798c5e88086272129169af45c2bb31",
+      "depth-16.f32": "4f4e3702de761bda27f3571465a5c8e2f7760b6ea93ee25df712fe615e0361df",
+      "depth-17.f32": "6e48b9014d68103206b079f56d5876b5b9374b803bb3f974fe699cd0aceae8e3",
+      "depth-18.f32": "f1f82e64db9ebba2bbee9f553cfb1277d5b344d7206e190f1d54270f4f40aa26",
+      "depth-19.f32": "f1f82e64db9ebba2bbee9f553cfb1277d5b344d7206e190f1d54270f4f40aa26",
+      "depth-20.f32": "f1f82e64db9ebba2bbee9f553cfb1277d5b344d7206e190f1d54270f4f40aa26",
+      "depth-21.f32": "f1f82e64db9ebba2bbee9f553cfb1277d5b344d7206e190f1d54270f4f40aa26",
+      "depth-22.f32": "f1f82e64db9ebba2bbee9f553cfb1277d5b344d7206e190f1d54270f4f40aa26",
+      "depth-23.f32": "f1f82e64db9ebba2bbee9f553cfb1277d5b344d7206e190f1d54270f4f40aa26",
+      "exposed-00.u8": "0b150fd32588b1daca5569992ebe559c0102c837306b1af4c44d35128ec58366",
+      "exposed-01.u8": "a0134586bb3fa77522d5559eb103c61311a4fb553a9d0f6d6bac5a219953907c",
+      "exposed-02.u8": "74057486a9c627b57e20e00a42dc2c4a5f36b6abb8320f7078b147bd9362939a",
+      "exposed-03.u8": "bed321f0816a781ded06c073195ac0e83dde11eb699a7aeaf8316a27f629b297",
+      "exposed-04.u8": "649cb4e1a89df802e20401074119d38f13d1549df289002c3751c41b4d90fd68",
+      "exposed-05.u8": "6d8746671bc2dbc85577dabd9203688e815b04101e8fedecc090bfcb363e5a5d",
+      "exposed-06.u8": "c67baadffc88179eaf9f9741217f4f7adafff3a9029c1000914489e3a882116b",
+      "exposed-07.u8": "69a8ed09286aab1e4fba79b172125ed6d3251e04286281153372c1e5c226f41e",
+      "exposed-08.u8": "55a8b3367502c0dc0499020e8bc79bf1d98977cbdffd124531923ca019ee8521",
+      "exposed-09.u8": "70928eff0b58d4ca3ea513e3ee164b911e8b9e1de87cf5fff590fbb44af4690f",
+      "exposed-10.u8": "4662e3b0c110785e597bb54c34ff71cf05ae227a43fc0b22d73fcd211fe067bf",
+      "exposed-11.u8": "6f31f9589884e550e99734912d362029f9a08811ffabbac102dbe3cc156165dc",
+      "exposed-12.u8": "acb01731030aea952e5bdb2bec667ed238b1f1798b12ca289bc24357ed981893",
+      "exposed-13.u8": "1644f47aba583624f310118f6a1aeeb7d9755a41405b88f3770386df91a4a5ae",
+      "exposed-14.u8": "8e0c5bed51ff3318c2ecdbfb1d9f002e75f1fdd7c8108a558c20016672a2b153",
+      "exposed-15.u8": "984bdcc80cb8f1e08dcb79665b1d06194c760f2c810a1777d96848678517974e",
+      "exposed-16.u8": "c2dffefcead5ebb6d021a9d3b45949aa0a132122a3ef7a0541b3bdec57334f73",
+      "exposed-17.u8": "29ad99c041bf6345f62927b9ede6ae8d07bda87a236549ed21076b653d45bc79",
+      "exposed-18.u8": "24a95286915c4a626d786aaacf2185614e62472c19f950fd0d73be4592000b2d",
+      "exposed-19.u8": "0b150fd32588b1daca5569992ebe559c0102c837306b1af4c44d35128ec58366",
+      "exposed-20.u8": "0b150fd32588b1daca5569992ebe559c0102c837306b1af4c44d35128ec58366",
+      "exposed-21.u8": "0b150fd32588b1daca5569992ebe559c0102c837306b1af4c44d35128ec58366",
+      "exposed-22.u8": "0b150fd32588b1daca5569992ebe559c0102c837306b1af4c44d35128ec58366",
+      "exposed-23.u8": "0b150fd32588b1daca5569992ebe559c0102c837306b1af4c44d35128ec58366",
+      "in-00.rgba8": "a8ee410d9b49f1905ada1ec2a2abf7d673f844af712a897c7f8cdd49bcc8f6ec",
+      "in-01.rgba8": "cd54947deadba0a5befeb6c0cd3485cf26f32484733263ed672b6b7b3560e2a5",
+      "in-02.rgba8": "9a1b66e2d9e01b2954f48b2d64afc5af08e71cac664ea2591066d24ad64af059",
+      "in-03.rgba8": "f0e2a5ae0e13943eec37e4c06a47b586b157e5f6993cea7c5b05d21ffbb544a8",
+      "in-04.rgba8": "3ebaee904e8f4cb6854560e4c16a96c02bd4abff679446c5a2c70e61ab8f0f36",
+      "in-05.rgba8": "4ebf21040f708dddcb78bf4e20ec8b564d0aacd1b05e4a4334dc2504ccd0aa46",
+      "in-06.rgba8": "6268918fa5378afdef0e02855429351796c9d37a15b54551f91697f1edd87b7c",
+      "in-07.rgba8": "faeaa2ff749c21a83310d4487ccc24a3593d5fd705b651a883cd04d2370efd04",
+      "in-08.rgba8": "427e6b992a0c12c9561da4a5622e7e80c0fcf69f9295fae2de7aee43a0f7b7d3",
+      "in-09.rgba8": "379c0ed02ed6f85eea8d4fb8bf4a523f777b477c6c3cabd366dbbb507ab34a9d",
+      "in-10.rgba8": "638221944af39cc1db7018d78c3ea0f0c5652f3116a086fb1f777d89e909b526",
+      "in-11.rgba8": "0002375d323a35fc4af81c5a37d508369c400e8bcdd44b2dc6eed78287f717e3",
+      "in-12.rgba8": "e1ed7c47f214d98809cea7a8b5ffaa144ebdaa598e935f58c3d016f64a86c088",
+      "in-13.rgba8": "099979d9f78077377bcf82701576ab1b1fd87e48f89ef0f44d84d03295851070",
+      "in-14.rgba8": "a654fcd76aeebbdf8fca48c38d31be164495981603d0d81fe367e27d42ca7ede",
+      "in-15.rgba8": "778c6151ca7484ca813f787a918ff83791f883b0a010826ab924e47971066e41",
+      "in-16.rgba8": "f3e2d69b723b1fc12b60df32a2f60123702d95b88f12f01643fe661e1d9486aa",
+      "in-17.rgba8": "e00e36e3405cb17565b2c769d531fcb641354872ec10e2070c0597e00a72ebb9",
+      "in-18.rgba8": "dee3070b0798a9185eb83eda8d29d5e5fb117be92c98e91f28436940a3739577",
+      "in-19.rgba8": "dee3070b0798a9185eb83eda8d29d5e5fb117be92c98e91f28436940a3739577",
+      "in-20.rgba8": "dee3070b0798a9185eb83eda8d29d5e5fb117be92c98e91f28436940a3739577",
+      "in-21.rgba8": "dee3070b0798a9185eb83eda8d29d5e5fb117be92c98e91f28436940a3739577",
+      "in-22.rgba8": "dee3070b0798a9185eb83eda8d29d5e5fb117be92c98e91f28436940a3739577",
+      "in-23.rgba8": "dee3070b0798a9185eb83eda8d29d5e5fb117be92c98e91f28436940a3739577",
+      "motion-00.f32": "a605cd4c9fe5db9c5d3f6f3b66ac3661659c6aebf53325125c5f4719c829eabf",
+      "motion-01.f32": "6164b2cd6b3e54c80c41401c868f5640f7b88fb12a155e947370355335f38d05",
+      "motion-02.f32": "25d9c34be22d492bcb93940b859f0ea60f6db1a4f5a414de6d9df5243ce607a1",
+      "motion-03.f32": "99e0c16991997f0eeb9f87d966648485d8e5965b3115337d8a7e09baf867ba80",
+      "motion-04.f32": "0c2c7575c47749fcf33950f2f8ace14b29f0df17fa86fbd98ad79f3166562638",
+      "motion-05.f32": "dada4b6f14e83766e2d531a03c5288bb10a8bc7d1908c0ac5916f99274fd2a38",
+      "motion-06.f32": "d60a9230af6bacf4db75939b2f851d57a7481d0b408937a2671f7955a08e0bef",
+      "motion-07.f32": "8e93a73f09c56e08473a2c3b74deaa321d42fcbf37bebba8eb9d31b11c72c425",
+      "motion-08.f32": "b2a3251be3bde38e630f4fc5be1d0128930bcddbf5f41ee248e22b8ed662b8bb",
+      "motion-09.f32": "77d24ec3b53b7ddf9ff92ffe932abe32f52ab553931935654fed3063c094a236",
+      "motion-10.f32": "f02c722c492635cbd72ea7c9efb23382805c97bbaf78daa01db24a0ab4d72929",
+      "motion-11.f32": "b2f1bcb74e6ee4c9d9a71729f63dce23df0b97d8a95c24c6b1c06d7168218049",
+      "motion-12.f32": "42233255a55d67b6789c071d36f414806192a00bc08b941f67c1e6d6d9fdfd56",
+      "motion-13.f32": "f34795030dda966d6b2760eb05eee47509cb3068ef1938b9ed878c0b54286177",
+      "motion-14.f32": "030d20b2f9ef4be7973a087cf4e3d04ff5f4cd9ce970952b85af9f454cb1e031",
+      "motion-15.f32": "438240b0484aebe9155f563f2c2b295e35b3885d5918a449268c061aa8a34c42",
+      "motion-16.f32": "e9fbed08dc575b6425e175230defe854f4f7f6cfaff6fbb384c77bd343d45f35",
+      "motion-17.f32": "b4235ad764dc2d2bd85ef301c21ebc64e48006d3a022658605e17f0dac2373d6",
+      "motion-18.f32": "e41271ca74fbeee91428c00dad415e472af54a4302c008b44ad31fbfae3b9166",
+      "motion-19.f32": "e1742515f3aa388b779300b5f7d454dbf52f356c18394bcef67810311cb5a5c2",
+      "motion-20.f32": "e1742515f3aa388b779300b5f7d454dbf52f356c18394bcef67810311cb5a5c2",
+      "motion-21.f32": "e1742515f3aa388b779300b5f7d454dbf52f356c18394bcef67810311cb5a5c2",
+      "motion-22.f32": "e1742515f3aa388b779300b5f7d454dbf52f356c18394bcef67810311cb5a5c2",
+      "motion-23.f32": "e1742515f3aa388b779300b5f7d454dbf52f356c18394bcef67810311cb5a5c2"
+    }
+  },
+  "timing_method": {
+    "qualification": "GPU timestamps around each complete runtime recording, uploads/downloads outside pair; last 12 frames balanced for N=2,3,4",
+    "conditions": "Automatic clocks/power unchanged. Qualification overlapped CPU build jobs; dedicated repeated timings, if present, are recorded separately.",
+    "warning": "Procedural Motion, one model, not game FPS. Full-pass vs skip cadence still alternates frame costs."
+  },
+  "cpu_checks": {
+    "port_suite": "PASS",
+    "cadence_N2_N3_N4_interleaved_features": "PASS",
+    "INI_generation": "PASS; [Temporal], enabled, interval 2; no [Reuse]",
+    "python_shell_syntax": "PASS"
+  },
+  "limitations": [
+    "No real-game/OptiScaler/FG x4 presentation run",
+    "No physical input-latency measurement",
+    "No independent HDR/PQ/moving-scene quality acceptance",
+    "No previous-depth/projection matrices/3D motion: conservative device-depth test, not true expected-depth reprojection",
+    "Unrecoverable camera-cut pixels can use current color until next scheduled NR",
+    "Private history cost 56 bytes/model pixel plus full-resolution guides",
+    "Shared session cadence survives runtime recreation; actual game DRS still unqualified",
+    "No installed Khronos validation layer; SPIR-V validation and actual GPU harness executed"
+  ],
+  "delivery": {
+    "main_push_authorized": true,
+    "archives_local_only": true,
+    "releases_tags_uploads": false,
+    "CI": "[skip ci]"
+  },
+  "checks_note": "Final Silver layer check repeated against immutable compiled shader directory after a concurrent package rebuild removed a standard build-path shader; all saved frame bytes already matched.",
+  "shared_clock_tests": {
+    "status": "PASS",
+    "runtime_recreated_on_frame": 13,
+    "no_extra_inference": true,
+    "independent_features": true,
+    "shared_clock_output_matches_recorded_motion": true,
+    "log": [
+      "shared exit 0",
+      "shared PASS: no extra NR",
+      "recreate exit 0",
+      "recreate PASS: no extra NR",
+      "interleave exit 0",
+      "interleave PASS: no extra NR"
+    ]
+  },
+  "binaries": {
+    "build/seamless/run_sequence_final": "f3b95a0008e8a9f3ad0bb141846bfe42585566bd61bc8fb401521f2f3ad2a251",
+    "build/seamless/before/run_sequence_fair": "0d1b92f40fa7c5e87bd80eb9343e945d197eca45efac979fdf0cf7137c7670b4"
+  },
+  "dedicated_timing": {
+    "method": "Interleaved GPU timings on a supplied Motion fixture. No game FPS claims.\n\nThe harness uploads/downloads outside its timestamp pair; idle gaps and automatic\nclocks still affect results. The last 12 frames contain whole N=2/3/4 periods.\nRun without simultaneous builds/other GPU tests. Legacy is an optional preserved\nold runtime test binary, never part of the shipped RDNA3 implementation.\n",
+    "scene": {
+      "scene": "Motion (procedural Vulkan regression)",
+      "extent": [
+        1280,
+        720
+      ],
+      "frames": 24,
+      "depth": "device depth, forward Z",
+      "motion": "current to previous, normalized UV",
+      "cut_frames": [
+        13
+      ],
+      "invalid_motion_frames": [
+        15
+      ],
+      "cases": [
+        {
+          "frame": 0,
+          "camera": 0,
+          "camera_angle_rad": 0,
+          "object": 320.0,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 0
+        },
+        {
+          "frame": 1,
+          "camera": 0,
+          "camera_angle_rad": 0,
+          "object": 335.36,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 6496
+        },
+        {
+          "frame": 2,
+          "camera": 8.0,
+          "camera_angle_rad": 0,
+          "object": 350.72,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 6496
+        },
+        {
+          "frame": 3,
+          "camera": 16.0,
+          "camera_angle_rad": 0,
+          "object": 366.08000000000004,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 6856
+        },
+        {
+          "frame": 4,
+          "camera": 24.0,
+          "camera_angle_rad": 0,
+          "object": 381.44,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 6496
+        },
+        {
+          "frame": 5,
+          "camera": 32.0,
+          "camera_angle_rad": 0,
+          "object": 396.8,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 6496
+        },
+        {
+          "frame": 6,
+          "camera": 40.0,
+          "camera_angle_rad": 0,
+          "object": 412.16,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 6856
+        },
+        {
+          "frame": 7,
+          "camera": 48.0,
+          "camera_angle_rad": 0,
+          "object": 427.52000000000004,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 6496
+        },
+        {
+          "frame": 8,
+          "camera": 120.0,
+          "camera_angle_rad": 0.18,
+          "object": 442.88,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 6629
+        },
+        {
+          "frame": 9,
+          "camera": 192.0,
+          "camera_angle_rad": 0.36,
+          "object": 458.24,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 6649
+        },
+        {
+          "frame": 10,
+          "camera": 264.0,
+          "camera_angle_rad": 0.54,
+          "object": 473.6,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 6621
+        },
+        {
+          "frame": 11,
+          "camera": 336.0,
+          "camera_angle_rad": 0.72,
+          "object": 488.96000000000004,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 6626
+        },
+        {
+          "frame": 12,
+          "camera": 408.0,
+          "camera_angle_rad": 0.8999999999999999,
+          "object": 504.32000000000005,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 6623
+        },
+        {
+          "frame": 13,
+          "camera": 522.6666666666667,
+          "camera_angle_rad": -0.35,
+          "object": 519.6800000000001,
+          "cut": true,
+          "invalid_motion": false,
+          "exposed_pixels": 6597
+        },
+        {
+          "frame": 14,
+          "camera": 530.6666666666667,
+          "camera_angle_rad": -0.35,
+          "object": 535.0400000000001,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 6798
+        },
+        {
+          "frame": 15,
+          "camera": 538.6666666666667,
+          "camera_angle_rad": -0.35,
+          "object": 550.4,
+          "cut": false,
+          "invalid_motion": true,
+          "exposed_pixels": 6816
+        },
+        {
+          "frame": 16,
+          "camera": 546.6666666666667,
+          "camera_angle_rad": -0.35,
+          "object": 565.76,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 6827
+        },
+        {
+          "frame": 17,
+          "camera": 554.6666666666667,
+          "camera_angle_rad": -0.35,
+          "object": 581.12,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 6816
+        },
+        {
+          "frame": 18,
+          "camera": 768.0,
+          "camera_angle_rad": -0.35,
+          "object": 596.48,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 5906
+        },
+        {
+          "frame": 19,
+          "camera": 768.0,
+          "camera_angle_rad": -0.35,
+          "object": 596.48,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 0
+        },
+        {
+          "frame": 20,
+          "camera": 768.0,
+          "camera_angle_rad": -0.35,
+          "object": 596.48,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 0
+        },
+        {
+          "frame": 21,
+          "camera": 768.0,
+          "camera_angle_rad": -0.35,
+          "object": 596.48,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 0
+        },
+        {
+          "frame": 22,
+          "camera": 768.0,
+          "camera_angle_rad": -0.35,
+          "object": 596.48,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 0
+        },
+        {
+          "frame": 23,
+          "camera": 768.0,
+          "camera_angle_rad": -0.35,
+          "object": 596.48,
+          "cut": false,
+          "invalid_motion": false,
+          "exposed_pixels": 0
+        }
+      ]
+    },
+    "runs": [
+      {
+        "round": 0,
+        "case": "full",
+        "sensors_before": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "34",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "8673000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "49000"
+        },
+        "sensors_after": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "49",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "9953000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "49000"
+        },
+        "frames": [
+          {
+            "frame": 0,
+            "full": true,
+            "gpu_ms": 77.149585
+          },
+          {
+            "frame": 1,
+            "full": true,
+            "gpu_ms": 76.562349
+          },
+          {
+            "frame": 2,
+            "full": true,
+            "gpu_ms": 76.31015
+          },
+          {
+            "frame": 3,
+            "full": true,
+            "gpu_ms": 76.450777
+          },
+          {
+            "frame": 4,
+            "full": true,
+            "gpu_ms": 76.258212
+          },
+          {
+            "frame": 5,
+            "full": true,
+            "gpu_ms": 76.255927
+          },
+          {
+            "frame": 6,
+            "full": true,
+            "gpu_ms": 77.563692
+          },
+          {
+            "frame": 7,
+            "full": true,
+            "gpu_ms": 77.535919
+          },
+          {
+            "frame": 8,
+            "full": true,
+            "gpu_ms": 75.474402
+          },
+          {
+            "frame": 9,
+            "full": true,
+            "gpu_ms": 77.734577
+          },
+          {
+            "frame": 10,
+            "full": true,
+            "gpu_ms": 77.142251
+          },
+          {
+            "frame": 11,
+            "full": true,
+            "gpu_ms": 76.153092
+          },
+          {
+            "frame": 12,
+            "full": true,
+            "gpu_ms": 76.49418
+          },
+          {
+            "frame": 13,
+            "full": true,
+            "gpu_ms": 76.822524
+          },
+          {
+            "frame": 14,
+            "full": true,
+            "gpu_ms": 75.957841
+          },
+          {
+            "frame": 15,
+            "full": true,
+            "gpu_ms": 76.598298
+          },
+          {
+            "frame": 16,
+            "full": true,
+            "gpu_ms": 78.129046
+          },
+          {
+            "frame": 17,
+            "full": true,
+            "gpu_ms": 76.721612
+          },
+          {
+            "frame": 18,
+            "full": true,
+            "gpu_ms": 77.308367
+          },
+          {
+            "frame": 19,
+            "full": true,
+            "gpu_ms": 76.292557
+          },
+          {
+            "frame": 20,
+            "full": true,
+            "gpu_ms": 75.990423
+          },
+          {
+            "frame": 21,
+            "full": true,
+            "gpu_ms": 77.42058
+          },
+          {
+            "frame": 22,
+            "full": true,
+            "gpu_ms": 76.568762
+          },
+          {
+            "frame": 23,
+            "full": true,
+            "gpu_ms": 78.022764
+          }
+        ],
+        "mean_ms": 76.8605795,
+        "full_ms": 76.8605795,
+        "reconstruction_ms": null
+      },
+      {
+        "round": 0,
+        "case": "n2",
+        "sensors_before": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "49",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "9954000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "49000"
+        },
+        "sensors_after": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "41",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "9403000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "50000"
+        },
+        "frames": [
+          {
+            "frame": 0,
+            "full": true,
+            "gpu_ms": 77.596194
+          },
+          {
+            "frame": 1,
+            "full": false,
+            "gpu_ms": 2.614568
+          },
+          {
+            "frame": 2,
+            "full": true,
+            "gpu_ms": 77.832403
+          },
+          {
+            "frame": 3,
+            "full": false,
+            "gpu_ms": 3.02078
+          },
+          {
+            "frame": 4,
+            "full": true,
+            "gpu_ms": 80.006934
+          },
+          {
+            "frame": 5,
+            "full": false,
+            "gpu_ms": 2.618976
+          },
+          {
+            "frame": 6,
+            "full": true,
+            "gpu_ms": 76.958101
+          },
+          {
+            "frame": 7,
+            "full": false,
+            "gpu_ms": 2.600782
+          },
+          {
+            "frame": 8,
+            "full": true,
+            "gpu_ms": 78.592006
+          },
+          {
+            "frame": 9,
+            "full": false,
+            "gpu_ms": 2.679571
+          },
+          {
+            "frame": 10,
+            "full": true,
+            "gpu_ms": 77.466908
+          },
+          {
+            "frame": 11,
+            "full": false,
+            "gpu_ms": 2.661096
+          },
+          {
+            "frame": 12,
+            "full": true,
+            "gpu_ms": 77.358622
+          },
+          {
+            "frame": 13,
+            "full": false,
+            "gpu_ms": 1.701032
+          },
+          {
+            "frame": 14,
+            "full": true,
+            "gpu_ms": 77.30468
+          },
+          {
+            "frame": 15,
+            "full": false,
+            "gpu_ms": 2.648592
+          },
+          {
+            "frame": 16,
+            "full": true,
+            "gpu_ms": 77.150266
+          },
+          {
+            "frame": 17,
+            "full": false,
+            "gpu_ms": 2.756157
+          },
+          {
+            "frame": 18,
+            "full": true,
+            "gpu_ms": 77.485263
+          },
+          {
+            "frame": 19,
+            "full": false,
+            "gpu_ms": 2.786214
+          },
+          {
+            "frame": 20,
+            "full": true,
+            "gpu_ms": 78.05198
+          },
+          {
+            "frame": 21,
+            "full": false,
+            "gpu_ms": 2.896463
+          },
+          {
+            "frame": 22,
+            "full": true,
+            "gpu_ms": 77.929788
+          },
+          {
+            "frame": 23,
+            "full": false,
+            "gpu_ms": 3.913355
+          }
+        ],
+        "mean_ms": 40.165201,
+        "full_ms": 77.5467665,
+        "reconstruction_ms": 2.7836355
+      },
+      {
+        "round": 0,
+        "case": "n3",
+        "sensors_before": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "41",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "9391000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "49000"
+        },
+        "sensors_after": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "39",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "9862000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "50000"
+        },
+        "frames": [
+          {
+            "frame": 0,
+            "full": true,
+            "gpu_ms": 77.933034
+          },
+          {
+            "frame": 1,
+            "full": false,
+            "gpu_ms": 2.604509
+          },
+          {
+            "frame": 2,
+            "full": false,
+            "gpu_ms": 2.660575
+          },
+          {
+            "frame": 3,
+            "full": true,
+            "gpu_ms": 78.31516
+          },
+          {
+            "frame": 4,
+            "full": false,
+            "gpu_ms": 2.583629
+          },
+          {
+            "frame": 5,
+            "full": false,
+            "gpu_ms": 2.721411
+          },
+          {
+            "frame": 6,
+            "full": true,
+            "gpu_ms": 78.856068
+          },
+          {
+            "frame": 7,
+            "full": false,
+            "gpu_ms": 3.445947
+          },
+          {
+            "frame": 8,
+            "full": false,
+            "gpu_ms": 2.63152
+          },
+          {
+            "frame": 9,
+            "full": true,
+            "gpu_ms": 77.477007
+          },
+          {
+            "frame": 10,
+            "full": false,
+            "gpu_ms": 2.987476
+          },
+          {
+            "frame": 11,
+            "full": false,
+            "gpu_ms": 3.11071
+          },
+          {
+            "frame": 12,
+            "full": true,
+            "gpu_ms": 78.218336
+          },
+          {
+            "frame": 13,
+            "full": false,
+            "gpu_ms": 1.711933
+          },
+          {
+            "frame": 14,
+            "full": false,
+            "gpu_ms": 4.594169
+          },
+          {
+            "frame": 15,
+            "full": true,
+            "gpu_ms": 78.26767
+          },
+          {
+            "frame": 16,
+            "full": false,
+            "gpu_ms": 2.629596
+          },
+          {
+            "frame": 17,
+            "full": false,
+            "gpu_ms": 2.644104
+          },
+          {
+            "frame": 18,
+            "full": true,
+            "gpu_ms": 77.756418
+          },
+          {
+            "frame": 19,
+            "full": false,
+            "gpu_ms": 2.561828
+          },
+          {
+            "frame": 20,
+            "full": false,
+            "gpu_ms": 2.558702
+          },
+          {
+            "frame": 21,
+            "full": true,
+            "gpu_ms": 78.590803
+          },
+          {
+            "frame": 22,
+            "full": false,
+            "gpu_ms": 2.534255
+          },
+          {
+            "frame": 23,
+            "full": false,
+            "gpu_ms": 2.754153
+          }
+        ],
+        "mean_ms": 27.901830583333332,
+        "full_ms": 78.20830674999999,
+        "reconstruction_ms": 2.7485925
+      },
+      {
+        "round": 0,
+        "case": "n4",
+        "sensors_before": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "39",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "9853000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "50000"
+        },
+        "sensors_after": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "36",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "9265000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "50000"
+        },
+        "frames": [
+          {
+            "frame": 0,
+            "full": true,
+            "gpu_ms": 77.832483
+          },
+          {
+            "frame": 1,
+            "full": false,
+            "gpu_ms": 2.824927
+          },
+          {
+            "frame": 2,
+            "full": false,
+            "gpu_ms": 2.637171
+          },
+          {
+            "frame": 3,
+            "full": false,
+            "gpu_ms": 2.621942
+          },
+          {
+            "frame": 4,
+            "full": true,
+            "gpu_ms": 79.83621
+          },
+          {
+            "frame": 5,
+            "full": false,
+            "gpu_ms": 2.614808
+          },
+          {
+            "frame": 6,
+            "full": false,
+            "gpu_ms": 3.560164
+          },
+          {
+            "frame": 7,
+            "full": false,
+            "gpu_ms": 2.640497
+          },
+          {
+            "frame": 8,
+            "full": true,
+            "gpu_ms": 79.225249
+          },
+          {
+            "frame": 9,
+            "full": false,
+            "gpu_ms": 2.613365
+          },
+          {
+            "frame": 10,
+            "full": false,
+            "gpu_ms": 3.724557
+          },
+          {
+            "frame": 11,
+            "full": false,
+            "gpu_ms": 2.873339
+          },
+          {
+            "frame": 12,
+            "full": true,
+            "gpu_ms": 77.894761
+          },
+          {
+            "frame": 13,
+            "full": false,
+            "gpu_ms": 1.733734
+          },
+          {
+            "frame": 14,
+            "full": false,
+            "gpu_ms": 4.22603
+          },
+          {
+            "frame": 15,
+            "full": false,
+            "gpu_ms": 4.923354
+          },
+          {
+            "frame": 16,
+            "full": true,
+            "gpu_ms": 77.649695
+          },
+          {
+            "frame": 17,
+            "full": false,
+            "gpu_ms": 2.783409
+          },
+          {
+            "frame": 18,
+            "full": false,
+            "gpu_ms": 2.727823
+          },
+          {
+            "frame": 19,
+            "full": false,
+            "gpu_ms": 2.800601
+          },
+          {
+            "frame": 20,
+            "full": true,
+            "gpu_ms": 78.967119
+          },
+          {
+            "frame": 21,
+            "full": false,
+            "gpu_ms": 2.603988
+          },
+          {
+            "frame": 22,
+            "full": false,
+            "gpu_ms": 2.56844
+          },
+          {
+            "frame": 23,
+            "full": false,
+            "gpu_ms": 2.609238
+          }
+        ],
+        "mean_ms": 21.790682666666665,
+        "full_ms": 78.170525,
+        "reconstruction_ms": 2.9974018888888887
+      },
+      {
+        "round": 0,
+        "case": "legacy",
+        "sensors_before": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "36",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "9256000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "50000"
+        },
+        "sensors_after": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "46",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "10033000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "51000"
+        },
+        "frames": [
+          {
+            "frame": 0,
+            "full": true,
+            "gpu_ms": 76.417835
+          },
+          {
+            "frame": 1,
+            "full": false,
+            "gpu_ms": 1.135277
+          },
+          {
+            "frame": 2,
+            "full": true,
+            "gpu_ms": 77.151749
+          },
+          {
+            "frame": 3,
+            "full": false,
+            "gpu_ms": 1.187777
+          },
+          {
+            "frame": 4,
+            "full": true,
+            "gpu_ms": 76.786575
+          },
+          {
+            "frame": 5,
+            "full": false,
+            "gpu_ms": 1.143493
+          },
+          {
+            "frame": 6,
+            "full": true,
+            "gpu_ms": 76.089411
+          },
+          {
+            "frame": 7,
+            "full": false,
+            "gpu_ms": 1.173389
+          },
+          {
+            "frame": 8,
+            "full": true,
+            "gpu_ms": 75.686004
+          },
+          {
+            "frame": 9,
+            "full": true,
+            "gpu_ms": 76.80998
+          },
+          {
+            "frame": 10,
+            "full": true,
+            "gpu_ms": 76.073861
+          },
+          {
+            "frame": 11,
+            "full": true,
+            "gpu_ms": 76.906123
+          },
+          {
+            "frame": 12,
+            "full": true,
+            "gpu_ms": 76.527804
+          },
+          {
+            "frame": 13,
+            "full": true,
+            "gpu_ms": 77.328445
+          },
+          {
+            "frame": 14,
+            "full": true,
+            "gpu_ms": 77.220039
+          },
+          {
+            "frame": 15,
+            "full": false,
+            "gpu_ms": 1.135317
+          },
+          {
+            "frame": 16,
+            "full": true,
+            "gpu_ms": 77.335699
+          },
+          {
+            "frame": 17,
+            "full": false,
+            "gpu_ms": 1.165294
+          },
+          {
+            "frame": 18,
+            "full": true,
+            "gpu_ms": 76.560105
+          },
+          {
+            "frame": 19,
+            "full": true,
+            "gpu_ms": 76.525479
+          },
+          {
+            "frame": 20,
+            "full": false,
+            "gpu_ms": 1.14197
+          },
+          {
+            "frame": 21,
+            "full": true,
+            "gpu_ms": 77.174673
+          },
+          {
+            "frame": 22,
+            "full": false,
+            "gpu_ms": 1.144975
+          },
+          {
+            "frame": 23,
+            "full": true,
+            "gpu_ms": 76.79403
+          }
+        ],
+        "mean_ms": 51.6711525,
+        "full_ms": 76.93328425,
+        "reconstruction_ms": 1.146889
+      },
+      {
+        "round": 1,
+        "case": "legacy",
+        "sensors_before": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "45",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "10015000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "51000"
+        },
+        "sensors_after": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "46",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "10040000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "53000"
+        },
+        "frames": [
+          {
+            "frame": 0,
+            "full": true,
+            "gpu_ms": 75.691896
+          },
+          {
+            "frame": 1,
+            "full": false,
+            "gpu_ms": 1.119327
+          },
+          {
+            "frame": 2,
+            "full": true,
+            "gpu_ms": 76.497867
+          },
+          {
+            "frame": 3,
+            "full": false,
+            "gpu_ms": 1.128905
+          },
+          {
+            "frame": 4,
+            "full": true,
+            "gpu_ms": 75.685924
+          },
+          {
+            "frame": 5,
+            "full": false,
+            "gpu_ms": 1.112714
+          },
+          {
+            "frame": 6,
+            "full": true,
+            "gpu_ms": 76.580784
+          },
+          {
+            "frame": 7,
+            "full": false,
+            "gpu_ms": 1.133955
+          },
+          {
+            "frame": 8,
+            "full": true,
+            "gpu_ms": 76.585754
+          },
+          {
+            "frame": 9,
+            "full": true,
+            "gpu_ms": 76.385053
+          },
+          {
+            "frame": 10,
+            "full": true,
+            "gpu_ms": 77.338464
+          },
+          {
+            "frame": 11,
+            "full": true,
+            "gpu_ms": 76.724698
+          },
+          {
+            "frame": 12,
+            "full": true,
+            "gpu_ms": 76.854104
+          },
+          {
+            "frame": 13,
+            "full": true,
+            "gpu_ms": 76.745057
+          },
+          {
+            "frame": 14,
+            "full": true,
+            "gpu_ms": 76.79928
+          },
+          {
+            "frame": 15,
+            "full": false,
+            "gpu_ms": 1.166056
+          },
+          {
+            "frame": 16,
+            "full": true,
+            "gpu_ms": 75.826872
+          },
+          {
+            "frame": 17,
+            "full": false,
+            "gpu_ms": 1.18433
+          },
+          {
+            "frame": 18,
+            "full": true,
+            "gpu_ms": 75.908988
+          },
+          {
+            "frame": 19,
+            "full": true,
+            "gpu_ms": 76.752871
+          },
+          {
+            "frame": 20,
+            "full": false,
+            "gpu_ms": 1.129907
+          },
+          {
+            "frame": 21,
+            "full": true,
+            "gpu_ms": 75.956759
+          },
+          {
+            "frame": 22,
+            "full": false,
+            "gpu_ms": 1.130348
+          },
+          {
+            "frame": 23,
+            "full": true,
+            "gpu_ms": 77.153032
+          }
+        ],
+        "mean_ms": 51.383967,
+        "full_ms": 76.499620375,
+        "reconstruction_ms": 1.15266025
+      },
+      {
+        "round": 1,
+        "case": "n4",
+        "sensors_before": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "46",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "10042000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "52000"
+        },
+        "sensors_after": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "38",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz \n1: 854Mhz *\n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "9461000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "51000"
+        },
+        "frames": [
+          {
+            "frame": 0,
+            "full": true,
+            "gpu_ms": 77.535398
+          },
+          {
+            "frame": 1,
+            "full": false,
+            "gpu_ms": 2.651197
+          },
+          {
+            "frame": 2,
+            "full": false,
+            "gpu_ms": 2.653682
+          },
+          {
+            "frame": 3,
+            "full": false,
+            "gpu_ms": 2.574011
+          },
+          {
+            "frame": 4,
+            "full": true,
+            "gpu_ms": 78.08905
+          },
+          {
+            "frame": 5,
+            "full": false,
+            "gpu_ms": 2.693678
+          },
+          {
+            "frame": 6,
+            "full": false,
+            "gpu_ms": 2.67368
+          },
+          {
+            "frame": 7,
+            "full": false,
+            "gpu_ms": 2.63697
+          },
+          {
+            "frame": 8,
+            "full": true,
+            "gpu_ms": 78.081195
+          },
+          {
+            "frame": 9,
+            "full": false,
+            "gpu_ms": 2.641258
+          },
+          {
+            "frame": 10,
+            "full": false,
+            "gpu_ms": 2.749264
+          },
+          {
+            "frame": 11,
+            "full": false,
+            "gpu_ms": 2.905
+          },
+          {
+            "frame": 12,
+            "full": true,
+            "gpu_ms": 77.972789
+          },
+          {
+            "frame": 13,
+            "full": false,
+            "gpu_ms": 1.670173
+          },
+          {
+            "frame": 14,
+            "full": false,
+            "gpu_ms": 4.211001
+          },
+          {
+            "frame": 15,
+            "full": false,
+            "gpu_ms": 4.186154
+          },
+          {
+            "frame": 16,
+            "full": true,
+            "gpu_ms": 78.181666
+          },
+          {
+            "frame": 17,
+            "full": false,
+            "gpu_ms": 2.655005
+          },
+          {
+            "frame": 18,
+            "full": false,
+            "gpu_ms": 2.749504
+          },
+          {
+            "frame": 19,
+            "full": false,
+            "gpu_ms": 3.962849
+          },
+          {
+            "frame": 20,
+            "full": true,
+            "gpu_ms": 77.488189
+          },
+          {
+            "frame": 21,
+            "full": false,
+            "gpu_ms": 4.003286
+          },
+          {
+            "frame": 22,
+            "full": false,
+            "gpu_ms": 2.575093
+          },
+          {
+            "frame": 23,
+            "full": false,
+            "gpu_ms": 2.65236
+          }
+        ],
+        "mean_ms": 21.85900575,
+        "full_ms": 77.88088133333333,
+        "reconstruction_ms": 3.1850472222222224
+      },
+      {
+        "round": 1,
+        "case": "n3",
+        "sensors_before": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "38",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "9452000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "51000"
+        },
+        "sensors_after": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "39",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "9314000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "51000"
+        },
+        "frames": [
+          {
+            "frame": 0,
+            "full": true,
+            "gpu_ms": 77.11015
+          },
+          {
+            "frame": 1,
+            "full": false,
+            "gpu_ms": 2.536499
+          },
+          {
+            "frame": 2,
+            "full": false,
+            "gpu_ms": 2.630839
+          },
+          {
+            "frame": 3,
+            "full": true,
+            "gpu_ms": 77.801023
+          },
+          {
+            "frame": 4,
+            "full": false,
+            "gpu_ms": 3.133594
+          },
+          {
+            "frame": 5,
+            "full": false,
+            "gpu_ms": 2.618655
+          },
+          {
+            "frame": 6,
+            "full": true,
+            "gpu_ms": 78.56287
+          },
+          {
+            "frame": 7,
+            "full": false,
+            "gpu_ms": 2.580222
+          },
+          {
+            "frame": 8,
+            "full": false,
+            "gpu_ms": 2.677207
+          },
+          {
+            "frame": 9,
+            "full": true,
+            "gpu_ms": 78.290633
+          },
+          {
+            "frame": 10,
+            "full": false,
+            "gpu_ms": 2.633403
+          },
+          {
+            "frame": 11,
+            "full": false,
+            "gpu_ms": 2.787055
+          },
+          {
+            "frame": 12,
+            "full": true,
+            "gpu_ms": 77.97828
+          },
+          {
+            "frame": 13,
+            "full": false,
+            "gpu_ms": 1.666807
+          },
+          {
+            "frame": 14,
+            "full": false,
+            "gpu_ms": 4.449254
+          },
+          {
+            "frame": 15,
+            "full": true,
+            "gpu_ms": 77.682919
+          },
+          {
+            "frame": 16,
+            "full": false,
+            "gpu_ms": 2.620299
+          },
+          {
+            "frame": 17,
+            "full": false,
+            "gpu_ms": 2.866005
+          },
+          {
+            "frame": 18,
+            "full": true,
+            "gpu_ms": 77.451719
+          },
+          {
+            "frame": 19,
+            "full": false,
+            "gpu_ms": 2.520068
+          },
+          {
+            "frame": 20,
+            "full": false,
+            "gpu_ms": 2.604589
+          },
+          {
+            "frame": 21,
+            "full": true,
+            "gpu_ms": 77.785954
+          },
+          {
+            "frame": 22,
+            "full": false,
+            "gpu_ms": 2.623064
+          },
+          {
+            "frame": 23,
+            "full": false,
+            "gpu_ms": 2.718525
+          }
+        ],
+        "mean_ms": 27.74729025,
+        "full_ms": 77.724718,
+        "reconstruction_ms": 2.758576375
+      },
+      {
+        "round": 1,
+        "case": "n2",
+        "sensors_before": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "38",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "9302000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "51000"
+        },
+        "sensors_after": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "42",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "9668000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "51000"
+        },
+        "frames": [
+          {
+            "frame": 0,
+            "full": true,
+            "gpu_ms": 77.771847
+          },
+          {
+            "frame": 1,
+            "full": false,
+            "gpu_ms": 2.553732
+          },
+          {
+            "frame": 2,
+            "full": true,
+            "gpu_ms": 79.244285
+          },
+          {
+            "frame": 3,
+            "full": false,
+            "gpu_ms": 2.609278
+          },
+          {
+            "frame": 4,
+            "full": true,
+            "gpu_ms": 78.516262
+          },
+          {
+            "frame": 5,
+            "full": false,
+            "gpu_ms": 2.550887
+          },
+          {
+            "frame": 6,
+            "full": true,
+            "gpu_ms": 78.926281
+          },
+          {
+            "frame": 7,
+            "full": false,
+            "gpu_ms": 2.651798
+          },
+          {
+            "frame": 8,
+            "full": true,
+            "gpu_ms": 78.658091
+          },
+          {
+            "frame": 9,
+            "full": false,
+            "gpu_ms": 2.696083
+          },
+          {
+            "frame": 10,
+            "full": true,
+            "gpu_ms": 78.957941
+          },
+          {
+            "frame": 11,
+            "full": false,
+            "gpu_ms": 2.657129
+          },
+          {
+            "frame": 12,
+            "full": true,
+            "gpu_ms": 78.941871
+          },
+          {
+            "frame": 13,
+            "full": false,
+            "gpu_ms": 1.682156
+          },
+          {
+            "frame": 14,
+            "full": true,
+            "gpu_ms": 77.261157
+          },
+          {
+            "frame": 15,
+            "full": false,
+            "gpu_ms": 2.576215
+          },
+          {
+            "frame": 16,
+            "full": true,
+            "gpu_ms": 77.978119
+          },
+          {
+            "frame": 17,
+            "full": false,
+            "gpu_ms": 3.006593
+          },
+          {
+            "frame": 18,
+            "full": true,
+            "gpu_ms": 78.581145
+          },
+          {
+            "frame": 19,
+            "full": false,
+            "gpu_ms": 2.532211
+          },
+          {
+            "frame": 20,
+            "full": true,
+            "gpu_ms": 78.782488
+          },
+          {
+            "frame": 21,
+            "full": false,
+            "gpu_ms": 2.514017
+          },
+          {
+            "frame": 22,
+            "full": true,
+            "gpu_ms": 78.912775
+          },
+          {
+            "frame": 23,
+            "full": false,
+            "gpu_ms": 2.545757
+          }
+        ],
+        "mean_ms": 40.44287533333333,
+        "full_ms": 78.4095925,
+        "reconstruction_ms": 2.4761581666666665
+      },
+      {
+        "round": 1,
+        "case": "full",
+        "sensors_before": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "42",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "9657000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "51000"
+        },
+        "sensors_after": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "50",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "10154000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "51000"
+        },
+        "frames": [
+          {
+            "frame": 0,
+            "full": true,
+            "gpu_ms": 75.516001
+          },
+          {
+            "frame": 1,
+            "full": true,
+            "gpu_ms": 76.920269
+          },
+          {
+            "frame": 2,
+            "full": true,
+            "gpu_ms": 77.050958
+          },
+          {
+            "frame": 3,
+            "full": true,
+            "gpu_ms": 76.870174
+          },
+          {
+            "frame": 4,
+            "full": true,
+            "gpu_ms": 77.119648
+          },
+          {
+            "frame": 5,
+            "full": true,
+            "gpu_ms": 76.183389
+          },
+          {
+            "frame": 6,
+            "full": true,
+            "gpu_ms": 76.651759
+          },
+          {
+            "frame": 7,
+            "full": true,
+            "gpu_ms": 76.298688
+          },
+          {
+            "frame": 8,
+            "full": true,
+            "gpu_ms": 76.665185
+          },
+          {
+            "frame": 9,
+            "full": true,
+            "gpu_ms": 77.418456
+          },
+          {
+            "frame": 10,
+            "full": true,
+            "gpu_ms": 77.548944
+          },
+          {
+            "frame": 11,
+            "full": true,
+            "gpu_ms": 77.359905
+          },
+          {
+            "frame": 12,
+            "full": true,
+            "gpu_ms": 76.454945
+          },
+          {
+            "frame": 13,
+            "full": true,
+            "gpu_ms": 76.969603
+          },
+          {
+            "frame": 14,
+            "full": true,
+            "gpu_ms": 76.305381
+          },
+          {
+            "frame": 15,
+            "full": true,
+            "gpu_ms": 77.022985
+          },
+          {
+            "frame": 16,
+            "full": true,
+            "gpu_ms": 76.451058
+          },
+          {
+            "frame": 17,
+            "full": true,
+            "gpu_ms": 78.016472
+          },
+          {
+            "frame": 18,
+            "full": true,
+            "gpu_ms": 76.764293
+          },
+          {
+            "frame": 19,
+            "full": true,
+            "gpu_ms": 77.224207
+          },
+          {
+            "frame": 20,
+            "full": true,
+            "gpu_ms": 76.566197
+          },
+          {
+            "frame": 21,
+            "full": true,
+            "gpu_ms": 75.856408
+          },
+          {
+            "frame": 22,
+            "full": true,
+            "gpu_ms": 76.920871
+          },
+          {
+            "frame": 23,
+            "full": true,
+            "gpu_ms": 77.101814
+          }
+        ],
+        "mean_ms": 76.8045195,
+        "full_ms": 76.8045195,
+        "reconstruction_ms": null
+      },
+      {
+        "round": 2,
+        "case": "full",
+        "sensors_before": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "50",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "10150000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "51000"
+        },
+        "sensors_after": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "53",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "10425000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "52000"
+        },
+        "frames": [
+          {
+            "frame": 0,
+            "full": true,
+            "gpu_ms": 76.329267
+          },
+          {
+            "frame": 1,
+            "full": true,
+            "gpu_ms": 77.580324
+          },
+          {
+            "frame": 2,
+            "full": true,
+            "gpu_ms": 77.186696
+          },
+          {
+            "frame": 3,
+            "full": true,
+            "gpu_ms": 77.514078
+          },
+          {
+            "frame": 4,
+            "full": true,
+            "gpu_ms": 77.404109
+          },
+          {
+            "frame": 5,
+            "full": true,
+            "gpu_ms": 77.237071
+          },
+          {
+            "frame": 6,
+            "full": true,
+            "gpu_ms": 76.075184
+          },
+          {
+            "frame": 7,
+            "full": true,
+            "gpu_ms": 76.928325
+          },
+          {
+            "frame": 8,
+            "full": true,
+            "gpu_ms": 77.422263
+          },
+          {
+            "frame": 9,
+            "full": true,
+            "gpu_ms": 77.279472
+          },
+          {
+            "frame": 10,
+            "full": true,
+            "gpu_ms": 77.20477
+          },
+          {
+            "frame": 11,
+            "full": true,
+            "gpu_ms": 75.857731
+          },
+          {
+            "frame": 12,
+            "full": true,
+            "gpu_ms": 77.487708
+          },
+          {
+            "frame": 13,
+            "full": true,
+            "gpu_ms": 76.689631
+          },
+          {
+            "frame": 14,
+            "full": true,
+            "gpu_ms": 77.444385
+          },
+          {
+            "frame": 15,
+            "full": true,
+            "gpu_ms": 77.400382
+          },
+          {
+            "frame": 16,
+            "full": true,
+            "gpu_ms": 75.95239
+          },
+          {
+            "frame": 17,
+            "full": true,
+            "gpu_ms": 77.607736
+          },
+          {
+            "frame": 18,
+            "full": true,
+            "gpu_ms": 76.858552
+          },
+          {
+            "frame": 19,
+            "full": true,
+            "gpu_ms": 77.6206
+          },
+          {
+            "frame": 20,
+            "full": true,
+            "gpu_ms": 77.003107
+          },
+          {
+            "frame": 21,
+            "full": true,
+            "gpu_ms": 76.506523
+          },
+          {
+            "frame": 22,
+            "full": true,
+            "gpu_ms": 76.442882
+          },
+          {
+            "frame": 23,
+            "full": true,
+            "gpu_ms": 77.756017
+          }
+        ],
+        "mean_ms": 77.06415941666667,
+        "full_ms": 77.06415941666667,
+        "reconstruction_ms": null
+      },
+      {
+        "round": 2,
+        "case": "n2",
+        "sensors_before": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "53",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "10411000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "51000"
+        },
+        "sensors_after": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "43",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "9705000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "51000"
+        },
+        "frames": [
+          {
+            "frame": 0,
+            "full": true,
+            "gpu_ms": 77.666167
+          },
+          {
+            "frame": 1,
+            "full": false,
+            "gpu_ms": 2.539265
+          },
+          {
+            "frame": 2,
+            "full": true,
+            "gpu_ms": 79.205652
+          },
+          {
+            "frame": 3,
+            "full": false,
+            "gpu_ms": 2.764412
+          },
+          {
+            "frame": 4,
+            "full": true,
+            "gpu_ms": 78.782167
+          },
+          {
+            "frame": 5,
+            "full": false,
+            "gpu_ms": 2.540226
+          },
+          {
+            "frame": 6,
+            "full": true,
+            "gpu_ms": 78.842201
+          },
+          {
+            "frame": 7,
+            "full": false,
+            "gpu_ms": 2.595251
+          },
+          {
+            "frame": 8,
+            "full": true,
+            "gpu_ms": 78.933615
+          },
+          {
+            "frame": 9,
+            "full": false,
+            "gpu_ms": 2.577537
+          },
+          {
+            "frame": 10,
+            "full": true,
+            "gpu_ms": 77.622564
+          },
+          {
+            "frame": 11,
+            "full": false,
+            "gpu_ms": 2.592646
+          },
+          {
+            "frame": 12,
+            "full": true,
+            "gpu_ms": 78.758763
+          },
+          {
+            "frame": 13,
+            "full": false,
+            "gpu_ms": 1.648252
+          },
+          {
+            "frame": 14,
+            "full": true,
+            "gpu_ms": 78.366137
+          },
+          {
+            "frame": 15,
+            "full": false,
+            "gpu_ms": 2.58423
+          },
+          {
+            "frame": 16,
+            "full": true,
+            "gpu_ms": 77.206052
+          },
+          {
+            "frame": 17,
+            "full": false,
+            "gpu_ms": 2.596854
+          },
+          {
+            "frame": 18,
+            "full": true,
+            "gpu_ms": 78.657771
+          },
+          {
+            "frame": 19,
+            "full": false,
+            "gpu_ms": 2.510089
+          },
+          {
+            "frame": 20,
+            "full": true,
+            "gpu_ms": 76.958743
+          },
+          {
+            "frame": 21,
+            "full": false,
+            "gpu_ms": 2.49987
+          },
+          {
+            "frame": 22,
+            "full": true,
+            "gpu_ms": 78.681416
+          },
+          {
+            "frame": 23,
+            "full": false,
+            "gpu_ms": 2.530448
+          }
+        ],
+        "mean_ms": 40.249885416666665,
+        "full_ms": 78.10481366666667,
+        "reconstruction_ms": 2.3949571666666665
+      },
+      {
+        "round": 2,
+        "case": "n3",
+        "sensors_before": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "43",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "9694000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "51000"
+        },
+        "sensors_after": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "38",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "9463000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "51000"
+        },
+        "frames": [
+          {
+            "frame": 0,
+            "full": true,
+            "gpu_ms": 76.572328
+          },
+          {
+            "frame": 1,
+            "full": false,
+            "gpu_ms": 2.612764
+          },
+          {
+            "frame": 2,
+            "full": false,
+            "gpu_ms": 2.618736
+          },
+          {
+            "frame": 3,
+            "full": true,
+            "gpu_ms": 78.370705
+          },
+          {
+            "frame": 4,
+            "full": false,
+            "gpu_ms": 2.595972
+          },
+          {
+            "frame": 5,
+            "full": false,
+            "gpu_ms": 3.734896
+          },
+          {
+            "frame": 6,
+            "full": true,
+            "gpu_ms": 76.877107
+          },
+          {
+            "frame": 7,
+            "full": false,
+            "gpu_ms": 2.562108
+          },
+          {
+            "frame": 8,
+            "full": false,
+            "gpu_ms": 2.645346
+          },
+          {
+            "frame": 9,
+            "full": true,
+            "gpu_ms": 78.477709
+          },
+          {
+            "frame": 10,
+            "full": false,
+            "gpu_ms": 2.629676
+          },
+          {
+            "frame": 11,
+            "full": false,
+            "gpu_ms": 2.765414
+          },
+          {
+            "frame": 12,
+            "full": true,
+            "gpu_ms": 79.710972
+          },
+          {
+            "frame": 13,
+            "full": false,
+            "gpu_ms": 1.64753
+          },
+          {
+            "frame": 14,
+            "full": false,
+            "gpu_ms": 4.340968
+          },
+          {
+            "frame": 15,
+            "full": true,
+            "gpu_ms": 78.478069
+          },
+          {
+            "frame": 16,
+            "full": false,
+            "gpu_ms": 2.627713
+          },
+          {
+            "frame": 17,
+            "full": false,
+            "gpu_ms": 2.597295
+          },
+          {
+            "frame": 18,
+            "full": true,
+            "gpu_ms": 77.552551
+          },
+          {
+            "frame": 19,
+            "full": false,
+            "gpu_ms": 2.57381
+          },
+          {
+            "frame": 20,
+            "full": false,
+            "gpu_ms": 2.580904
+          },
+          {
+            "frame": 21,
+            "full": true,
+            "gpu_ms": 78.297526
+          },
+          {
+            "frame": 22,
+            "full": false,
+            "gpu_ms": 2.560505
+          },
+          {
+            "frame": 23,
+            "full": false,
+            "gpu_ms": 2.817513
+          }
+        ],
+        "mean_ms": 27.982113000000002,
+        "full_ms": 78.50977950000001,
+        "reconstruction_ms": 2.7182797499999998
+      },
+      {
+        "round": 2,
+        "case": "n4",
+        "sensors_before": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "38",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "9454000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "51000"
+        },
+        "sensors_after": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "38",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "10503000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "52000"
+        },
+        "frames": [
+          {
+            "frame": 0,
+            "full": true,
+            "gpu_ms": 78.044045
+          },
+          {
+            "frame": 1,
+            "full": false,
+            "gpu_ms": 2.835027
+          },
+          {
+            "frame": 2,
+            "full": false,
+            "gpu_ms": 2.616692
+          },
+          {
+            "frame": 3,
+            "full": false,
+            "gpu_ms": 2.636529
+          },
+          {
+            "frame": 4,
+            "full": true,
+            "gpu_ms": 77.762991
+          },
+          {
+            "frame": 5,
+            "full": false,
+            "gpu_ms": 2.533574
+          },
+          {
+            "frame": 6,
+            "full": false,
+            "gpu_ms": 2.624947
+          },
+          {
+            "frame": 7,
+            "full": false,
+            "gpu_ms": 2.548843
+          },
+          {
+            "frame": 8,
+            "full": true,
+            "gpu_ms": 79.251058
+          },
+          {
+            "frame": 9,
+            "full": false,
+            "gpu_ms": 3.166096
+          },
+          {
+            "frame": 10,
+            "full": false,
+            "gpu_ms": 2.895021
+          },
+          {
+            "frame": 11,
+            "full": false,
+            "gpu_ms": 4.26302
+          },
+          {
+            "frame": 12,
+            "full": true,
+            "gpu_ms": 77.900732
+          },
+          {
+            "frame": 13,
+            "full": false,
+            "gpu_ms": 1.769282
+          },
+          {
+            "frame": 14,
+            "full": false,
+            "gpu_ms": 4.201303
+          },
+          {
+            "frame": 15,
+            "full": false,
+            "gpu_ms": 4.188719
+          },
+          {
+            "frame": 16,
+            "full": true,
+            "gpu_ms": 78.70983
+          },
+          {
+            "frame": 17,
+            "full": false,
+            "gpu_ms": 2.588438
+          },
+          {
+            "frame": 18,
+            "full": false,
+            "gpu_ms": 2.801122
+          },
+          {
+            "frame": 19,
+            "full": false,
+            "gpu_ms": 2.767859
+          },
+          {
+            "frame": 20,
+            "full": true,
+            "gpu_ms": 79.601965
+          },
+          {
+            "frame": 21,
+            "full": false,
+            "gpu_ms": 2.648031
+          },
+          {
+            "frame": 22,
+            "full": false,
+            "gpu_ms": 2.572969
+          },
+          {
+            "frame": 23,
+            "full": false,
+            "gpu_ms": 2.824927
+          }
+        ],
+        "mean_ms": 21.88126475,
+        "full_ms": 78.737509,
+        "reconstruction_ms": 2.9291833333333335
+      },
+      {
+        "round": 2,
+        "case": "legacy",
+        "sensors_before": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "38",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "10494000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "52000"
+        },
+        "sensors_after": {
+          "/sys/class/drm/card1/device/gpu_busy_percent": "45",
+          "/sys/class/drm/card1/device/pp_dpm_sclk": "0: 800Mhz *\n1: 1100Mhz \n2: 2700Mhz",
+          "/sys/class/drm/card1/device/power_dpm_force_performance_level": "auto",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/power1_average": "10086000",
+          "/sys/class/drm/card1/device/hwmon/hwmon4/temp1_input": "52000"
+        },
+        "frames": [
+          {
+            "frame": 0,
+            "full": true,
+            "gpu_ms": 76.622303
+          },
+          {
+            "frame": 1,
+            "full": false,
+            "gpu_ms": 1.132592
+          },
+          {
+            "frame": 2,
+            "full": true,
+            "gpu_ms": 77.148663
+          },
+          {
+            "frame": 3,
+            "full": false,
+            "gpu_ms": 1.140567
+          },
+          {
+            "frame": 4,
+            "full": true,
+            "gpu_ms": 75.968581
+          },
+          {
+            "frame": 5,
+            "full": false,
+            "gpu_ms": 1.140767
+          },
+          {
+            "frame": 6,
+            "full": true,
+            "gpu_ms": 75.96782
+          },
+          {
+            "frame": 7,
+            "full": false,
+            "gpu_ms": 1.229737
+          },
+          {
+            "frame": 8,
+            "full": true,
+            "gpu_ms": 76.525479
+          },
+          {
+            "frame": 9,
+            "full": true,
+            "gpu_ms": 77.473881
+          },
+          {
+            "frame": 10,
+            "full": true,
+            "gpu_ms": 76.244025
+          },
+          {
+            "frame": 11,
+            "full": true,
+            "gpu_ms": 77.859334
+          },
+          {
+            "frame": 12,
+            "full": true,
+            "gpu_ms": 77.826752
+          },
+          {
+            "frame": 13,
+            "full": true,
+            "gpu_ms": 76.892978
+          },
+          {
+            "frame": 14,
+            "full": true,
+            "gpu_ms": 76.897546
+          },
+          {
+            "frame": 15,
+            "full": false,
+            "gpu_ms": 1.120248
+          },
+          {
+            "frame": 16,
+            "full": true,
+            "gpu_ms": 77.713376
+          },
+          {
+            "frame": 17,
+            "full": false,
+            "gpu_ms": 1.418776
+          },
+          {
+            "frame": 18,
+            "full": true,
+            "gpu_ms": 76.585874
+          },
+          {
+            "frame": 19,
+            "full": true,
+            "gpu_ms": 77.440738
+          },
+          {
+            "frame": 20,
+            "full": false,
+            "gpu_ms": 1.132592
+          },
+          {
+            "frame": 21,
+            "full": true,
+            "gpu_ms": 76.148844
+          },
+          {
+            "frame": 22,
+            "full": false,
+            "gpu_ms": 1.129907
+          },
+          {
+            "frame": 23,
+            "full": true,
+            "gpu_ms": 77.066066
+          }
+        ],
+        "mean_ms": 51.781141416666664,
+        "full_ms": 77.07152175,
+        "reconstruction_ms": 1.2003807499999999
+      }
+    ],
+    "source": "ac2eba958e95af0c5dfe698689c59ffd71a9e49b",
+    "binary_sha256": {
+      "build/seamless/run_sequence_final": "f3b95a0008e8a9f3ad0bb141846bfe42585566bd61bc8fb401521f2f3ad2a251",
+      "build/seamless/before/run_sequence_fair": "0d1b92f40fa7c5e87bd80eb9343e945d197eca45efac979fdf0cf7137c7670b4"
+    },
+    "summary": {
+      "full": {
+        "median_ms": 76.8605795,
+        "min_ms": 76.8045195,
+        "max_ms": 77.06415941666667,
+        "full_median_ms": 76.8605795,
+        "reconstruction_median_ms": null
+      },
+      "n2": {
+        "median_ms": 40.249885416666665,
+        "min_ms": 40.165201,
+        "max_ms": 40.44287533333333,
+        "full_median_ms": 78.10481366666667,
+        "reconstruction_median_ms": 2.4761581666666665
+      },
+      "n3": {
+        "median_ms": 27.901830583333332,
+        "min_ms": 27.74729025,
+        "max_ms": 27.982113000000002,
+        "full_median_ms": 78.20830674999999,
+        "reconstruction_median_ms": 2.7485925
+      },
+      "n4": {
+        "median_ms": 21.85900575,
+        "min_ms": 21.790682666666665,
+        "max_ms": 21.88126475,
+        "full_median_ms": 78.170525,
+        "reconstruction_median_ms": 2.9974018888888887
+      },
+      "legacy": {
+        "median_ms": 51.6711525,
+        "min_ms": 51.383967,
+        "max_ms": 51.781141416666664,
+        "full_median_ms": 76.93328425,
+        "reconstruction_median_ms": 1.15266025
+      }
+    }
+  },
+  "final_image_usage_checks": {
+    "small": {
+      "status": "PASS; image bytes unchanged after Vulkan usage correction",
+      "network_selection": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "counts": [
+        2,
+        2,
+        0
+      ]
+    },
+    "silver": {
+      "status": "PASS; image bytes unchanged after Vulkan usage correction",
+      "network_selection": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "counts": [
+        2,
+        2,
+        0
+      ]
+    },
+    "experimental": {
+      "status": "PASS; image bytes unchanged after Vulkan usage correction",
+      "network_selection": [
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      "counts": [
+        2,
+        2,
+        0
+      ]
+    },
+    "quality": {
+      "status": "PASS; image bytes unchanged after Vulkan usage correction",
+      "network_selection": [
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "counts": [
+        2,
+        2,
+        0
+      ]
+    },
+    "balanced": {
+      "status": "PASS; image bytes unchanged after Vulkan usage correction",
+      "network_selection": [
+        0,
+        0,
+        1,
+        1,
+        1
+      ],
+      "counts": [
+        2,
+        2,
+        0
+      ]
+    },
+    "performance": {
+      "status": "PASS; image bytes unchanged after Vulkan usage correction",
+      "network_selection": [
+        0,
+        0,
+        1,
+        2,
+        1
+      ],
+      "counts": [
+        2,
+        2,
+        0
+      ]
+    },
+    "ultra": {
+      "status": "PASS; image bytes unchanged after Vulkan usage correction",
+      "network_selection": [
+        0,
+        0,
+        1,
+        3,
+        1
+      ],
+      "counts": [
+        2,
+        2,
+        0
+      ]
+    },
+    "allocation_usage": "history images support SAMPLED|STORAGE; write views are storage, read aliases have a sampler"
+  },
+  "installed_modes": {
+    "small": {
+      "status": "runtime/cadence smoke PASS; independent quality reference unavailable",
+      "network_selection": [
+        1,
+        0,
+        0,
+        0,
+        0
+      ],
+      "counts": [
+        2,
+        2,
+        0
+      ],
+      "sha256": [
+        "4f26ab38e0d2a9b419ee37aafa6084f60d7260aa067ea460969c7a78fec121e5",
+        "1a3ebe0849110ebedec8bd159ca2e76530711b7314d25dae0c4f12dcf26e744a",
+        "319a4903f64797bc559292415a53f673c101a5c29c150cfd13762f9646222930",
+        "34f02595f6c2f834348560ce0c086496efb69f9150227960935e0a8205f23d54"
+      ]
+    },
+    "silver": {
+      "status": "runtime/cadence smoke PASS; independent quality reference unavailable",
+      "network_selection": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "counts": [
+        2,
+        2,
+        0
+      ],
+      "sha256": [
+        "56ad6e45cb99ee80f99c13ef53ebfa9f3d937c34c04c8f89b898581c8b1362ac",
+        "63a34deeb8dd98283ca0a5a3a6805b2408f0bfe91640dd043ecb36040b2db11c",
+        "de5101434a398a6d5fc16055cd933e1188e200fcef89f1ec59562e8082e1bbde",
+        "09e6d546f6d8aaf30d63e5e893a636e00c8d574d9e99c53b32ed99fb7e8d58de"
+      ]
+    },
+    "experimental": {
+      "status": "runtime/cadence smoke PASS; independent quality reference unavailable",
+      "network_selection": [
+        1,
+        1,
+        0,
+        0,
+        0
+      ],
+      "counts": [
+        2,
+        2,
+        0
+      ],
+      "sha256": [
+        "a4870a9eee005dd8bf9af67d80e70aaff0051cd234a3a0cd09984b7bee0f5adb",
+        "3b46ef72e11cd273abc10462366ff60022d5ae3476a3f1800dc9f62d83764d46",
+        "0dc06b0629a32050278526d7019427f7f074a3509d5adf9bbcbe9cacfab755df",
+        "197a37f0b9ff7d51d606a289f2ace2945223e16620d0eea29bcca1e43bdad75e"
+      ]
+    },
+    "quality": {
+      "status": "runtime/cadence smoke PASS; independent quality reference unavailable",
+      "network_selection": [
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      "counts": [
+        2,
+        2,
+        0
+      ],
+      "sha256": [
+        "f546d069cadcb5c536b43d3cdb0df375b9dcd43f133434ae939e07c487ad5372",
+        "557561848909a0e9a2bc39633c7804fd9fbd29457798c3b22043cc44f98faf7a",
+        "d5a0a389477e0e2da13bc777010d36261511df50afea4cc152a1eff17d94c45b",
+        "c8fbc8a7e2b4a2db154636965e96b727a4740e54c012006cc6117f9c8ae8e73f"
+      ]
+    },
+    "balanced": {
+      "status": "runtime/cadence smoke PASS; independent quality reference unavailable",
+      "network_selection": [
+        0,
+        0,
+        1,
+        1,
+        1
+      ],
+      "counts": [
+        2,
+        2,
+        0
+      ],
+      "sha256": [
+        "2ddd778e53bb46e9162b73901d5c4d30cf8b769f09267d1c344adbb53c4faa9f",
+        "b2955b0a3fe11d8aea5c25dc524b10f4fb14de5eacd20776aa057af2ab9b3fe5",
+        "65d3a759824caf747899def15fa3c1a52784b22579cefba1675550ba93296447",
+        "f9692870da67e887c5a11507d0311397079fc9e3ec14080bb1fe19d6e2617474"
+      ]
+    },
+    "performance": {
+      "status": "runtime/cadence smoke PASS; independent quality reference unavailable",
+      "network_selection": [
+        0,
+        0,
+        1,
+        2,
+        1
+      ],
+      "counts": [
+        2,
+        2,
+        0
+      ],
+      "sha256": [
+        "7a89b251dc8a9626b58d6332bd2bae81234d6d9a2fb81faa1d98cbb72c8ded4b",
+        "0168f313c5c11bd606cc0b4f013f6fca259d8d3fa0ade55639e3d7910d76d570",
+        "4713db7c6576b06e412b138724507196a295d83b826cc400951a7aeaddfeb1cc",
+        "a5ec9cb4b27e1b7d0e991b7cb228934f143bfad8183073eb17ba4eb39dcb9e4f"
+      ]
+    },
+    "ultra": {
+      "status": "runtime/cadence smoke PASS; independent quality reference unavailable",
+      "network_selection": [
+        0,
+        0,
+        1,
+        3,
+        1
+      ],
+      "counts": [
+        2,
+        2,
+        0
+      ],
+      "sha256": [
+        "87ed6722301822281b0fefb4bf1a2bf8449e030afe0e0924ccbbe9e307ee932f",
+        "c292f917fcd98eacdf8353ac45f29ea078df267e54f91ebb542cbe75f5ce583b",
+        "779c00e49aaf34e526b3f44431bb6a9605623db9f683a03e8233ddaf26e33e86",
+        "a0b1d3ef6b7a412de2ec6400af6f03be7874e3808c24d25cc2e833566e5f376f"
+      ]
     }
   }
 }

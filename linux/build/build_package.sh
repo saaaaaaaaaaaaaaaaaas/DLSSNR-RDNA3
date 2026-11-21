@@ -405,7 +405,7 @@ if [[ "$gpu" == rdna3 ]]; then
     [[ ! -f docs/RDNA3-0.0.9-VALIDATION.json ]] || cp -- docs/RDNA3-0.0.9-VALIDATION.json "$pkg/"
     [[ "$profile" != z1-extreme ]] || cp -- docs/RDNA3-Z1-EXTREME.md docs/RDNA3-Z1-VALIDATION.json "$pkg/"
     case "$profile" in
-        z1-extreme-turbo) cp -- docs/RDNA3-SEAMLESS.md docs/RDNA3-SEAMLESS-VALIDATION.json "$pkg/";;
+        z1-extreme-turbo) cp -- docs/RDNA3-SEAMLESS.md docs/RDNA3-SEAMLESS-VALIDATION.json linux/package/Turbo-Temporal.txt "$pkg/";;
     esac
 fi
 chmod +x "$pkg/install.sh" "$mt/extract_model.sh"
@@ -421,6 +421,7 @@ if [[ "$profile" == z1-extreme* && "$arch" == x86_64 ]]; then
     flavor=
     [[ "$profile" != z1-extreme-turbo ]] || flavor=-Turbo
     archive="DLSS-NR-AMD-Vulcan-Linux-$version-Z1E-Optimized$flavor-RDNA-3.tar.gz"
+    [[ "$profile" != z1-extreme-turbo ]] || archive="DLSS-NR-AMD-Vulcan-Linux-$version-Z1E-Turbo-Temporal-RDNA-3.tar.gz"
 else
     archive="DLSSNR-AMD-Vulkan-Linux-$version-$arch$([[ "$gpu" == rdna4 ]] || echo "-$gpu")$profile_suffix.tar.gz"
 fi

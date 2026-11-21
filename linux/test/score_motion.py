@@ -64,18 +64,19 @@ def main():
             'exposed_mae_mean_rgb8':mean([r['exposed_mae_rgb8'] for r in warm if r['exposed_mae_rgb8'] is not None]),
             'frames':metrics}
     # An image and amplified error for the same moving frame, no generative edit.
-    i=9;names=['motion-full','motion-n2','motion-legacy']
+    i=5;names=['motion-full','motion-n2','motion-legacy']
     sheet=Image.new('RGB',(w*2,(h+24)*len(names)),(20,20,20));draw=ImageDraw.Draw(sheet)
     for row,name in enumerate(names):
         rgb=load(name,i)[...,:3];y=row*(h+24)
         diff=np.minimum(abs(rgb.astype(np.int16)-full[i][...,:3])*8,255).astype(np.uint8)
-        draw.text((8,y+5),name+' frame 9',fill='white');draw.text((w+8,y+5),'difference vs full NR x8',fill='white')
+        draw.text((8,y+5),f'{name} frame {i}',fill='white');draw.text((w+8,y+5),'difference vs full NR x8',fill='white')
         sheet.paste(Image.fromarray(rgb),(0,y+24));sheet.paste(Image.fromarray(diff),(w,y+24))
     common=[i for i in range(4,frames) if not report['cases']['motion-n2']['frames'][i]['full'] and not report['cases']['motion-legacy']['frames'][i]['full']]
     report['common_skipped_comparison']={'frames':common}
     for name in ('motion-n2','motion-legacy'):
         values=[report['cases'][name]['frames'][i]['exposed_positive_blue_error_rgb8'] for i in common]
         report['common_skipped_comparison'][name]=statistics.mean(v for v in values if v is not None)
+    report['motion_without_faults']={name:statistics.mean(r['exposed_positive_blue_error_rgb8'] for r in report['cases'][name]['frames'][4:13] if r['exposed_positive_blue_error_rgb8'] is not None) for name in ('motion-n2','motion-legacy')}
     sheet.save(root/'motion-comparison.png')
     (root/'motion-quality.json').write_text(json.dumps(report,indent=2)+'\n')
     for name,data in report['cases'].items():

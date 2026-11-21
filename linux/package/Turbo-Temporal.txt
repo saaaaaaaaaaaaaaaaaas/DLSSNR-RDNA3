@@ -1,0 +1,13 @@
+Z1 Extreme Turbo - causal temporal NR
+
+The default is full NR every second real frame. Other frames reconstruct its
+enhancement from current input and validated past history. No future frame or
+extra frame-generation stage is used.
+
+NR Control > Network > Seamless temporal NR controls this mode.
+In dlssnr-amd.ini, [Temporal] Enabled=0 runs full NR on every real frame.
+Interval accepts 2..4. Old [Reuse] settings are retired on RDNA3.
+
+Use the normal installer with your own DLL/models. No model is included.
+Motion results and remaining game/HDR/FG limitations are documented in
+RDNA3-SEAMLESS.md and RDNA3-SEAMLESS-VALIDATION.json.
