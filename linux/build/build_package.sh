@@ -402,7 +402,10 @@ if [[ "$gpu" == rdna3 ]]; then
     [[ ! -f docs/RDNA3-0.0.9-VALIDATION.json ]] || cp -- docs/RDNA3-0.0.9-VALIDATION.json "$pkg/"
     [[ "$profile" != z1-extreme ]] || cp -- docs/RDNA3-Z1-EXTREME.md docs/RDNA3-Z1-VALIDATION.json "$pkg/"
     case "$profile" in
-        z1-extreme-turbo) cp -- docs/RDNA3-SEAMLESS.md docs/RDNA3-SEAMLESS-VALIDATION.json linux/package/Turbo-Temporal.txt "$pkg/";;
+        z1-extreme-turbo)
+            cp -- docs/RDNA3-SEAMLESS.md docs/RDNA3-SEAMLESS-VALIDATION.json linux/package/Turbo-Temporal.txt "$pkg/"
+            python3 linux/build/finalize_z1e_package.py "$pkg"
+            ;;
     esac
 fi
 chmod +x "$pkg/install.sh" "$mt/extract_model.sh"
