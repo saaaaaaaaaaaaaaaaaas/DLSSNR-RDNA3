@@ -1,5 +1,11 @@
 # DLSSNR-AMD on RDNA3 (RX 7000)
 
+This is the **RDNA3 Z1 Extreme release branch**: Linux/Proton x86_64, Turbo
+Temporal, full NR every second real frame by default. Build its model-free
+release with `bash linux/build/build_z1e_release.sh`. The entry point and this
+branch's CI accept RDNA3/x86_64/Turbo only; RDNA4 and Fast are not built.
+See [release instructions and checks](docs/RDNA3-Z1E-RELEASE.md).
+
 This branch runs the same neural rendering network as the main project on AMD Radeon RX 7000 cards
 (RDNA3, gfx11), which have no FP8 matrix instructions. Linux and Proton only; `windows/` is not ported.
 Everything in the [main README](README.md) that is not about the card still applies, including the

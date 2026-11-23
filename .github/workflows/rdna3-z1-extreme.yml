@@ -1,0 +1,55 @@
+# This branch targets the Z1 Extreme only. Never add a GPU matrix here.
+name: RDNA3 Z1 Extreme package
+
+on:
+  push:
+    branches: [rdna3-z1-extreme]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  z1-extreme:
+    runs-on: ubuntu-24.04
+    env:
+      NR_GPU: rdna3
+      NR_ARCH: x86_64
+      NR_SHADER_PROFILE: z1-extreme-turbo
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake ninja-build mingw-w64 python3 p7zip-full libvulkan-dev spirv-tools
+
+      - name: Cache pinned dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            toolchain
+            artifacts/ref
+            !artifacts/ref/Vulkan-Loader
+          key: z1e-deps-v1-${{ hashFiles('fetch_deps.sh') }}
+
+      - name: Build and audit RDNA3 Z1 Extreme release
+        run: bash linux/build/build_z1e_release.sh
+
+      - name: Retain loader diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: z1e-loader-diagnostics
+          path: |
+            artifacts/ref/Vulkan-Loader/cmake-*.log
+            artifacts/ref/Vulkan-Loader/ninja-*.log
+
+      - name: Upload audited RDNA3 Z1 Extreme files
+        uses: actions/upload-artifact@v4
+        with:
+          name: DLSSNR-RDNA3-Z1-Extreme-Turbo
+          path: artifacts/z1e-release/release/*
+          if-no-files-found: error

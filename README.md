@@ -1,5 +1,10 @@
 # DLSSNR-AMD
 
+This is the **RDNA3 Z1 Extreme Turbo release branch**. Use
+`bash linux/build/build_z1e_release.sh`; see
+[release instructions](docs/RDNA3-Z1E-RELEASE.md). Its release/CI target is
+RDNA3 x86_64 only.
+
 This fork targets **Linux/Proton on RDNA3** and includes the Linux changes from
 upstream 0.0.9. Start with [README-RDNA3.md](README-RDNA3.md) and the
 [0.0.9 port report](docs/RDNA3-PORT-0.0.9.md). The upstream overview below describes
