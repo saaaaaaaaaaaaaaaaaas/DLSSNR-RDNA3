@@ -6,6 +6,20 @@ tag resolved locally to `b241aa43c45e11e3942a18dc1004dc9e5ba3ee3f`.
 Work stays on local branch `feature/z1e-ditto-relight`; no push or release.
 Only Linux/Proton RDNA3 Turbo is built. RDNA4 and Windows are outside this change.
 
+## Lighting order toggle acceptance
+
+Follow-up baseline: `6110320`. Add **Before NR** below Lighting, saved per layer
+as `NRDittoBeforeNR`, default on to preserve the existing lighting order.
+
+| Area | Required behavior and evidence |
+| --- | --- |
+| On | Relight -> NR encode/model -> existing resolve. Capture the actual model input and show the lighting change. |
+| Off | NR encode/model -> resolve -> Relight -> output codec. Model input must match Lighting off. |
+| Lifecycle | Switching order invalidates NR/reconstruction/lighting history; compare switched output with fresh stages. |
+| Composition | Lighting runs once per layer, including multiple NR passes; preserve SDR/HDR encoding, alpha, Preprocess and bypass. |
+| Compatibility | Saved/default selection, INI writer/parser and UI agree; pre-order output is unchanged. No vendor/learned shader or RDNA4 build. |
+| Delivery | Local commit and updated OptiScaler package only; no push or release. |
+
 ## Acceptance matrix before implementation
 
 | Area | Required behavior and evidence |
@@ -26,8 +40,10 @@ Physical game/FG/HDR quality is qualified separately from procedural fixtures.
 
 ## Implemented path
 
-Saved `NRLookUpsample=4` now selects **Ditto Relight**. Relight runs once on the
-full-size running reference before NR encoding. It retains upstream's AO/GI,
+Saved `NRLookUpsample=4` now selects **Ditto Relight**. With **Before NR** on
+(the default), Relight runs once on the full-size running reference before NR
+encoding. Turning it off runs Relight once after all NR passes and their resolve,
+before the output codec commits the result. It retains upstream's AO/GI,
 depth/color mips, occluder LUT, sparse filter, separate lighting histories,
 fused CACAO blur and baked curve. Its main/filter/history grid is half the
 reference size, regardless of the model scale. Composition upsamples by depth
@@ -58,7 +74,11 @@ gated to RDNA3; RDNA4 keeps the previous v0.4.0 vendor shaders and host path.
 
 Choose a RenoDX layer, **Before the upscaler**, **Upsampling: Ditto Relight**,
 and **Resolution scale: 0.25–1**. Disable **Follow render resolution** to use
-that scale. In the **Ditto Relight** group, Lighting controls AO/GI and the
+that scale. In the **Ditto Relight** group, **Before NR** sits below Lighting.
+On: the model receives the already-lit frame. Off: lighting follows the NR stack.
+The layer placement remains Before the upscaler in both cases.
+The per-layer key is `NRDittoBeforeNR = 1` (default on), and changing it resets
+the relevant histories. Lighting controls AO/GI and the
 upstream tone curve; disabling it retains guided neural reconstruction.
 Ambient occlusion, Global illumination and Samples are adjustable.
 
@@ -156,3 +176,22 @@ Vulkan-loader or dynamic pthread import. Build target: RDNA3/x86_64/Turbo.
 Implementation, checks and this receipt are saved as local commits on
 `feature/z1e-ditto-relight`. No push, tag, release or automatic installation
 was performed. Main and the published RDNA3 Z1 release remain unchanged.
+
+## Before NR toggle verification
+
+The toggle defaults on and is saved per layer as `NRDittoBeforeNR`. Tests on
+Z1 Extreme captured the encoded texture at the actual model callback boundary:
+with the toggle on, lighting changes that input; off, it matches Lighting off
+exactly. All six SDR/HDR cases pass, including full resolution, reduced model
+resolution, two passes and Preprocess. Switching both ways resets history and
+matches a fresh stage. NR-off bypass remains exact. A separate nonidentity
+model edit confirms that post-NR lighting consumes the model's result.
+
+Motion passes for both orders. The 13 previously saved final frames match byte
+for byte with Before NR on; their aggregate error scores are unchanged. One
+additional 20-frame Motion sequence checks post-NR lighting. API/synchronization
+validation reports zero errors. No shader, learned network or golden changed;
+RDNA4 was not built. These remain procedural tests, not game qualification.
+
+Evidence: [toggle validation](DITTO-BEFORE-NR-VALIDATION.json), local logs under
+`build/ditto-before-nr/`. This follow-up remains local with an updated ASI package.

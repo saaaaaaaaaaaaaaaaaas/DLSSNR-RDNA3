@@ -146,6 +146,7 @@ inline constexpr Key kKeys[] = {
     {"NRFastInterleavedPreset", kUint, 0, 1.f, 2.f, float(nr::fast::kDefaultInterleavedPreset), "Passes", "Interleaved preset", "NRFastInterleavedPreset. Interleaved's processing method.", "~Preset 1\0Preset 1\0Preset 2\0"},
 #if NR_ARCH_RDNA3
     {"NRDittoRelight", kBool, 0, 0.f, 0.f, 1.f, "Ditto Relight", "Lighting", "Enable Ditto Relight AO/GI. Off retains guided reconstruction.", nullptr},
+    {"NRDittoBeforeNR", kBool, 0, 0.f, 0.f, 1.f, "Ditto Relight", "Before NR", "On: NR sees the frame with lighting applied. Off: lighting is applied after all NR passes.", nullptr},
     {"NRDittoAO", kFloat, 2, 0.f, 1.f, 0.75f, "Ditto Relight", "Ambient occlusion", "Ambient-light occlusion strength.", nullptr},
     {"NRDittoGI", kFloat, 2, 0.f, 4.f, 2.f, "Ditto Relight", "Global illumination", "Screen-space bounce-light strength.", nullptr},
     {"NRDittoSamples", kUint, 0, 4.f, 32.f, 32.f, "Ditto Relight", "Samples", "Lighting samples per half-size pixel.", nullptr},

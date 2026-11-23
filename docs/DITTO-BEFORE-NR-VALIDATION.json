@@ -1,0 +1,20 @@
+{
+  "baseline": "6110320",
+  "gpu": "Z1 Extreme / RADV Mesa 26.2.6-arch3.1",
+  "default_before_nr": true,
+  "key": "NRDittoBeforeNR",
+  "model_boundary_checks": [
+    "Lighting order SDR prep=0 passes=1 full=0: pre-input-change=0.0571289 post-input-exact, switches reset history, NR-off bypass exact",
+    "Lighting order HDR prep=0 passes=1 full=0: pre-input-change=0.0830078 post-input-exact, switches reset history, NR-off bypass exact",
+    "Lighting order SDR prep=1 passes=2 full=0: pre-input-change=0.0585938 post-input-exact, switches reset history, NR-off bypass exact",
+    "Lighting order HDR prep=1 passes=2 full=0: pre-input-change=0.0751953 post-input-exact, switches reset history, NR-off bypass exact",
+    "Lighting order SDR prep=0 passes=1 full=1: pre-input-change=0.0571289 post-input-exact, switches reset history, NR-off bypass exact",
+    "Lighting order HDR prep=0 passes=1 full=1: pre-input-change=0.0830078 post-input-exact, switches reset history, NR-off bypass exact"
+  ],
+  "default_motion_saved_final_frames_identical": 13,
+  "default_motion_aggregate_scores_unchanged": true,
+  "motion_after_nr_passed": true,
+  "api_sync_errors": 0,
+  "shader_changes": false,
+  "post_nr_preserves_nonidentity_model_result_sdr_hdr": true
+}

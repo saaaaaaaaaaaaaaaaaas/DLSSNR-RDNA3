@@ -1,5 +1,6 @@
 // Included inside Stage::Impl. Relight sees the full-size reference in the codec's
-// existing color domain, before NR encoding. It never relights encoded neural RGB.
+// existing color domain, before NR encoding or after the complete NR stack.
+// It never relights encoded neural RGB.
 void retire_relight() {
     for (Image* im : {&relight_dummy, &relight_nd, &relight_half_nd, &relight_ao[0], &relight_ao[1],
                      &relight_hist[0], &relight_hist[1], &relight_hd[0], &relight_hd[1],

@@ -11,12 +11,15 @@ NR Control (End), RenoDX layer:
   Placement: Before the upscaler
   Upsampling: Ditto Relight (saved selection 4)
   Resolution scale: 0.25 to 1; disable Follow render resolution
-  Ditto Relight: Lighting, Ambient occlusion, Global illumination, Samples
+  Ditto Relight: Lighting, Before NR, Ambient occlusion, Global illumination, Samples
 
 At 1280x720 and 0.33, the model uses 422x238. A guided neural edit is
 reconstructed onto the original 1280x720 reference before OptiScaler's SR.
 Lighting uses full-size guides and half-size AO/GI, independent of model size.
 At scale 1, NR needs no enlargement; lighting still works.
+Before NR is on by default: NR receives the frame with lighting applied.
+Turn it off to apply lighting after all NR passes. The choice is saved per layer
+as NRDittoBeforeNR. Switching it resets the relevant histories.
 Lighting off retains guided reconstruction without the extra AO/GI and curve.
 The game's readable depth, motion vectors and jitter are required.
 

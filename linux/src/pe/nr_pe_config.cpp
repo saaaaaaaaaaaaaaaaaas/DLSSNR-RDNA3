@@ -626,12 +626,13 @@ void* renodx_field(RenoDXConfig& r, int index) {
         case 115: return &v.fast_interleaved_passes;
         case 116: return &v.fast_interleaved_preset;
         case 117: return &v.ditto_relight;
-        case 118: return &v.ditto_ao;
-        case 119: return &v.ditto_gi;
-        case 120: return &v.ditto_samples;
-        case 121: return &v.ditto_fov;
-        case 122: return &v.ditto_near;
-        case 123: return &v.ditto_far;
+        case 118: return &v.ditto_before_nr;
+        case 119: return &v.ditto_ao;
+        case 120: return &v.ditto_gi;
+        case 121: return &v.ditto_samples;
+        case 122: return &v.ditto_fov;
+        case 123: return &v.ditto_near;
+        case 124: return &v.ditto_far;
         default: return nullptr;
     }
 }
@@ -702,6 +703,7 @@ bool parse_renodx_key(RenoDXConfig& r, const std::string& key, const std::string
     else if (key == "nrresolutionscale") v.resolution_scale = renodx_float(value, d.resolution_scale, 0.25f, 1.0f);
     else if (key == "nrfollowinputres") { if (auto b = parse_bool(value)) v.follow_input_res = *b; }
     else if (key == "nrdittorelight") { if (auto b = parse_bool(value)) v.ditto_relight = *b; }
+    else if (key == "nrdittobeforenr") { if (auto b = parse_bool(value)) v.ditto_before_nr = *b; }
     else if (key == "nrdittoao") v.ditto_ao = renodx_float(value, d.ditto_ao, 0.0f, 1.0f);
     else if (key == "nrdittogi") v.ditto_gi = renodx_float(value, d.ditto_gi, 0.0f, 4.0f);
     else if (key == "nrdittofov") v.ditto_fov = renodx_float(value, d.ditto_fov, 10.0f, 170.0f);
@@ -1116,9 +1118,9 @@ void write_renodx(FILE* f, const RenoDXConfig& r) {
         v.norm_release_stops, v.norm_slew_stops, v.present_guides, v.depth_mode, v.mvec_scale_x, v.mvec_scale_y,
         r.screenshot_key.c_str(), r.screenshot_source, r.screenshot_format, r.screenshot_layout,
         r.screenshot_jpeg_quality, r.screenshot_max_mb);
-    std::fprintf(f, "\nNRDittoRelight = %u\nNRDittoAO = %.3f\nNRDittoGI = %.3f\nNRDittoSamples = %u\n"
+    std::fprintf(f, "\nNRDittoRelight = %u\nNRDittoBeforeNR = %u\nNRDittoAO = %.3f\nNRDittoGI = %.3f\nNRDittoSamples = %u\n"
                     "NRDittoFov = %.3f\nNRDittoNear = %.4f\nNRDittoFar = %.3f\n",
-                    v.ditto_relight ? 1 : 0, v.ditto_ao, v.ditto_gi, v.ditto_samples,
+                    v.ditto_relight ? 1 : 0, v.ditto_before_nr ? 1 : 0, v.ditto_ao, v.ditto_gi, v.ditto_samples,
                     v.ditto_fov, v.ditto_near, v.ditto_far);
     std::fprintf(f, "\nNROutputRect = %u\n; OptiScaler route: 0 Auto (the size at creation first), 1 Declared (default, as 0.0.7: the evaluate's size first), 2 Resource (the resource's size)\n", r.output_rect);
     std::fprintf(f,

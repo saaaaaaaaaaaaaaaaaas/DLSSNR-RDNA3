@@ -199,6 +199,83 @@ struct Test {
         printf("Independent pass histories: drift=%g, network-calls=%u\n",drift,calls);fflush(stdout);
         assert(calls==14 && drift<.004f);
     }
+#ifndef NR_DITTO_BASELINE
+    void lighting_order(const char* shaders,bool hdr,bool prep,uint32_t passes,bool full=false) {
+        const uint32_t w=99,h=65;
+        nr::renodx::StageConfig c{};c.shaders=shaders;c.width=w;c.height=h;
+        c.nr_width=full?w:33;c.nr_height=full?h:22;c.hdr_flag=hdr;
+        c.frame_format=hdr?VK_FORMAT_R16G16B16A16_SFLOAT:VK_FORMAT_R8G8B8A8_UNORM;
+        c.settings.look_upsample=4;c.settings.resolution_scale=.33f;c.settings.passes=passes;
+        assert(c.settings.ditto_before_nr);
+        begin();auto color=image(w,h,c.frame_format),out=image(w,h,c.frame_format);
+        auto depth=image(w,h,VK_FORMAT_D32_SFLOAT),mv=image(w,h,VK_FORMAT_R32G32_SFLOAT);
+        std::vector<Image> captured;
+        for(uint32_t p=0;p<passes;p++) captured.push_back(image(c.nr_width,c.nr_height,VK_FORMAT_R16G16B16A16_SFLOAT));
+        clear(color,.25f,.5f,.75f);clear(depth,.5f,0,0);clear(mv,0,0,0);barrier();end();
+        nr::renodx::StageFrame fr{};fr.colour=frame(color);fr.output=frame(out);fr.depth=frame(depth);fr.motion=frame(mv);
+        fr.after_upscale=false;fr.jitter_known=true;fr.render_width=w;fr.render_height=h;
+        fr.motion_scale_x=1.f/w;fr.motion_scale_y=1.f/h;fr.depth_inverted=true;
+        if(prep) {fr.preprocess.enabled=true;fr.preprocess.curve=1;fr.preprocess.inverse=true;}
+        struct Snapshot {std::vector<std::vector<float>> inputs;std::vector<float> output;unsigned calls=0,resets=0;};
+        const auto run=[&](nr::renodx::Stage& stage,bool reset,bool edit=false) {
+            Snapshot s;fr.reset=reset;begin();
+            stage.record(cmd,fr,[&](uint32_t pass,const nr::ColourFrame& p,const nr::ColourFrame& n,bool history_reset) {
+                s.calls++;s.resets+=history_reset?1u:0u;barrier();
+                VkImageCopy copy{};copy.srcSubresource=copy.dstSubresource={VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
+                copy.extent={p.width,p.height,1};
+                // Capture at the actual model boundary, before any output-side lighting can run.
+                vkCmdCopyImage(cmd,p.image,VK_IMAGE_LAYOUT_GENERAL,captured.at(pass).im,VK_IMAGE_LAYOUT_GENERAL,1,&copy);
+                if(edit) {
+                    const VkClearColorValue value{{.7f,.25f,.4f,1.f}};
+                    const VkImageSubresourceRange range{VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,1};
+                    vkCmdClearColorImage(cmd,n.image,VK_IMAGE_LAYOUT_GENERAL,&value,1,&range);
+                } else vkCmdCopyImage(cmd,p.image,VK_IMAGE_LAYOUT_GENERAL,n.image,VK_IMAGE_LAYOUT_GENERAL,1,&copy);
+                barrier();
+            });end();
+            assert(s.calls==passes);
+            for(auto im:captured) s.inputs.push_back(read(im));s.output=read(out);return s;
+        };
+        const auto delta=[](const std::vector<float>& a,const std::vector<float>& b) {
+            assert(a.size()==b.size());float e=0;for(size_t i=0;i<a.size();i++) e=std::max(e,std::abs(a[i]-b[i]));return e;
+        };
+        c.settings.ditto_relight=false;nr::renodx::Stage raw_stage(host,c);const auto raw=run(raw_stage,true);
+        c.settings.ditto_relight=true;nr::renodx::Stage before(host,c);const auto lit=run(before,true);
+        c.settings.ditto_before_nr=false;nr::renodx::Stage after(host,c);const auto post=run(after,true);
+        float before_change=0;
+        for(uint32_t p=0;p<passes;p++) {
+            assert(delta(post.inputs[p],raw.inputs[p])==0.f);
+            before_change=std::max(before_change,delta(lit.inputs[p],raw.inputs[p]));
+        }
+        assert(before_change>.001f&&delta(post.output,raw.output)>.01f);
+        before.set(c.settings);const auto switched_after=run(before,false);
+        assert(switched_after.resets==passes&&delta(switched_after.output,post.output)<.004f);
+        for(uint32_t p=0;p<passes;p++) assert(delta(switched_after.inputs[p],post.inputs[p])==0.f);
+        c.settings.ditto_before_nr=true;before.set(c.settings);const auto switched_before=run(before,false);
+        assert(switched_before.resets==passes&&delta(switched_before.output,lit.output)<.004f);
+        for(uint32_t p=0;p<passes;p++) assert(delta(switched_before.inputs[p],lit.inputs[p])==0.f);
+        c.settings.nr_enabled=false;before.set(c.settings);const auto disabled=run_disabled(before,fr,out,color);
+        assert(disabled);
+        if(passes==1&&!full) {
+            // After NR must light the model's actual result, not the original input.
+            const auto nr_only=run(raw_stage,true,true);
+            begin();auto stored=image(w,h,c.frame_format);barrier();
+            VkImageCopy copy{};copy.srcSubresource=copy.dstSubresource={VK_IMAGE_ASPECT_COLOR_BIT,0,0,1};
+            copy.extent={w,h,1};vkCmdCopyImage(cmd,out.im,VK_IMAGE_LAYOUT_GENERAL,stored.im,VK_IMAGE_LAYOUT_GENERAL,1,&copy);barrier();end();
+            const auto nr_then_light=run(after,true,true);
+            begin();barrier();vkCmdCopyImage(cmd,stored.im,VK_IMAGE_LAYOUT_GENERAL,color.im,VK_IMAGE_LAYOUT_GENERAL,1,&copy);barrier();end();
+            c.settings.nr_enabled=true;c.settings.ditto_before_nr=true;
+            nr::renodx::Stage light_nr_output(host,c);const auto expected=run(light_nr_output,true);
+            assert(delta(nr_then_light.output,expected.output)<.006f);
+            assert(delta(nr_then_light.output,nr_only.output)>.01f);
+        }
+        printf("Lighting order %s prep=%d passes=%u full=%d: pre-input-change=%g post-input-exact, switches reset history, NR-off bypass exact\n",
+               hdr?"HDR":"SDR",prep,passes,full,before_change);
+    }
+    bool run_disabled(nr::renodx::Stage& stage,nr::renodx::StageFrame& fr,Image out,Image color) {
+        unsigned calls=0;begin();stage.record(cmd,fr,[&](uint32_t,const nr::ColourFrame&,const nr::ColourFrame&,bool){calls++;});end();
+        return calls==0&&read(out)==read(color);
+    }
+#endif
     void test(const char* shaders,bool hdr,uint32_t w,uint32_t h,float scale,uint32_t passes,bool prep, bool bypass_last = false, bool srgb = false, bool lighting = false) {
         nr::renodx::StageConfig c{};c.shaders=shaders;c.width=w;c.height=h;c.hdr_flag=hdr;
         c.settings.resolution_scale=scale;c.settings.look_upsample=4;set_lighting(c.settings,lighting);c.settings.passes=passes;
@@ -264,6 +341,12 @@ int main(int argc,char** argv) try {
     t.composition_detail(argv[1]);
     t.composition_detail(argv[1],.0001f,.002f);
     t.composition_controls(argv[1]);
+    t.lighting_order(argv[1],false,false,1);
+    t.lighting_order(argv[1],true,false,1);
+    t.lighting_order(argv[1],false,true,2);
+    t.lighting_order(argv[1],true,true,2);
+    t.lighting_order(argv[1],false,false,1,true);
+    t.lighting_order(argv[1],true,false,1,true);
     puts("Ditto SR integration contracts passed");
 } catch(const std::exception& e) { std::fprintf(stderr,"%s\n",e.what());return 1; }
 

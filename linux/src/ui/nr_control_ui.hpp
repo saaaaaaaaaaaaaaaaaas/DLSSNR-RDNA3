@@ -237,6 +237,9 @@ bool draw_renodx(A& a, Route route, bool running, const std::function<void()>& s
             if (std::strcmp(k.group, g) != 0 || !on_route(k.name, route) || (keep && !keep(k.name))) continue;
             if (!running && std::strcmp(k.name, "Enabled") != 0) continue;
             bool off = false;   // greyed out: the value is kept but does nothing now
+            if (std::strncmp(k.name, "NRDitto", 7) == 0)
+                off = value_of("NRLookUpsample") != 4.f ||
+                      (std::strcmp(k.name, "NRDittoRelight") != 0 && value_of("NRDittoRelight") == 0.f);
             if (std::strncmp(k.name, "NRLook", 6) == 0 && std::strcmp(k.name, "NRLookMode") != 0 &&
                 std::strcmp(k.name, "NRLookUpsample") != 0)
                 off = value_of("NRLookMode") == 0.f;

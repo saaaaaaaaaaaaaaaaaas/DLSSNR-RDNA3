@@ -1441,7 +1441,7 @@ namespace {
 // stage has; NRUnlockPasses (ours) as NRPasses.
 bool history_settings_differ(const Settings& a, const Settings& b) {
     auto same3 = [](const auto& x, const auto& y) { return x[0] == y[0] && x[1] == y[1] && x[2] == y[2]; };
-    return a.ditto_relight != b.ditto_relight || a.ditto_ao != b.ditto_ao || a.ditto_gi != b.ditto_gi ||
+    return a.ditto_relight != b.ditto_relight || a.ditto_before_nr != b.ditto_before_nr || a.ditto_ao != b.ditto_ao || a.ditto_gi != b.ditto_gi ||
            a.ditto_samples != b.ditto_samples || a.ditto_fov != b.ditto_fov || a.ditto_near != b.ditto_near || a.ditto_far != b.ditto_far ||
            (a.look_upsample != b.look_upsample && (a.look_upsample == 4u || b.look_upsample == 4u)) || a.passes_mode != b.passes_mode || a.fast_method != b.fast_method ||
            std::memcmp(a.fast_passes, b.fast_passes, sizeof a.fast_passes) != 0 ||
@@ -1542,6 +1542,12 @@ uint32_t Stage::record(VkCommandBuffer cmd, const StageFrame& fr, const Network&
                        fr.depth.image && fr.motion.image && fr.jitter_known &&
                        fr.render_width && fr.render_height;
     if (!ditto) m.retire_ditto();
+#if NR_ARCH_RDNA3
+    const bool relight_before = ditto && s.ditto_relight && s.ditto_before_nr;
+    const bool relight_after = ditto && s.ditto_relight && !s.ditto_before_nr;
+#else
+    const bool relight_after = false;
+#endif
 
     // The colour into the output as it is: NR off (NeuralUplift), or every pass at zero strength (RenoDX's explicit
     // bypass).
@@ -1760,7 +1766,8 @@ uint32_t Stage::record(VkCommandBuffer cmd, const StageFrame& fr, const Network&
     // The last pass's resolve and the commit in one dispatch when the commit takes no pedestal (v6_resolve_commit).
     // The recorded RDNA4 fixtures matched the two-dispatch output. NR_RENODX_FUSE=0 keeps the two for comparison.
     static const bool fuse_off = [] { const char* e = std::getenv("NR_RENODX_FUSE"); return e && e[0] == '0'; }();
-    const bool fuse = v6 && !fuse_off && !frame_pedestal_removal(s, m.hdr, m.units);
+    // Post-NR lighting needs the linear stack result before the output codec commits it.
+    const bool fuse = v6 && !fuse_off && !relight_after && !frame_pedestal_removal(s, m.hdr, m.units);
     bool fused = false;
     {   // the images this recording's path writes or reads, made the first time one needs them
         const VkImageUsageFlags rw = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
@@ -1896,10 +1903,10 @@ uint32_t Stage::record(VkCommandBuffer cmd, const StageFrame& fr, const Network&
     look::Settings ls = look::snapshot(s, fr.after_upscale && have_motion);
     if (ditto) m.prepare_ditto(cmd, fr, borrow, passes);
 #if NR_ARCH_RDNA3
-    if (ditto && s.ditto_relight) {
+    if (relight_before) {
         m.run_relight(cmd, fr, fr.reset || m.history_reset, m.hdr ? w0.view : m.original.view);
         if (m.hdr && m.prep_on) prep_forward_hdr(m.relight_color, false);
-    } else m.retire_relight();
+    } else if (!relight_after) m.retire_relight();
 #endif
     // SDR without the black-level restore: the decode makes N'_up itself (legacy_decode_up) - no look_upsample,
     // no P_up / N'_up images
@@ -2018,7 +2025,7 @@ uint32_t Stage::record(VkCommandBuffer cmd, const StageFrame& fr, const Network&
         m.strengths(k, &transfer, &color);
         const Image& ref = k == 0 ? (
 #if NR_ARCH_RDNA3
-            ditto && s.ditto_relight ? m.relight_color :
+            relight_before ? m.relight_color :
 #endif
             (m.hdr ? w0 : m.original)) : m.stack_out(k - 1);
         Image& write = m.stack_out(k);
@@ -2580,6 +2587,24 @@ uint32_t Stage::record(VkCommandBuffer cmd, const StageFrame& fr, const Network&
         final_shaped = route.shaped;
     }
 
+#if NR_ARCH_RDNA3
+    if (relight_after) {
+        Image& final = m.stack_out(uint32_t(executed));
+        m.run_relight(cmd, fr, reset_all, final.view);
+        if (!m.hdr) {
+            // The legacy decoder with identical source/neural and full color strength
+            // is an identity store into the existing SDR output format (including UNORM).
+            LegacyConstants copy{};
+            copy.size[0] = copy.source_size[0] = copy.proxy_size[0] = copy.neural_size[0] = W;
+            copy.size[1] = copy.source_size[1] = copy.proxy_size[1] = copy.neural_size[1] = H;
+            copy.color_strength = 1.f;
+            m.dispatch(cmd, Impl::kDecodeL, m.S(Impl::kDecodeL,
+                {{0, m.relight_color.view}, {1, m.relight_color.view}, {2, m.relight_color.view},
+                 {3, m.relight_color.view}, {4, final.view}}), &copy, sizeof copy, gx, gy);
+        }
+    }
+#endif
+
     // 4. The last pass's result back into the frame's encoding (HDR: the pedestal block means - a single shaped
     // pass measures NR's own lift, unshaped - and the commit), then into the output.
     const Image* result = &m.decoded;
@@ -2605,7 +2630,11 @@ uint32_t Stage::record(VkCommandBuffer cmd, const StageFrame& fr, const Network&
         const V6Constants com = make_v6(s, m.f6, W, H, W, H, W, H, W, H, final_transfer, final_color, 0.f);
         const bool v2 = !m.units.absolute && m.feed != kFeedV1;
         const Impl::P commit = v2 ? Impl::kCommitExposure : Impl::kCommit6;
-        const std::map<uint32_t, VkImageView> cv{{0, work_final.view}, {1, w0.view},
+        const std::map<uint32_t, VkImageView> cv{{0,
+#if NR_ARCH_RDNA3
+                                                     relight_after ? m.relight_color.view :
+#endif
+                                                     work_final.view}, {1, w0.view},
                                                  {2, v2 ? m.scale.view : m.scale_or_work0()}, {3, w0.view},
                                                  {4, store_in_place ? borrow->out : m.decoded.view}, {5, m.block_mean.view}};
         prepare_store();

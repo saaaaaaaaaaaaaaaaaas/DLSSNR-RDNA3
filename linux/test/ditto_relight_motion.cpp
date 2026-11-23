@@ -62,12 +62,12 @@ struct MotionTest : Test {
         const uint32_t push[3]={p.width,p.height,identity?1u:0u};vkCmdPushConstants(cmd,layout,VK_SHADER_STAGE_COMPUTE_BIT,0,12,push);
         vkCmdDispatch(cmd,(p.width+7)/8,(p.height+7)/8,1);barrier();
     }
-    std::vector<float> motion(const char* shaders,const std::filesystem::path& output,float scale,bool lighting,bool identity,bool inverted,uint32_t mode=4,float ao=.75f,float gi=2.f) {
+    std::vector<float> motion(const char* shaders,const std::filesystem::path& output,float scale,bool lighting,bool identity,bool inverted,uint32_t mode=4,float ao=.75f,float gi=2.f,bool before_nr=true) {
         const uint32_t W=321,H=181,F=20;
         nr::renodx::StageConfig c{};c.shaders=shaders;c.width=W;c.height=H;c.nr_width=std::max(1u,uint32_t(std::lround(W*scale)));c.nr_height=std::max(1u,uint32_t(std::lround(H*scale)));
         c.hdr_flag=true;c.frame_format=VK_FORMAT_R16G16B16A16_SFLOAT;c.settings.look_upsample=mode;c.settings.resolution_scale=scale;
 #ifndef NR_DITTO_BASELINE
-        c.settings.ditto_relight=lighting;c.settings.ditto_ao=ao;c.settings.ditto_gi=gi;
+        c.settings.ditto_relight=lighting;c.settings.ditto_before_nr=before_nr;c.settings.ditto_ao=ao;c.settings.ditto_gi=gi;
 #endif
         begin();Image color=image(W,H,c.frame_format),out=image(W,H,c.frame_format),depth=image(W,H,VK_FORMAT_D32_SFLOAT),mv=image(W,H,VK_FORMAT_R32G32B32A32_SFLOAT);end();
         nr::renodx::Stage stage(host,c);nr::renodx::StageFrame fr{};fr.colour=frame(color);fr.output=frame(out);fr.depth=frame(depth);fr.motion=frame(mv);
@@ -116,7 +116,7 @@ struct MotionTest : Test {
         if(lighting) assert(effect>.01f);
 #endif
         std::filesystem::create_directories(output);
-        const std::string name=std::to_string(int(scale*100))+"-"+std::to_string(lighting)+"-"+std::to_string(identity)+"-"+std::to_string(inverted)+"-"+std::to_string(mode)+"-"+std::to_string(int(ao*100))+"-"+std::to_string(int(gi*100));
+        const std::string name=std::to_string(int(scale*100))+"-"+std::to_string(lighting)+"-"+std::to_string(identity)+"-"+std::to_string(inverted)+"-"+std::to_string(mode)+"-"+std::to_string(int(ao*100))+"-"+std::to_string(int(gi*100))+(before_nr?"":"-after-nr");
         std::ofstream report(output/(name+".txt"));report<<rmse<<" "<<edge_rmse<<" "<<max_alpha<<" "<<calls<<"\n";
         std::ofstream raw(output/(name+".rgba32f"),std::ios::binary);raw.write(reinterpret_cast<const char*>(answer.data()),answer.size()*4);
         std::ofstream input_raw(output/(name+"-input.rgba32f"),std::ios::binary);input_raw.write(reinterpret_cast<const char*>(input.data()),input.size()*4);
@@ -141,5 +141,8 @@ int main(int argc,char** argv) {
     printf("Isolated lighting: AO delta=%g GI delta=%g\n",ao_delta,gi_delta);
     assert(ao_delta>.0001f&&gi_delta>.0001f);
 #endif
+    #ifndef NR_DITTO_BASELINE
+    t.motion(argv[1],argv[3],.33f,true,false,true,4,.75f,2.f,false);
+    #endif
     puts("Motion transport and Relight checks passed (analytic network, not game qualification)");
 }

@@ -98,6 +98,7 @@ struct Settings {
     float resolution_scale = 1.0f;      // NRResolutionScale: the network at 0.25..1 of the frame
     bool follow_input_res = false;      // NRFollowInputRes: the network at the game's render resolution
     bool ditto_relight = true;
+    bool ditto_before_nr = true;       // NRDittoBeforeNR: NR receives the relit frame; off applies lighting after the stack.
     float ditto_ao = .75f, ditto_gi = 2.f;
     uint32_t ditto_samples = 32;
     float ditto_fov = 60.f, ditto_near = .1f, ditto_far = 100000.f;
