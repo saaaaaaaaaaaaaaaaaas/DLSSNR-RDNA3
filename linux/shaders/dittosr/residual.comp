@@ -1,0 +1,74 @@
+#version 450
+#extension GL_EXT_samplerless_texture_functions : require
+// Integration shader: Ditto accumulates a bounded signed neural edit. The final
+// joint bilateral transport follows RenoDX's log-ratio transport without changing its shaders.
+layout(local_size_x=8,local_size_y=8) in;
+layout(binding=0) uniform texture2D proxy;
+layout(binding=1) uniform texture2D neural;
+layout(binding=2) uniform texture2D reference;
+layout(binding=3) uniform texture2D temporal_edit;
+layout(binding=4) uniform texture2D low_depth;
+layout(binding=5) uniform texture2D full_depth;
+layout(binding=6,rgba16f) uniform writeonly image2D result;
+layout(binding=7,rgba16f) uniform writeonly image2D proxy_result;
+layout(binding=8) uniform texture2D encoded_edit;
+layout(push_constant) uniform C { uvec2 size; uvec2 low_size; vec2 jitter; uint mode; uint linear_reference; } c;
+const float floor_value=1.0/4096.0;
+vec3 decode(vec3 x) { return mix(x/12.92,pow(max((x+.055)/1.055,0.0),vec3(2.4)),greaterThan(x,vec3(.04045))); }
+vec3 encode(vec3 x) { return mix(12.92*x,1.055*pow(max(x,0.0),vec3(1.0/2.4))-.055,greaterThan(x,vec3(.0031308))); }
+vec3 edit_at(ivec2 p) { return log2(max(decode(texelFetch(neural,p,0).rgb),floor_value))-log2(max(decode(texelFetch(proxy,p,0).rgb),floor_value)); }
+vec3 unpack_edit(vec3 x) { vec3 v=clamp(2.0*x-1.0,-.98,.98); return v/max(1.0-abs(v),.02); }
+void main() {
+    ivec2 p=ivec2(gl_GlobalInvocationID.xy);
+    if(any(greaterThanEqual(p,ivec2(c.size)))) return;
+    if(c.mode==0u) {
+        vec3 e=edit_at(p);
+        imageStore(result,p,vec4(.5+.5*e/(1.0+abs(e)),1));
+        return;
+    }
+    ivec2 last=ivec2(c.low_size)-1;
+    vec2 at=(vec2(p)+.5)*vec2(c.low_size)/vec2(c.size)-.5;
+    ivec2 base=ivec2(floor(at));
+    vec3 ref=texelFetch(reference,p,0).rgb;
+    vec3 original=(c.linear_reference&1u)!=0u?ref:decode(ref);
+    float guide=log2(max(dot(max(original,0.0),vec3(.2126,.7152,.0722)),floor_value));
+    float depth=texelFetch(full_depth,p,0).r;
+    if((c.linear_reference&2u)==0u) depth=1.0-depth;
+    vec3 sum=vec3(0),lo=vec3(1e30),hi=vec3(-1e30);
+    float ws=0.0,total=0.0;
+    vec3 best=vec3(0);float best_score=1e30;
+    for(int y=-1;y<=2;y++) for(int x=-1;x<=2;x++) {
+        ivec2 q=clamp(base+ivec2(x,y),ivec2(0),last);
+        vec2 dist=vec2(base+ivec2(x,y))-at;
+        float spatial=exp(-2.0*dot(dist,dist));
+        vec4 n=texelFetch(neural,q,0);
+        float dg=guide-n.a;
+        float qdepth=texelFetch(low_depth,q,0).r;
+        if((c.linear_reference&2u)==0u) qdepth=1.0-qdepth;
+        float dz=abs(qdepth-depth)/max(.00001,.04*max(abs(depth),.00001));
+        float w=spatial*exp(-2.0*dg*dg)*exp(-2.0*dz*dz);
+        vec3 e=unpack_edit(texelFetch(encoded_edit,q,0).rgb);
+        sum+=w*e;ws+=w;total+=spatial;
+        if(w>1e-5) { lo=min(lo,e);hi=max(hi,e); }
+        float score=dz*dz+dg*dg+.05*dot(dist,dist);
+        if(score<best_score) { best_score=score;best=e; }
+    }
+    vec3 spatial=ws>1e-6?sum/ws:best;
+    // Stable-grid history must be sampled at the current game's phase. Clamp its
+    // edit to current same-surface evidence; disocclusion cannot borrow another surface's lighting.
+    vec2 tp=vec2(p)-c.jitter;ivec2 b=ivec2(floor(tp)),m=ivec2(c.size)-1;vec2 f=fract(tp);
+    vec3 a=texelFetch(temporal_edit,clamp(b,ivec2(0),m),0).rgb;
+    vec3 d=texelFetch(temporal_edit,clamp(b+ivec2(1,0),ivec2(0),m),0).rgb;
+    vec3 e=texelFetch(temporal_edit,clamp(b+ivec2(0,1),ivec2(0),m),0).rgb;
+    vec3 g=texelFetch(temporal_edit,clamp(b+1,ivec2(0),m),0).rgb;
+    vec3 carried=unpack_edit(mix(mix(a,d,f.x),mix(e,g,f.x),f.y));
+    if(ws>1e-6) carried=clamp(carried,lo,hi);else carried=spatial;
+    vec3 gain=exp2(mix(spatial,carried,.5*clamp(ws/max(total,1e-6),0.0,1.0)));
+    vec2 bc=clamp(at,vec2(0),vec2(last)),bf=fract(bc);ivec2 b0=ivec2(floor(bc)),b1=min(b0+1,last);
+    vec3 pu=mix(mix(decode(texelFetch(proxy,b0,0).rgb),decode(texelFetch(proxy,ivec2(b1.x,b0.y),0).rgb),bf.x),
+                mix(decode(texelFetch(proxy,ivec2(b0.x,b1.y),0).rgb),decode(texelFetch(proxy,b1,0).rgb),bf.x),bf.y);
+    vec3 nu=(c.linear_reference&1u)!=0u?max(pu,floor_value)*gain:
+        mix(original+floor_value*(gain-1.0),original*gain,greaterThanEqual(original,vec3(floor_value)));
+    imageStore(proxy_result,p,vec4(encode(pu),1));
+    imageStore(result,p,vec4(encode(nu),1));
+}

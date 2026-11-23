@@ -1,0 +1,52 @@
+#version 450
+#extension GL_EXT_samplerless_texture_functions : require
+layout(local_size_x=16, local_size_y=16) in;
+layout(binding=0) uniform texture2D reconstruction;
+layout(binding=1) uniform texture2D depth;
+layout(binding=2) uniform texture2D motion;
+layout(binding=4, rgba16f) uniform writeonly image2D up_neural;
+layout(binding=5, r32f) uniform writeonly image2D low_depth;
+layout(binding=6, rgba32f) uniform writeonly image2D low_motion;
+layout(push_constant) uniform C {
+    uvec2 size;
+    uvec2 source_size;
+    uvec2 depth_base;
+    uvec2 depth_size;
+    uvec2 motion_base;
+    uvec2 motion_size;
+    vec2 motion_scale;
+    uint inverted;
+    uint guides;
+    vec2 jitter;
+} c;
+void main() {
+    ivec2 p=ivec2(gl_GlobalInvocationID.xy);
+    if (any(greaterThanEqual(p, ivec2(c.size)))) return;
+    vec2 uv=(vec2(p)+0.5)/vec2(c.size);
+    if (c.guides==0u) {
+        // Ditto removes jitter. Put its neural reconstruction on the game's current sample phase before N/P resolve.
+        vec2 pos=vec2(p)-c.jitter;
+        ivec2 lo=ivec2(floor(pos)), hi=ivec2(c.source_size)-1;
+        vec2 f=fract(pos);
+        vec4 a=texelFetch(reconstruction,clamp(lo,ivec2(0),hi),0);
+        vec4 b=texelFetch(reconstruction,clamp(lo+ivec2(1,0),ivec2(0),hi),0);
+        vec4 d=texelFetch(reconstruction,clamp(lo+ivec2(0,1),ivec2(0),hi),0);
+        vec4 e=texelFetch(reconstruction,clamp(lo+ivec2(1),ivec2(0),hi),0);
+        imageStore(up_neural,p,mix(mix(a,b,f.x),mix(d,e,f.x),f.y));
+    } else {
+        ivec2 center=min(ivec2(uv*vec2(c.depth_size)),ivec2(c.depth_size)-1);
+        ivec2 best=center;
+        float z=texelFetch(depth,center+ivec2(c.depth_base),0).r;
+        // Preserve foreground motion at silhouettes when the guides are reduced to NR's grid.
+        for (int y=-1;y<=1;++y) for (int x=-1;x<=1;++x) {
+            ivec2 q=clamp(center+ivec2(x,y),ivec2(0),ivec2(c.depth_size)-1);
+            float v=texelFetch(depth,q+ivec2(c.depth_base),0).r;
+            if (c.inverted!=0u ? v>z : v<z) { z=v; best=q; }
+        }
+        vec2 muv=(vec2(best)+0.5)/vec2(c.depth_size);
+        ivec2 mp=min(ivec2(muv*vec2(c.motion_size)),ivec2(c.motion_size)-1);
+        vec2 mv=texelFetch(motion,mp+ivec2(c.motion_base),0).xy*c.motion_scale;
+        imageStore(low_depth,p,vec4(z));
+        imageStore(low_motion,p,vec4(mv,0,0));
+    }
+}

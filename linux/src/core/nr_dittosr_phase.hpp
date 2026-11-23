@@ -1,5 +1,9 @@
 #pragma once
+#if NR_ARCH_RDNA3
 #include "dittosr/constants.hpp"
+#else
+#include "dittosr-legacy/constants.hpp"
+#endif
 #include <array>
 
 namespace nr::ditto {

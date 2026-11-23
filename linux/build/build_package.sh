@@ -345,13 +345,10 @@ if [[ "$arch" == x86_64 ]]; then
     # DittoSR shaders and third-party license notices.
     ditto_shaders=artifacts/optiscaler/asi/shaders/renodx
 
-    for pass in prepare convert motion upscale sharpen; do
-        cp -- "$ditto_shaders/renodx_ditto_$pass.spv" \
-            "$pkg/dlssnr-amd/shaders/renodx/"
-    done
+    cp -- "$ditto_shaders"/renodx_ditto_*.spv "$pkg/dlssnr-amd/shaders/renodx/"
 
     cp -- "$ditto_shaders/DittoSR-LICENSE.txt" \
-        "$ditto_shaders/Snapdragon-GSR-LICENSE.txt" \
+        "$ditto_shaders/Snapdragon-GSR-LICENSE.txt" "$ditto_shaders/CORTAO-LICENSE.txt" "$ditto_shaders/FidelityFX-CACAO-LICENSE.txt" \
         "$pkg/dlssnr-amd/shaders/renodx/"
     cp -- artifacts/optiscaler/asi/dlssnr-amd.asi artifacts/optiscaler/asi/nr_present_probe.exe "$pkg/optiscaler/asi/"
     # the notices of what dlssnr-amd.asi has compiled in: NR Control's font (Inter, SIL OFL 1.1) and Dear ImGui (MIT)

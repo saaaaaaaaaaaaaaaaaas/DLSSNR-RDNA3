@@ -12,8 +12,15 @@
 #include <vector>
 
 static void ck(VkResult r) { if (r) throw std::runtime_error("Vulkan failure " + std::to_string(r)); }
+static void set_lighting(nr::renodx::Settings& s,bool enabled=false) {
+#ifndef NR_DITTO_BASELINE
+    s.ditto_relight=enabled;
+#else
+    (void)s;(void)enabled;
+#endif
+}
 static bool ditto_ran = false;
-static void log_sink(const char* s) { puts(s); ditto_ran |= std::strstr(s, "[nr] Ditto SR: neural") != nullptr; }
+static void log_sink(const char* s) { puts(s); ditto_ran |= std::strstr(s, "[nr] Ditto Relight 0.5.4: neural") != nullptr; }
 struct Test {
     nr::HostDevice host;
     VkCommandPool pool{};
@@ -34,7 +41,7 @@ struct Test {
         assert(n); std::vector<VkPhysicalDevice> devices(n);
         ck(vkEnumeratePhysicalDevices(host.instance,&n,devices.data())); host.physical=devices[0];
         VkPhysicalDeviceProperties props{}; vkGetPhysicalDeviceProperties(host.physical,&props);
-        printf("Device: %s (software execution is not target GPU validation)\n",props.deviceName);
+        printf("Device: %s (procedural API fixture; game qualification is separate)\n",props.deviceName);
         uint32_t nq=0; vkGetPhysicalDeviceQueueFamilyProperties(host.physical,&nq,nullptr);
         std::vector<VkQueueFamilyProperties> q(nq); vkGetPhysicalDeviceQueueFamilyProperties(host.physical,&nq,q.data());
         for (uint32_t k=0;k<nq;++k) if ((q[k].queueFlags&(VK_QUEUE_GRAPHICS_BIT|VK_QUEUE_COMPUTE_BIT))==(VK_QUEUE_GRAPHICS_BIT|VK_QUEUE_COMPUTE_BIT)) { host.queue_family=k; break; }
@@ -43,6 +50,12 @@ struct Test {
         qi.queueFamilyIndex=host.queue_family; qi.queueCount=1; qi.pQueuePriorities=&priority;
         VkPhysicalDeviceFeatures features{}; vkGetPhysicalDeviceFeatures(host.physical,&features);
         VkDeviceCreateInfo d{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO}; d.queueCreateInfoCount=1; d.pQueueCreateInfos=&qi; d.pEnabledFeatures=&features;
+        VkPhysicalDeviceVulkan12Features f12{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES};
+        VkPhysicalDeviceFeatures2 f2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};f2.pNext=&f12;
+        vkGetPhysicalDeviceFeatures2(host.physical,&f2);
+        // Slang's f32tof16 packing in Relight declares Float16; production NR already needs it.
+        VkPhysicalDeviceVulkan12Features enabled12{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES};
+        enabled12.shaderFloat16=f12.shaderFloat16;d.pNext=&enabled12;
         ck(vkCreateDevice(host.physical,&d,nullptr,&host.device)); vkGetDeviceQueue(host.device,host.queue_family,0,&host.queue);
         vkGetPhysicalDeviceMemoryProperties(host.physical,&mem);
         VkCommandPoolCreateInfo p{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO}; p.queueFamilyIndex=host.queue_family; p.flags=VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
@@ -128,7 +141,7 @@ struct Test {
         const uint32_t w=96,h=64;
         nr::renodx::StageConfig c{};c.shaders=shaders;c.width=w;c.height=h;c.nr_width=w/2;c.nr_height=h/2;
         c.hdr_flag=true;c.frame_format=VK_FORMAT_R16G16B16A16_SFLOAT;
-        c.settings.resolution_scale=.5f;c.settings.look_upsample=4;
+        c.settings.resolution_scale=.5f;c.settings.look_upsample=4;set_lighting(c.settings);
         begin();auto color=image(w,h,c.frame_format),out=image(w,h,c.frame_format);
         auto depth=image(w,h,VK_FORMAT_D32_SFLOAT),mv=image(w,h,VK_FORMAT_R32G32_SFLOAT);
         clear(depth,.5f,0,0);clear(mv,0,0,0);clear(out,0,0,0);barrier();end();upload_checker(color);
@@ -152,7 +165,7 @@ struct Test {
     void composition_controls(const char* shaders) {
         const uint32_t w=96,h=64;
         nr::renodx::StageConfig c{};c.shaders=shaders;c.width=w;c.height=h;c.nr_width=w/2;c.nr_height=h/2;
-        c.hdr_flag=true;c.frame_format=VK_FORMAT_R16G16B16A16_SFLOAT;c.settings.resolution_scale=.5f;c.settings.look_upsample=4;
+        c.hdr_flag=true;c.frame_format=VK_FORMAT_R16G16B16A16_SFLOAT;c.settings.resolution_scale=.5f;c.settings.look_upsample=4;set_lighting(c.settings);
         begin();auto color=image(w,h,c.frame_format),out=image(w,h,c.frame_format);
         auto depth=image(w,h,VK_FORMAT_D32_SFLOAT),mv=image(w,h,VK_FORMAT_R32G32_SFLOAT);
         clear(color,.25f,.5f,.75f);clear(depth,.5f,0,0);clear(mv,.5f,-.25f,0);clear(out,0,0,0);barrier();end();
@@ -186,9 +199,9 @@ struct Test {
         printf("Independent pass histories: drift=%g, network-calls=%u\n",drift,calls);fflush(stdout);
         assert(calls==14 && drift<.004f);
     }
-    void test(const char* shaders,bool hdr,uint32_t w,uint32_t h,float scale,uint32_t passes,bool prep, bool bypass_last = false, bool srgb = false) {
+    void test(const char* shaders,bool hdr,uint32_t w,uint32_t h,float scale,uint32_t passes,bool prep, bool bypass_last = false, bool srgb = false, bool lighting = false) {
         nr::renodx::StageConfig c{};c.shaders=shaders;c.width=w;c.height=h;c.hdr_flag=hdr;
-        c.settings.resolution_scale=scale;c.settings.look_upsample=4;c.settings.passes=passes;
+        c.settings.resolution_scale=scale;c.settings.look_upsample=4;set_lighting(c.settings,lighting);c.settings.passes=passes;
         if(prep) { c.settings.look_mode=true;c.settings.look_stabilize=2;c.settings.detail_stability=2; }
         if(bypass_last) c.settings.pass_transfer[passes-2]=c.settings.pass_color[passes-2]=0.f;
         nr::renodx::working_resolution(c.settings,w,h,w,h,&c.nr_width,&c.nr_height);
@@ -216,12 +229,13 @@ struct Test {
         auto out=read(output);auto target=read(color);float max_error=0;
         for(size_t k=0;k<out.size();++k) { assert(std::isfinite(out[k])); max_error=std::max(max_error,std::abs(out[k]-target[k%4])); }
         printf("%s %ux%u NR %ux%u passes=%u prep=%d max-error=%g\n",hdr?"HDR":"SDR",w,h,c.nr_width,c.nr_height,passes,prep,max_error);
-        assert(max_error<.02f);
+        if(!lighting) assert(max_error<.02f); else assert(max_error>.01f);
         c.settings.look_upsample=2;stage.set(c.settings);begin();stage.record(cmd,fr,identity);end();
-        c.settings.look_upsample=4;stage.set(c.settings);begin();stage.record(cmd,fr,identity);end();
+        c.settings.look_upsample=4;set_lighting(c.settings);stage.set(c.settings);begin();stage.record(cmd,fr,identity);end();
     }
 };
-int main(int argc,char** argv) {
+#ifndef NR_DITTO_FIXTURE_LIBRARY
+int main(int argc,char** argv) try {
     if(argc!=2) { puts("usage: dittosr-stage <renodx shader directory>");return 2; }
     float previous[2]={};DittoConstants k{};
     auto f=nr::ditto::neural_frame(422,238,1280,720,1280,720,.3f,-.2f,false,true);
@@ -243,7 +257,13 @@ int main(int argc,char** argv) {
     t.test(argv[1],true,99,65,.5f,2,false,true);
     t.test(argv[1],true,96,64,1.f,1,false);
     t.test(argv[1],false,96,64,.33f,1,false,false,true);
+    t.test(argv[1],false,99,65,.25f,2,false,false,false,true);
+    t.test(argv[1],true,99,65,.33f,2,true,false,false,true);
+    t.test(argv[1],false,96,64,.33f,1,false,false,true,true);
+    t.test(argv[1],true,96,64,1.f,1,false,false,false,true);
     t.composition_detail(argv[1]);
     t.composition_controls(argv[1]);
     puts("Ditto SR integration contracts passed");
-}
+} catch(const std::exception& e) { std::fprintf(stderr,"%s\n",e.what());return 1; }
+
+#endif

@@ -1,28 +1,29 @@
-NR Control: Ditto SR trial update (Linux/Proton, x86_64, RDNA3)
+NR Control: Ditto Relight 0.5.4 local update (Linux/Proton x86_64 RDNA3)
 
-Requires the existing RDNA3 0.0.8.3 port package and OptiScaler route.
-Exit the game. Back up OptiScaler/plugins/dlssnr-amd.asi and the existing
-dlssnr-amd/shaders/renodx folder outside the game folder.
-Copy this archive's OptiScaler and dlssnr-amd folders into the game folder,
-merging them with the existing folders. Replace the ASI and all five Ditto
-shaders together; the old prepare shader is incompatible with this update.
+Requires an existing RDNA3 0.0.9 installation and the OptiScaler route.
+Exit the game. Back up OptiScaler/plugins/dlssnr-amd.asi and the entire
+existing dlssnr-amd/shaders/renodx folder outside the game folder.
+Merge this archive's OptiScaler and dlssnr-amd folders into the game folder.
+Replace the ASI and ALL included Ditto/Relight shaders and notices together.
+Keep your installed model files, OptiScaler and preferred SR/FG provider.
 
-In NR Control (End), choose a RenoDX layer and set:
+NR Control (End), RenoDX layer:
   Placement: Before the upscaler
-  Resolution scale: for example 0.33
-  Upsampling: Ditto SR
-Keep your preferred upscaler, such as FSR 4, selected in OptiScaler.
+  Upsampling: Ditto Relight (saved selection 4)
+  Resolution scale: 0.25 to 1; disable Follow render resolution
+  Ditto Relight: Lighting, Ambient occlusion, Global illumination, Samples
 
-At 1280x720 SR input, 0.33 runs NR at 422x238. Ditto SR reconstructs neural
-to up_neural at 1280x720. NR's normal resolve uses up_proxy and up_neural;
-then OptiScaler's SR can upscale the composed result to 1920x1080.
-At scale 1, Ditto SR has no enlargement to do and the normal NR path runs.
-Follow render resolution overrides Resolution scale; disable it for this example.
-Ditto SR needs the game's readable depth, motion vectors and jitter.
-Unsupported placement or missing inputs are reported in NR Control.
+At 1280x720 and 0.33, the model uses 422x238. A guided neural edit is
+reconstructed onto the original 1280x720 reference before OptiScaler's SR.
+Lighting uses full-size guides and half-size AO/GI, independent of model size.
+At scale 1, NR needs no enlargement; lighting still works.
+Lighting off retains guided reconstruction without the extra AO/GI and curve.
+The game's readable depth, motion vectors and jitter are required.
 
-Build and software Vulkan checks passed. AMD GPU image quality, timing,
-frame generation and the in-game FSR 4 chain still require a target trial.
-No model, NVIDIA DLL, OptiScaler or frame-generation provider is included.
+The NR interface does not provide projection metadata. Set Vertical FOV and
+Near/Far plane to the game camera if the default 60 degrees / 0.1 / 100000
+does not match. Lighting is experimental screen-space AO/GI.
+Motion/API checks on Z1 Extreme pass. Real-game HDR/PQ, FG and cascaded SR
+quality remain unqualified. No model or NVIDIA DLL is included.
 
 Rollback: exit the game and restore the backed-up ASI and shader folder.

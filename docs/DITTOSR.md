@@ -1,5 +1,8 @@
 # Ditto SR in NR Control
 
+This is the historical v0.4.0 integration record. The local RDNA3 follow-up
+replaces it with [Ditto Relight 0.5.4](DITTO-RELIGHT.md).
+
 Implementation base: `188324b759e9d34d4bed7361946bf034d69db0b9`
 (the RDNA3 0.0.8.3 port with the NR Control cursor/FG fixes).
 DittoSR reference: release `v0.4.0`, commit

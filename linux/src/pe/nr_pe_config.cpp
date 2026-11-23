@@ -625,6 +625,13 @@ void* renodx_field(RenoDXConfig& r, int index) {
         case 114: return &v.fast_fine[2];
         case 115: return &v.fast_interleaved_passes;
         case 116: return &v.fast_interleaved_preset;
+        case 117: return &v.ditto_relight;
+        case 118: return &v.ditto_ao;
+        case 119: return &v.ditto_gi;
+        case 120: return &v.ditto_samples;
+        case 121: return &v.ditto_fov;
+        case 122: return &v.ditto_near;
+        case 123: return &v.ditto_far;
         default: return nullptr;
     }
 }
@@ -692,8 +699,15 @@ bool parse_renodx_key(RenoDXConfig& r, const std::string& key, const std::string
     else if (key == "nrtransfermode") v.transfer_mode = renodx_enum(value, d.transfer_mode, 0, 1);
     else if (key == "nrstylehighlightguard") v.style_highlight_guard = renodx_float(value, d.style_highlight_guard, 0.0f, 2.0f);
     else if (key == "nrdetailstability") v.detail_stability = renodx_enum(value, d.detail_stability, 0, 2);
-    else if (key == "nrresolutionscale") v.resolution_scale = renodx_float(value, d.resolution_scale, 0.33f, 1.0f);
+    else if (key == "nrresolutionscale") v.resolution_scale = renodx_float(value, d.resolution_scale, 0.25f, 1.0f);
     else if (key == "nrfollowinputres") { if (auto b = parse_bool(value)) v.follow_input_res = *b; }
+    else if (key == "nrdittorelight") { if (auto b = parse_bool(value)) v.ditto_relight = *b; }
+    else if (key == "nrdittoao") v.ditto_ao = renodx_float(value, d.ditto_ao, 0.0f, 1.0f);
+    else if (key == "nrdittogi") v.ditto_gi = renodx_float(value, d.ditto_gi, 0.0f, 4.0f);
+    else if (key == "nrdittofov") v.ditto_fov = renodx_float(value, d.ditto_fov, 10.0f, 170.0f);
+    else if (key == "nrdittonear") v.ditto_near = renodx_float(value, d.ditto_near, 0.001f, 10.0f);
+    else if (key == "nrdittofar") v.ditto_far = renodx_float(value, d.ditto_far, 10.0f, 1000000.0f);
+    else if (key == "nrdittosamples") v.ditto_samples = renodx_enum(value, d.ditto_samples, 4, 32);
     else if (key == "nrlookupsample") v.look_upsample = renodx_enum(value, d.look_upsample, 0, 4);
     else if (key == "nrlookmode") { if (auto b = parse_bool(value)) v.look_mode = *b; }
     else if (key == "nrlookstrength") v.look_strength = renodx_float(value, d.look_strength, 0.0f, 2.0f);
@@ -904,14 +918,14 @@ void write_renodx(FILE* f, const RenoDXConfig& r) {
         "; smooths NR's change over time along the motion vectors, less flickering detail: 0 = auto (on after the upscaler with motion vectors); 1 = off (default); 2 = always on\n"
         "\n"
         "NRResolutionScale = %.2f\n"
-        "; the NR network's resolution, 0.33 .. 1 of the picture, default 1. Below 1 the network is faster; the change is enlarged back to the picture by NRLookUpsample below\n"
+        "; the NR network's resolution, 0.25 .. 1 of the picture, default 1. Below 1 the network is faster; the change is enlarged back to the picture by NRLookUpsample below\n"
         "\n"
         "NRFollowInputRes = %d\n"
         "; 1 = the NR network runs at the game's render resolution (the motion vectors' resolution) instead of NRResolutionScale; 0 = off (default)\n"
         "\n"
         "NRLookUpsample = %u\n"
         "; with the network below the picture's resolution, how the change is enlarged back: 0 = auto (edge-aware, default); 1 = edge-aware; 2 = classic (plain enlargement);\n"
-        "; 3 = edge-aware, with SDR pictures reduced by area; 4 = Ditto SR on NR output, Before SR only, requires game depth/motion/jitter\n"
+        "; 3 = edge-aware, with SDR pictures reduced by area; 4 = Ditto Relight on NR output, Before SR only, requires game depth/motion/jitter\n"
         "\n"
         "NRLookMode = %d\n"
         "; RenoDX's Adjust NR's look: adjusts how much NR changed, directly on its result; changes apply at once, the network does not restart.\n"
@@ -1102,6 +1116,10 @@ void write_renodx(FILE* f, const RenoDXConfig& r) {
         v.norm_release_stops, v.norm_slew_stops, v.present_guides, v.depth_mode, v.mvec_scale_x, v.mvec_scale_y,
         r.screenshot_key.c_str(), r.screenshot_source, r.screenshot_format, r.screenshot_layout,
         r.screenshot_jpeg_quality, r.screenshot_max_mb);
+    std::fprintf(f, "\nNRDittoRelight = %u\nNRDittoAO = %.3f\nNRDittoGI = %.3f\nNRDittoSamples = %u\n"
+                    "NRDittoFov = %.3f\nNRDittoNear = %.4f\nNRDittoFar = %.3f\n",
+                    v.ditto_relight ? 1 : 0, v.ditto_ao, v.ditto_gi, v.ditto_samples,
+                    v.ditto_fov, v.ditto_near, v.ditto_far);
     std::fprintf(f, "\nNROutputRect = %u\n; OptiScaler route: 0 Auto (the size at creation first), 1 Declared (default, as 0.0.7: the evaluate's size first), 2 Resource (the resource's size)\n", r.output_rect);
     std::fprintf(f,
         "\nNRPresentFrames = %u\n"

@@ -3751,15 +3751,15 @@ bool Session::Impl::record_renodx(VkCommandBuffer cmd, renodx::Stage& stage, con
                                   const Session::RenoDXFrame& rf, const ColourFrame* exposure) {
     if (rf.settings.look_upsample == 4u) {
         if (rf.present || rf.after_upscale) {
-            status = "Ditto SR requires Placement: Before the upscaler";
+            status = "Ditto Relight requires Placement: Before the upscaler";
             return false;
         }
         if (!(engine.depth.usage & VK_IMAGE_USAGE_SAMPLED_BIT) || !(engine.motion.usage & VK_IMAGE_USAGE_SAMPLED_BIT)) {
-            status = "Ditto SR needs shader-readable game depth and motion vectors";
+            status = "Ditto Relight needs shader-readable game depth and motion vectors";
             return false;
         }
         if (!engine.depth.image || !engine.motion.image || !rf.jitter_known || !rf.render_width || !rf.render_height) {
-            status = "Ditto SR needs the game's depth, motion vectors and jitter";
+            status = "Ditto Relight needs the game's depth, motion vectors and jitter";
             return false;
         }
     }

@@ -563,7 +563,8 @@ struct Stage::Impl {
              kDecodeReduceL,   // legacy_decode + the black-level reduce in one pass (the SDR frame in place)
              kComposeDecode,   // look_compose + legacy_decode + the reduce (SDR, the network at the frame's extent)
              kStFbIn, kStPrep, kStBox, kStApply,
-             kDittoPrepare, kDittoConvert, kDittoMotion, kDittoUpscale, kDittoSharpen,
+             kDittoPrepare, kDittoConvert, kDittoMotion, kDittoUpscale, kDittoSharpen, kDittoResidual,
+             kAoPrep, kAoMip, kAoMain, kAoFilter, kAoTemporal, kAoCacao, kAoLut, kAoCurve, kAoCompose,
              kDecodeUpL,   // look_upsample + legacy_decode (SDR, the network below the frame's extent)
              kResolveCommit6Up,   // look_upsample + v6_resolve_commit (HDR, the same)
              kPrepFused,   // Preprocess with RenoDX's SDR encode (mode 3) and decode (mode 4) folded in
@@ -575,8 +576,14 @@ struct Stage::Impl {
     VkBuffer ditto_constants{};
     VkDeviceMemory ditto_constants_memory{};
     Image ditto_depth, ditto_motion, ditto_result, ditto_change;
+    Image ditto_edit, ditto_full_depth, ditto_full_motion;
+    Image relight_dummy, relight_nd, relight_half_nd, relight_ao[2], relight_hist[2], relight_hd[2], relight_mip[4], relight_lut, relight_curve, relight_color;
+    bool relight_valid = false, relight_tables = false;
+    uint32_t relight_cur = 0;
+    uint64_t relight_frames = 0;
+    float relight_jitter[2] = {};
     struct DittoPass {
-        Image mda[2], history[2], aux[2];
+        Image mda[2], history[2], aux[2], env[2], stability[2];
         uint32_t cur = 0;
         bool valid = false;
         float previous_jitter[2] = {};
@@ -1129,7 +1136,11 @@ struct Stage::Impl {
         return false;
     }
 
+#if NR_ARCH_RDNA3
 #include "nr_dittosr_stage.inl"
+#else
+#include "nr_dittosr_legacy.inl"
+#endif
 
     // RunLookStage for one pass: the bands, the temporal filter on the pass's own history and every gain into
     // look_out (N'), then, below the frame's extent, P_up and N'_up. Returns whether it shaped.
@@ -1261,7 +1272,11 @@ struct Stage::Impl {
             dispatch(cmd, kCompose, look_set(kCompose, look_views(neural.view)), &lc, sizeof lc, (NW + 15) / 16,
                      (NH + 15) / 16);
         }
-        if (route.transport && !up_fused) {   // RecordUpsample: P_up and N'_up at the frame's extent
+        if (route.transport && !up_fused
+#if NR_ARCH_RDNA3
+            && ls.upsample != 4u // Ditto's guided residual dispatch writes both transport images.
+#endif
+            ) {   // RecordUpsample: P_up and N'_up at the frame's extent
             look::Constants up = lc;
             up.size[0] = W; up.size[1] = H;
             dispatch(cmd, kUpsample, look_set(kUpsample, look_views(look_out.view)), &up, sizeof up, (W + 15) / 16,
@@ -1396,9 +1411,9 @@ Stage::~Stage() {
     for (auto& i : m.il_depth) m.destroy(i);
     for (Image* im : {&m.il_base, &m.il_comp, &m.il_ring[0], &m.il_ring[1], &m.il_ring[2]}) m.destroy(*im);
     for (auto& a : m.il_inc) for (Image& im : a) m.destroy(im);
-    for (Image* im : {&m.ditto_depth, &m.ditto_motion, &m.ditto_result, &m.ditto_change}) m.destroy(*im);
+    for (Image* im : {&m.ditto_depth, &m.ditto_motion, &m.ditto_result, &m.ditto_change, &m.ditto_edit, &m.ditto_full_depth, &m.ditto_full_motion, &m.relight_dummy, &m.relight_nd, &m.relight_half_nd, &m.relight_ao[0], &m.relight_ao[1], &m.relight_hist[0], &m.relight_hist[1], &m.relight_hd[0], &m.relight_hd[1], &m.relight_mip[0], &m.relight_mip[1], &m.relight_mip[2], &m.relight_mip[3], &m.relight_lut, &m.relight_curve, &m.relight_color}) m.destroy(*im);
     for (auto& pass : m.dittos)
-        for (Image* im : {&pass.mda[0], &pass.mda[1], &pass.history[0], &pass.history[1], &pass.aux[0], &pass.aux[1]})
+        for (Image* im : {&pass.mda[0], &pass.mda[1], &pass.history[0], &pass.history[1], &pass.aux[0], &pass.aux[1], &pass.env[0], &pass.env[1], &pass.stability[0], &pass.stability[1]})
             m.destroy(*im);
     if (m.ditto_sampler) vkDestroySampler(m.device, m.ditto_sampler, nullptr);
     if (m.ditto_constants) vkDestroyBuffer(m.device, m.ditto_constants, nullptr);
@@ -1426,7 +1441,9 @@ namespace {
 // stage has; NRUnlockPasses (ours) as NRPasses.
 bool history_settings_differ(const Settings& a, const Settings& b) {
     auto same3 = [](const auto& x, const auto& y) { return x[0] == y[0] && x[1] == y[1] && x[2] == y[2]; };
-    return (a.look_upsample != b.look_upsample && (a.look_upsample == 4u || b.look_upsample == 4u)) || a.passes_mode != b.passes_mode || a.fast_method != b.fast_method ||
+    return a.ditto_relight != b.ditto_relight || a.ditto_ao != b.ditto_ao || a.ditto_gi != b.ditto_gi ||
+           a.ditto_samples != b.ditto_samples || a.ditto_fov != b.ditto_fov || a.ditto_near != b.ditto_near || a.ditto_far != b.ditto_far ||
+           (a.look_upsample != b.look_upsample && (a.look_upsample == 4u || b.look_upsample == 4u)) || a.passes_mode != b.passes_mode || a.fast_method != b.fast_method ||
            std::memcmp(a.fast_passes, b.fast_passes, sizeof a.fast_passes) != 0 ||
            std::memcmp(a.fast_halo_limit, b.fast_halo_limit, sizeof a.fast_halo_limit) != 0 ||
            std::memcmp(a.fast_fine, b.fast_fine, sizeof a.fast_fine) != 0 ||
@@ -1497,7 +1514,11 @@ void working_resolution(const Settings& s, uint32_t rw, uint32_t rh, uint32_t gw
         *nw = std::min(gw, rw);
         *nh = std::min(gh, rh);
     } else {
+        #if NR_ARCH_RDNA3
+        const float scale = std::clamp(s.resolution_scale, 0.25f, 1.f);
+#else
         const float scale = std::clamp(s.resolution_scale, 0.33f, 1.f);
+#endif
         *nw = std::max(1u, uint32_t(std::lround(double(rw) * scale)));
         *nh = std::max(1u, uint32_t(std::lround(double(rh) * scale)));
     }
@@ -1513,7 +1534,12 @@ uint32_t Stage::record(VkCommandBuffer cmd, const StageFrame& fr, const Network&
     const uint32_t gx = (W + 15) / 16, gy = (H + 15) / 16, nx = (NW + 15) / 16, ny = (NH + 15) / 16;
     const uint32_t passes = stack_passes(s);
     const bool ditto = s.look_upsample == 4u && !fr.after_upscale && !m.cfg.present &&
-                       (NW < W || NH < H) && fr.depth.image && fr.motion.image && fr.jitter_known &&
+                       #if NR_ARCH_RDNA3
+                       NW <= W && NH <= H &&
+#else
+                       (NW < W || NH < H) &&
+#endif
+                       fr.depth.image && fr.motion.image && fr.jitter_known &&
                        fr.render_width && fr.render_height;
     if (!ditto) m.retire_ditto();
 
@@ -1869,6 +1895,12 @@ uint32_t Stage::record(VkCommandBuffer cmd, const StageFrame& fr, const Network&
     const bool have_motion = fr.motion.image && fr.motion.width && fr.motion.height;
     look::Settings ls = look::snapshot(s, fr.after_upscale && have_motion);
     if (ditto) m.prepare_ditto(cmd, fr, borrow, passes);
+#if NR_ARCH_RDNA3
+    if (ditto && s.ditto_relight) {
+        m.run_relight(cmd, fr, fr.reset || m.history_reset, m.hdr ? w0.view : m.original.view);
+        if (m.hdr && m.prep_on) prep_forward_hdr(m.relight_color, false);
+    } else m.retire_relight();
+#endif
     // SDR without the black-level restore: the decode makes N'_up itself (legacy_decode_up) - no look_upsample,
     // no P_up / N'_up images
     const bool transport_now = (NW < W || NH < H) && look::transport_wanted(ls, NW, NH, W, H);
@@ -1984,7 +2016,11 @@ uint32_t Stage::record(VkCommandBuffer cmd, const StageFrame& fr, const Network&
     for (uint32_t k = 0; k < passes; ++k) {
         float transfer = 1.f, color = 1.f;
         m.strengths(k, &transfer, &color);
-        const Image& ref = k == 0 ? (m.hdr ? w0 : m.original) : m.stack_out(k - 1);
+        const Image& ref = k == 0 ? (
+#if NR_ARCH_RDNA3
+            ditto && s.ditto_relight ? m.relight_color :
+#endif
+            (m.hdr ? w0 : m.original)) : m.stack_out(k - 1);
         Image& write = m.stack_out(k);
         // the SDR frame read where it is (one pass): its view and sets naming it from the borrow pool
         const bool ref_frame = !m.hdr && k == 0 && read_in_place;
@@ -2400,7 +2436,11 @@ uint32_t Stage::record(VkCommandBuffer cmd, const StageFrame& fr, const Network&
                                              up_fused);
         const bool decode_up = up_fused && route.transport;   // the decode below makes N'_up (legacy_decode_up)
         if (ditto && route.transport)
-            m.run_ditto(cmd, k, fr, reset, route.shaped ? m.look_out.view : m.neural.view);
+            m.run_ditto(cmd, k, fr, reset, route.shaped ? m.look_out.view : m.neural.view
+#if NR_ARCH_RDNA3
+                        , ref_view
+#endif
+                        );
         const VkImageView rp = route.transport ? m.up_proxy.view : m.proxy.view;
         const VkImageView rn = route.transport ? m.up_neural.view : route.shaped ? m.look_out.view : m.neural.view;
         const uint32_t pw = route.transport ? W : NW, ph = route.transport ? H : NH;

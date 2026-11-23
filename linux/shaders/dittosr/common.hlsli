@@ -1,4 +1,4 @@
-// DittoSR for D3D12 - shared constants and the HDR encoding.
+// DittoSR (D3D12 and Vulkan) - shared constants and the HDR encoding.
 // Every pass reads the same root constants (dittosr.cpp DittoConstants, same order).
 
 cbuffer C : register(b0) {
@@ -9,10 +9,10 @@ cbuffer C : register(b0) {
     float2 jit;           // FSR's jitterOffset, render pixels (the sample at p + 0.5 stands for p + 0.5 - jit)
     float ratio;          // output / render width
     float width;          // the narrow Gaussian's width (1.4)
-    float alphaRest;      // a stable pixel's share of each new frame at rest (0.035)
+    float alphaRest;      // a stable pixel's share of each new frame at rest (0.1)
     float conf;           // the confidence the narrow estimate is taken alone from (0.3)
     float reset;          // 1: this frame alone
-    float gammaRest;      // the history clip width at rest (1.5)
+    float gammaRest;      // the history clip width at rest (3)
     float react;          // the reaction to changes (1)
     float reactiveScale;  // the game's reactive mask: how far it raises the new frame's share (1)
     float stabStep;       // the stability level's step up each frame a sample lands near the pixel (0.34)
@@ -30,7 +30,7 @@ cbuffer C : register(b0) {
     float motionGamma;    // the history clip width while moving (0.9 originally)
     float motionShare;    // the new frame's base share while moving (0.3)
     float motionMinMax;   // how far the box is held within the samples' min / max while moving (1)
-    float antiShimmer;    // the anti-shimmer's strength (0: off; D3D12)
+    float antiShimmer;    // the anti-shimmer's strength (0: off)
     float sharpness;      // 0 - 1: at rest soft below 0.6, sharpened above; moving, sharpened by it (sharpen.hlsl)
     float changeScale;    // how far the share of the image that changed drives the reaction (1)
     float shareFar;       // the new frame's share x this where no sample landed close (0.6 originally)
@@ -47,7 +47,16 @@ cbuffer C : register(b0) {
     float autoExposure;   // 1: the convert pass measures the exposure (the game asked for it, giving none): t5 the last
                           // frame's, u2 this one's
     float historySharpen; // the history's detail made up for its resampling blur, in motion (upscale.hlsl; 0: off)
-    float fusedSharpen;   // > 0: the upscale sharpens and writes the output itself, the sharpening pass skipped (D3D12)
+    float fusedSharpen;   // > 0: the upscale sharpens and writes the output itself, the sharpening pass skipped
+    float envTol;         // the envelope: how far outside its range a luma counts as new (0.04)
+    float envDecay;       // ... the share of its width the range narrows by each frame (0.05)
+    float envGain;        // ... the reactive mask per unit beyond the tolerance (0: off)
+    float envRest;        // ... 1: only at rest (fading out from half an output pixel a frame)
+    float rampLo, rampHi; // the speed (output pixels a frame) from which, and at which in full, the base share is the moving one
+    float envRel;         // the envelope's tolerance more by this x its width
+    float envCap;         // ... the most it raises the reactive mask to (0.5 and under: the stability is kept)
+    float alphaSlow;      // > 0: the base share in slow motion (rampLo..rampHi), then on to the moving one by 8 px a frame
+    float sharpenMode;    // 0: CAS; 1: RCAS (sharpen.hlsl); 2: off (the upscale writes the output, as it is)
 };
 
 // hf: the colour work's precision - half in the FP16 variant (DITTO_FP16, SM 6.2 with 16-bit types: twice the rate on
@@ -63,8 +72,10 @@ typedef float3 hf3;
 SamplerState linearClamp : register(s0);
 
 // Vulkan (DITTO_VK, SPIR-V): every storage image with its format spelled out - writing one without needs a device
-// feature the game may not have enabled. The game's output is written by the sharpening pass alone, compiled once per
-// output format (OUTFMT); the history is RGBA16F there (RGB10A2 as a storage image needs another optional feature).
+// feature the game may not have enabled. The passes that write the game's output (the upscale, the sharpening) are
+// compiled once per output format (OUTFMT), the upscale once more per history format (HISTFMT: RGB10A2 or RGBA16F);
+// the stability levels R8, or R8G8 with the anti-shimmer's state (the Vulkan upscale always has it: 0 turns it off).
+// R8, R8G8 and RGB10A2 as storage images are Vulkan's extended formats: dittosr_vk.cpp checks the device has them.
 #if DITTO_VK
 #define VKFMT(f) [[vk::image_format(f)]]
 #else
@@ -72,6 +83,9 @@ SamplerState linearClamp : register(s0);
 #endif
 #ifndef OUTFMT
 #define OUTFMT "rgba16f"
+#endif
+#ifndef HISTFMT
+#define HISTFMT "rgba16f"
 #endif
 
 Texture2D<float> Exposure : register(t5);

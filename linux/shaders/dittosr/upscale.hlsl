@@ -1,10 +1,10 @@
 // DittoSR's upscale. Output size.
 // t0 = the previous history, t1 = the convert pass's (xy motion in NDC), t2 = the colour, t3 = the motion
 // pass's (the motion checks, the derived reactive mask), t4 = the change's 1 x 1, t6 = the game's reactive mask
-// (optional), t7 = the previous stability levels (D3D12).
-// u0 = the history (rgb in DittoSR's encoded domain; a = the stability level on Vulkan, its RGBA16F alpha), u1 = the
-// game's output (the colour decoded back to the game's domain; a debug view only - the sharpening writes it), u2 = the
-// stability levels (D3D12: R8, the RGB10A2 history's alpha has 2 bits).
+// (optional), t7 = the previous stability levels.
+// u0 = the history (rgb in DittoSR's encoded domain), u1 = the game's output (the colour decoded back to the game's
+// domain; fused or a debug view - else the sharpening writes it), u2 = the stability levels (R8 - the RGB10A2 history's
+// alpha has 2 bits -, R8G8 with the anti-shimmer's state).
 //   The current frame: the 3x3 render samples around the pixel, each where its jitter put it, weighted by a round
 //   Gaussian of its distance in output pixels (narrow) and by a wider one in render pixels (smooth). (Once the narrow one
 //   was stretched along the samples' edges, and widened while moving, a thin line's lock besides: on the Ally no visible
@@ -20,19 +20,30 @@ Texture2D<float4> InputColor : register(t2);
 Texture2D<float4> Motion : register(t3);
 Texture2D<float> Change : register(t4);
 Texture2D<float> Reactive : register(t6);
-VKFMT("rgba16f") RWTexture2D<float4> History : register(u0);
-#if !DITTO_VK
+#if FUSED_MOTION
+// (at 1x: the motion pass' inputs and outputs - its checks done here, one render pixel this output pixel)
+Texture2D<float4> PrevMotion : register(t8);
+Texture2D<float4> PrevMda : register(t9);
+Texture2D<float2> PrevEnv : register(t10);
+RWTexture2D<float4> AuxOut : register(u3);
+RWTexture2D<float2> EnvOut : register(u4);
+#define MC_MDA MotionDepthClip
+#define MC_PREVMDA PrevMda
+#define MC_PREVMOTION PrevMotion
+#define MC_PREVENV PrevEnv
+#include "motion_core.hlsli"
+#endif
+VKFMT(HISTFMT) RWTexture2D<float4> History : register(u0);
 #if ANTI_SHIMMER
 Texture2D<float2> PrevStab : register(t7);  // (x the stability level, y the anti-shimmer's running sign)
 #else
 Texture2D<float> PrevStab : register(t7);
 #endif
-RWTexture2D<float4> Output : register(u1);  // (Vulkan: the sharpening pass writes the output, sharpness 0 or not)
+VKFMT(OUTFMT) RWTexture2D<float4> Output : register(u1);
 #if ANTI_SHIMMER
-RWTexture2D<float2> StabOut : register(u2);
+VKFMT("rg8") RWTexture2D<float2> StabOut : register(u2);
 #else
-RWTexture2D<float> StabOut : register(u2);
-#endif
+VKFMT("r8") RWTexture2D<float> StabOut : register(u2);
 #endif
 
 float3 hist(float2 uv, out float3 low) {  // (Catmull-Rom in 5 bilinear taps; low: their plain mean, ~3 pixels wide)
@@ -59,18 +70,17 @@ void put(uint2 id, float3 g, float2 stab, float e, float3 shown) {
     // plus the sharpening's own term: a still pixel's frame-to-frame wobble below a step stays hidden as it did; the
     // unrounded value showed it, the shimmer at rest up 10 %)
     if (history10 > 0.5) shown = round(hs.rgb * 1023.0) / 1023.0 + (shown - g);
-#if !DITTO_VK
 #if ANTI_SHIMMER
     StabOut[id] = stab;
 #else
     StabOut[id] = stab.x;
 #endif
-    if (debugView < 0.5 && fusedSharpen <= 0.0) return;  // (sharpen.hlsl writes the output; a debug view or fused: here)
+    // (sharpen.hlsl writes the output; a debug view, fused or the sharpening off - but in the comparison: here)
+    if (debugView < 0.5 && fusedSharpen <= 0.0 && !(sharpenMode > 1.5 && splitX <= 0.0)) return;
     float3 o = dec(saturate(shown), e);
     float3 ic;
     if (indicator > 0.5 && indicatorAt(id, e, ic)) o = ic;
     Output[id] = float4(o, 1.0);
-#endif
 }
 void put(uint2 id, float3 g, float2 stab, float e) { put(id, g, stab, e, g); }
 
@@ -164,8 +174,21 @@ void main(uint2 id : SV_DispatchThreadID, uint2 gid : SV_GroupID, uint li : SV_G
     // the edge: the samples' luma gradient (Sobel); the narrow Gaussian stretched along it, narrow across it (r2 =
     // |d|^2 - 0.75 es dt^2, dt by steps from the centre's). 0.2.4 had it, 0.3.0 dropped it for speed; back with the
     // anti-shimmer at 0.8 it beat 0.3.1 on every 3x scene, PSNR and shimmer alike, +0.58 ms on a 2 CU RDNA 2)
-    hf lmnh = min(min(min(cc[0].x, cc[1].x), min(cc[2].x, cc[3].x)), min(min(cc[4].x, cc[5].x), min(min(cc[6].x, cc[7].x), cc[8].x)));
-    hf lmxh = max(max(max(cc[0].x, cc[1].x), max(cc[2].x, cc[3].x)), max(max(cc[4].x, cc[5].x), max(max(cc[6].x, cc[7].x), cc[8].x)));
+    // (the samples' range and moments first: the edge's luma range is theirs)
+    [unroll] for (int i = 0; i < 9; i++) {
+        ymn = min(ymn, cc[i]); ymx = max(ymx, cc[i]);
+        if (i != 4) { hf3 dc = cc[i] - cc[4]; m1h += dc; m2h += dc * dc; }
+    }
+    hf lmnh = ymn.x, lmxh = ymx.x;
+#if FUSED_MOTION
+    // (1x: the motion pass' checks here - the 3x3 the tile's around this pixel (b0 = id), its luma the YCoCg's Y; written
+    // for the next frame's, every pixel, before any return)
+    float4 axF;
+    float2 envF;
+    motionCore(uv, mda4, (float)cc[4].x, (float)lmnh, (float)lmxh, axF, envF);
+    AuxOut[id] = axF;
+    EnvOut[id] = envF;
+#endif
     float gx = (float)((cc[2].x + (hf)2.0 * cc[5].x + cc[8].x) - (cc[0].x + (hf)2.0 * cc[3].x + cc[6].x));
     float gy = (float)((cc[6].x + (hf)2.0 * cc[7].x + cc[8].x) - (cc[0].x + (hf)2.0 * cc[1].x + cc[2].x));
     float g2 = gx * gx + gy * gy, rg = rsqrt(max(g2, 1e-10));
@@ -173,17 +196,6 @@ void main(uint2 id : SV_DispatchThreadID, uint2 gid : SV_GroupID, uint li : SV_G
     float2 tng = g2 > 1e-10 ? float2(-gy, gx) * rg : float2(0.0, 1.0);
     float kn = -2.26 * L2E * ks * ks, ke = 0.75 * es;
     float dt0 = dot(d0, tng);
-    float wn[9];
-    [unroll] for (int i = 0; i < 9; i++) {
-        float dt = dt0 + tng.x * (i % 3 - 1) + tng.y * (i / 3 - 1);
-        wn[i] = exp2(kn * (dx[i % 3] * dx[i % 3] + dy[i / 3] * dy[i / 3] - ke * dt * dt));
-    }
-    [unroll] for (int i = 0; i < 9; i++) {
-        float w = wn[i];
-        sg += cc[i] * (hf)w; wg += w;
-        ymn = min(ymn, cc[i]); ymx = max(ymx, cc[i]);
-        hf3 dc = cc[i] - cc[4]; m1h += dc; m2h += dc * dc;
-    }
     float3 m1 = (float3)m1h / 9.0, sig = sqrt(max((float3)m2h / 9.0 - m1 * m1, 0.0));
     m1 += (float3)cc[4];
     // (the smooth estimate - where no sample landed close, and with no history: the bilinear of the 4 samples around
@@ -194,6 +206,19 @@ void main(uint2 id : SV_DispatchThreadID, uint2 gid : SV_GroupID, uint li : SV_G
     hf3 c00 = hy0 ? (hx ? cc[4] : cc[3]) : (hx ? cc[1] : cc[0]), c10 = hy0 ? (hx ? cc[5] : cc[4]) : (hx ? cc[2] : cc[1]);
     hf3 c01 = hy0 ? (hx ? cc[7] : cc[6]) : (hx ? cc[4] : cc[3]), c11 = hy0 ? (hx ? cc[8] : cc[7]) : (hx ? cc[5] : cc[4]);
     float3 cs2 = lerp(lerp((float3)c00, (float3)c10, fb.x), lerp((float3)c01, (float3)c11, fb.x), fb.y);
+    // (the narrow Gaussian over those same 4 samples - the pixel's cell: the 3 x 3's other 5 are a render pixel or more
+    // from the pixel, their weights under 3 % at 2x along an edge and ~0 at 3x. Over all 9 until 0.4.2: the harness'
+    // battery the same at 2x and 3x, +- 0.01 dB at 1.5x; on the ROG Ally 0.125 ms less at 1080p 1.5x, none at 2x)
+    {
+        float ix = hx ? 0.0 : -1.0, iy = hy0 ? 0.0 : -1.0;
+        float2 ddx = hx ? dx.yz : dx.xy, ddy = hy0 ? dy.yz : dy.xy;
+        float2 tx = dt0 + tng.x * float2(ix, ix + 1.0), ty = tng.y * float2(iy, iy + 1.0);
+        float4 dt4 = float4(tx.x + ty.x, tx.y + ty.x, tx.x + ty.y, tx.y + ty.y);
+        float4 r2 = float4(ddx.x * ddx.x + ddy.x * ddy.x, ddx.y * ddx.y + ddy.x * ddy.x, ddx.x * ddx.x + ddy.y * ddy.y, ddx.y * ddx.y + ddy.y * ddy.y);
+        float4 w4 = exp2(kn * (r2 - ke * dt4 * dt4));
+        sg = c00 * (hf)w4.x + c10 * (hf)w4.y + c01 * (hf)w4.z + c11 * (hf)w4.w;
+        wg = w4.x + w4.y + w4.z + w4.w;
+    }
     float3 cg = (float3)sg / max(wg, 1e-6);
     float cf = saturate(wg);
     float3 cur = lerp(cs2, cg, smoothstep(0.05, conf > 0.0 ? conf : 0.6, cf));
@@ -208,7 +233,11 @@ void main(uint2 id : SV_DispatchThreadID, uint2 gid : SV_GroupID, uint li : SV_G
     }
     // the motion pass's, at render size: x = the motion's change against its neighbours' (rj), y = the disocclusion
     // (dz), z = the derived reactive mask
+#if FUSED_MOTION
+    float4 ax = axF;
+#else
     float4 ax = Motion.SampleLevel(linearClamp, uv, 0.0);
+#endif
     float rj = ax.x, dz = ax.y;
     // (where the history is lost - something revealed, another object's edge - the fill takes the place of the
     // Gaussians' estimate: sharp from the first frame)
@@ -219,16 +248,12 @@ void main(uint2 id : SV_DispatchThreadID, uint2 gid : SV_GroupID, uint li : SV_G
     }
     float3 hl, hy = ycc(hist(puv, hl));
     hl = ycc(hl);
-    // (the stability level where the pixel was: D3D12 its own texture, Vulkan the history's alpha)
-#if DITTO_VK
-    float sp = PrevOutput.SampleLevel(linearClamp, puv, 0.0).a, up = 0.0;
-#else
+    // (the stability level where the pixel was)
 #if ANTI_SHIMMER
     float2 sp2 = PrevStab.SampleLevel(linearClamp, puv, 0.0);
     float sp = sp2.x, up = sp2.y * 2.0 - 1.0;
 #else
     float sp = PrevStab.SampleLevel(linearClamp, puv, 0.0);
-#endif
 #endif
     // (the share of the image that changed against its history - the change pass's one pixel)
     float gch = changeScale * smoothstep(0.2, 0.5, Change.Load(int3(0, 0, 0)));
@@ -267,10 +292,17 @@ void main(uint2 id : SV_DispatchThreadID, uint2 gid : SV_GroupID, uint li : SV_G
     // object's detail, the history resampled every frame softening it - at 3x a moving object matched FSR's at 2.3x,
     // and the grass still shimmered half as much as FSR's)
     float hr = saturate(ratio - 2.0);
-    float base = lerp(lerp(0.2, alphaRest > 0.0 ? alphaRest : 0.035, sp), motionShare * (1.0 + 0.67 * hr), saturate(mlen * 0.125));
+    float bRest = lerp(0.2, alphaRest > 0.0 ? alphaRest : 0.035, sp), bMove = motionShare * (1.0 + 0.67 * hr);
+    float rmp = saturate((mlen - rampLo) / max(rampHi - rampLo, 1e-3));
+    float base = alphaSlow > 0.0 ? lerp(lerp(bRest, max(bRest, alphaSlow), rmp), bMove, saturate((mlen - rampHi) / max(8.0 - rampHi, 1e-3)))
+                                 : lerp(bRest, bMove, rmp);
     // (moving, less contrast between the pixels a sample landed near and the rest: each frame's own pattern of them
     // shimmers - at rest it is what resolves the detail)
     float near = motionNear > 0.0 ? lerp(shareNear, motionNear, mf) : shareNear;
+    // (below 1.5x, still and stable, less of each near sample: x 0.67 at 1x, easing back by 1.5x - at 1x one lands near
+    // every pixel each frame, and the still grass shimmered 2.52 -> 1.64 with it (frame weight halved). Not moving:
+    // there it trailed the tiles' moving square, -0.4 dB)
+    near *= 1.0 - 0.33 * (1.0 - saturate((ratio - 1.0) * 2.0)) * sp * (1.0 - saturate(mlen));
     float landw = smoothstep(0.05, 0.8, cf);
     float a = base * lerp(shareFar, near, landw);
     // (frame_weight: the user's persistence - the reactions below still take over where something changed. Above 1, in
@@ -296,7 +328,7 @@ void main(uint2 id : SV_DispatchThreadID, uint2 gid : SV_GroupID, uint li : SV_G
     // (the game's reactive mask: particles, transparencies without motion of their own - more of the new frame)
     // (none from the game: the motion pass's derived one - the luma changed beyond what the jitter explains)
     float rv = 0.0;
-    if (hasReactive > 0.5) rv = saturate(Reactive.SampleLevel(linearClamp, uv, 0.0) * reactiveScale);
+    if (hasReactive > 0.5) rv = max(saturate(Reactive.SampleLevel(linearClamp, uv, 0.0) * reactiveScale), ax.z);  // (ax.z: the envelope's alone then)
     else rv = ax.z;
     a = max(a, rv);
     // (the stability for the next frame: 0 where the history was cut, else one step up. Above 2x at rest, a step only
@@ -327,16 +359,12 @@ void main(uint2 id : SV_DispatchThreadID, uint2 gid : SV_GroupID, uint li : SV_G
 #endif
     if (debugView > 1.5) {  // (the history as usual, the output a view of the decision)
         float3 v = debugView < 2.5 ? saturate(a).xxx : debugView < 3.5 ? sp.xxx : float3(saturate(t - 1.0), cut ? 1.0 : 0.0, cf);
-#if DITTO_VK
-        History[id] = float4(v, 0.0);  // (Vulkan: the view through the history and the sharpening pass - approximate)
-#else
         History[id] = hstore(id, res, stab);
         StabOut[id] = stab2;
         Output[id] = float4(v, 1.0);
-#endif
         return;
     }
-    // the fused sharpening (fusedSharpen > 0, D3D12): the output, not the history - the blend's detail (the history's over
+    // the fused sharpening (fusedSharpen > 0): the output, not the history - the blend's detail (the history's over
     // its low frequencies, the new frame's narrow estimate over its smooth one, by the frame's share) added to the luma
     // by sharpen.hlsl's strength (at rest by the sharpness and the stability, moving 0.1 x sharpness), within the
     // samples' luma range and a quarter beyond moving; not on very bright pixels (the decoding blows a little up)
@@ -348,6 +376,10 @@ void main(uint2 id : SV_DispatchThreadID, uint2 gid : SV_GroupID, uint li : SV_G
         float km = 0.1 * sh * (1.0 + 1.25 * hr);
         float mv = saturate(mlen * 0.5);
         float kk = min(lerp(kr > 0.0 ? kr * (0.5 + 0.5 * stab) : kr, km, mv), 0.2);
+        // (as CAS: by the room the samples' luma range leaves before black or white over its peak, square-rooted - a
+        // dark pixel by a bright light hardly lifted: at sharpness 1 such pixels were pushed up to the light's luma, its
+        // decoding a flash - the harness' glints at 1.5x, sparkle 14.7)
+        if (kk > 0.0) kk *= sqrt(saturate(min((float)ymn.x, 1.0 - (float)ymx.x) / max((float)ymx.x, 1e-4)));
         float g = fusedSharpen * (0.8 - 0.5 * hr) * 4.0 * kk / (1.0 - 4.0 * kk);  // (0.8 up to 2x, 0.3 at 3x: the pass's sharpness)
         float yb = 0.25 * res.r + 0.5 * res.g + 0.25 * res.b;
         float mrg = 0.25 * (1.0 - hr) * (ymx.x - ymn.x) * mv;

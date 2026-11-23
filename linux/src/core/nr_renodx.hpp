@@ -95,9 +95,13 @@ struct Settings {
     float norm_release_stops = 0.5f;    // NRNormReleaseStops
     float norm_slew_stops = 0.02f;      // NRNormSlewStops
     uint32_t detail_stability = 1;      // NRDetailStability: 0 auto, 1 off (default), 2 always
-    float resolution_scale = 1.0f;      // NRResolutionScale: the network at 0.33..1 of the frame
+    float resolution_scale = 1.0f;      // NRResolutionScale: the network at 0.25..1 of the frame
     bool follow_input_res = false;      // NRFollowInputRes: the network at the game's render resolution
-    uint32_t look_upsample = 0;         // NRLookUpsample: 0 auto, 1 edge-aware, 2 classic, 3 area input, 4 Ditto SR
+    bool ditto_relight = true;
+    float ditto_ao = .75f, ditto_gi = 2.f;
+    uint32_t ditto_samples = 32;
+    float ditto_fov = 60.f, ditto_near = .1f, ditto_far = 100000.f;
+    uint32_t look_upsample = 0;         // NRLookUpsample: 0 auto, 1 edge-aware, 2 classic, 3 area input, 4 Ditto Relight
     // Adjust NR's look (look_stage.hpp Settings; every default the identity, NRLookMode off).
     bool look_mode = false;             // NRLookMode
     float look_strength = 1.0f;         // NRLookStrength 0..2

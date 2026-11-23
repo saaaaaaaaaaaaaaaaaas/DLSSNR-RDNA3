@@ -208,7 +208,7 @@ settings keep RenoDX's names, defaults and ranges:
   fast (the network runs once and its change is strengthened).
 - **Composition**: colour and transfer strength, chroma clamp, transfer mode, highlight guard, Detail stability (Off
   by default), black restore and pedestal, codec.
-- **Resolution**: the network's resolution, following the render resolution, upsampling. On Linux/Proton, **Ditto SR** reconstructs neural to 100% for NR's normal proxy/neural composition before OptiScaler's SR. Select a RenoDX layer, **Before the upscaler**, a Resolution scale below 1 and **Upsampling: Ditto SR**. See [setup and verification](docs/DITTOSR.md).
+- **Resolution**: the network's resolution, following the render resolution, upsampling. On RDNA3 Linux/Proton, **Ditto Relight 0.5.4** adds AO/GI and reconstructs the neural edit against full-size color/depth. Select **Before the upscaler**, **Upsampling: Ditto Relight** and a model scale of 0.25–1. The lighting toggle leaves guided reconstruction available separately. See [setup and verification](docs/DITTO-RELIGHT.md).
 - **Adjust NR's look**: brightening, darkening, colour, hue, shadows / midtones / highlights, large-scale tone and
   fine detail, halos, temporal smoothing.
 - **Encoding**: how the picture's values are read (SDR, linear, PQ; units and white points for HDR) and the divisor.

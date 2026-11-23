@@ -12,6 +12,8 @@ python3 - "$asi/dlssnr-amd.asi" "$version" "$commit" <<'PY'
 from pathlib import Path
 import sys
 data = Path(sys.argv[1]).read_bytes()
+if b'[nr] Ditto Relight 0.5.4: neural' not in data:
+    sys.exit('This is not the RDNA3 Ditto Relight 0.5.4 ASI. Rebuild with NR_GPU=rdna3.')
 if not any(stamp.encode() + b'\0' in data for stamp in sys.argv[2:]):
     sys.exit('The ASI does not identify this source revision. Rebuild it before packaging.')
 PY
@@ -20,10 +22,11 @@ stage=$(mktemp -d "$out/package.XXXXXX")
 trap 'rm -rf -- "$stage"' EXIT
 mkdir -p -- "$stage/OptiScaler/plugins" "$stage/dlssnr-amd/shaders/renodx" "$stage/licenses"
 cp -- "$asi/dlssnr-amd.asi" "$stage/OptiScaler/plugins/"
-for pass in prepare convert motion upscale sharpen; do
-    cp -- "$asi/shaders/renodx/renodx_ditto_$pass.spv" "$stage/dlssnr-amd/shaders/renodx/"
+for pass in prepare residual convert motion upscale sharpen aoprep aomipall aomain aofilter aotemporal aocacao aolut aocurve aocompose; do
+    [[ -f "$asi/shaders/renodx/renodx_ditto_$pass.spv" ]] || { echo "missing Ditto Relight $pass shader" >&2; exit 1; }
 done
-cp -- "$asi/shaders/renodx/DittoSR-LICENSE.txt" "$asi/shaders/renodx/Snapdragon-GSR-LICENSE.txt" \
+cp -- "$asi/shaders/renodx"/renodx_ditto_*.spv "$stage/dlssnr-amd/shaders/renodx/"
+cp -- "$asi/shaders/renodx/DittoSR-LICENSE.txt" "$asi/shaders/renodx/Snapdragon-GSR-LICENSE.txt" "$asi/shaders/renodx/CORTAO-LICENSE.txt" "$asi/shaders/renodx/FidelityFX-CACAO-LICENSE.txt" \
     "$stage/dlssnr-amd/shaders/renodx/"
 cp -- LICENSE "$stage/licenses/DLSSNR-AMD-LICENSE.txt"
 cp -- toolchain/imgui-nr/LICENSE.txt "$stage/licenses/DearImGui-LICENSE.txt"
@@ -32,7 +35,7 @@ cp -- artifacts/ref/DLSS5-Feeder/external/minhook/LICENSE.txt "$stage/licenses/M
 cp -- linux/shaders/renodx/LICENSE "$stage/licenses/RenoDX-LICENSE.txt"
 cp -- linux/shaders/passes/include/fsr1/LICENSE.txt "$stage/licenses/FidelityFX-FSR1-LICENSE.txt"
 cp -- linux/package/DITTOSR-UPDATE.txt "$stage/README.txt"
-archive="$out/NR-Control-DittoSR-$version-x86_64-rdna3.tar.gz"
+archive="$out/NR-Control-Ditto-Relight-$version-x86_64-rdna3.tar.gz"
 tar --sort=name --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner -C "$stage" -cf - . | gzip -n > "$archive"
 python3 linux/build/check_package.py "$archive"
 (cd -- "$out" && sha256sum -- "$(basename -- "$archive")" > "$(basename -- "$archive").sha256")

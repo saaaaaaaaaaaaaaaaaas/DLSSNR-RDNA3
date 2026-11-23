@@ -66,9 +66,17 @@ inline constexpr Key kKeys[] = {
     {"NRTransferMode", kUint, 0, 0.0f, 1.0f, 0.0f, "Composition", "Transfer mode", "NRTransferMode.", "Bounded ratio\0Consistent\0"},
     {"NRStyleHighlightGuard", kFloat, 2, 0.0f, 2.0f, 0.0f, "Composition", "Highlight guard (stops)", "NRStyleHighlightGuard. 0 = off.", nullptr},
     {"NRDetailStability", kUint, 0, 0.0f, 2.0f, 1.0f, "Composition", "Detail stability", "NRDetailStability. NR's change smoothed over frames.", "Auto\0Off\0Always\0"},
+#if NR_ARCH_RDNA3
+    {"NRResolutionScale", kFloat, 2, 0.25f, 1.0f, 1.0f, "Resolution", "Resolution scale", "NRResolutionScale. The network below the frame, 0.25-1.", nullptr},
+#else
     {"NRResolutionScale", kFloat, 2, 0.33f, 1.0f, 1.0f, "Resolution", "Resolution scale", "NRResolutionScale. The network below the frame, 0.33-1.", nullptr},
+#endif
     {"NRFollowInputRes", kBool, 0, 0.0f, 0.0f, 0.0f, "Resolution", "Follow render resolution", "NRFollowInputRes. The network at the motion vectors' resolution.", nullptr},
+#if NR_ARCH_RDNA3
+    {"NRLookUpsample", kUint, 0, 0.0f, 4.0f, 0.0f, "Resolution", "Upsampling", "NRLookUpsample. Ditto Relight reconstructs the neural edit against full-size color/depth and adds screen-space AO/GI for NR's normal composition before the upscaler. Requires Before SR, game depth, motion and jitter.", "Auto\0Edge-aware\0Classic\0Area input\0Ditto Relight\0"},
+#else
     {"NRLookUpsample", kUint, 0, 0.0f, 4.0f, 0.0f, "Resolution", "Upsampling", "NRLookUpsample. Ditto SR reconstructs neural to 100% for NR's normal composition before the upscaler. Requires Before SR, game depth, motion and jitter.", "Auto\0Edge-aware\0Classic\0Area input\0Ditto SR\0"},
+#endif
     {"NRLookMode", kBool, 0, 0.0f, 0.0f, 0.0f, "Adjust NR's look", "Adjust NR's look", "NRLookMode. Reshapes NR's result live; off leaves it as it is.", nullptr},
     {"NRLookStrength", kFloat, 2, 0.0f, 2.0f, 1.0f, "Adjust NR's look", "Edit strength", "NRLookStrength.", nullptr},
     {"NRLookBrighten", kFloat, 2, 0.0f, 2.0f, 1.0f, "Adjust NR's look", "Brightening", "NRLookBrighten.", nullptr},
@@ -136,6 +144,15 @@ inline constexpr Key kKeys[] = {
     {"NRFastHybridFine", kFloat, 2, 0.f, 2.f, 1.f, "Passes", "Fine detail", "NRFastHybridFine. How much of the network's fine detail change Hybrid adds: 1 as made (default), 0 none, 2 twice.", nullptr},
     {"NRFastInterleavedPasses", kUint, 0, 2.f, 8.f, 3.f, "Passes", "Passes (fast)", "NRFastInterleavedPasses. Interleaved: how many legacy passes (2 to 8) take turns, one each frame. Each pass more needs more video memory.", nullptr},
     {"NRFastInterleavedPreset", kUint, 0, 1.f, 2.f, float(nr::fast::kDefaultInterleavedPreset), "Passes", "Interleaved preset", "NRFastInterleavedPreset. Interleaved's processing method.", "~Preset 1\0Preset 1\0Preset 2\0"},
+#if NR_ARCH_RDNA3
+    {"NRDittoRelight", kBool, 0, 0.f, 0.f, 1.f, "Ditto Relight", "Lighting", "Enable Ditto Relight AO/GI. Off retains guided reconstruction.", nullptr},
+    {"NRDittoAO", kFloat, 2, 0.f, 1.f, 0.75f, "Ditto Relight", "Ambient occlusion", "Ambient-light occlusion strength.", nullptr},
+    {"NRDittoGI", kFloat, 2, 0.f, 4.f, 2.f, "Ditto Relight", "Global illumination", "Screen-space bounce-light strength.", nullptr},
+    {"NRDittoSamples", kUint, 0, 4.f, 32.f, 32.f, "Ditto Relight", "Samples", "Lighting samples per half-size pixel.", nullptr},
+    {"NRDittoFov", kFloat, 1, 10.f, 170.f, 60.f, "Ditto Relight", "Vertical FOV", "Camera FOV in degrees. The NR interface provides no projection matrix; set this to the game camera.", nullptr},
+    {"NRDittoNear", kFloat, 3, 0.001f, 10.f, 0.1f, "Ditto Relight", "Near plane", "Game camera near plane, in view units.", nullptr},
+    {"NRDittoFar", kFloat, 1, 10.f, 1000000.f, 100000.f, "Ditto Relight", "Far plane", "Game camera far plane, in view units.", nullptr},
+#endif
 };
 inline constexpr int kCount = int(sizeof kKeys / sizeof kKeys[0]);
 }  // namespace nr::renodx_keys

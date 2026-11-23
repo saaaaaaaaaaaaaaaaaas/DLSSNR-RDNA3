@@ -19,6 +19,7 @@ layout(push_constant) uniform C {
     uint guides;
     vec2 jitter;
 } c;
+float safe_depth(float z) { return isnan(z)||isinf(z) ? (c.inverted!=0u?0.0:1.0) : clamp(z,0.0,1.0); }
 void main() {
     ivec2 p=ivec2(gl_GlobalInvocationID.xy);
     if (any(greaterThanEqual(p, ivec2(c.size)))) return;
@@ -36,17 +37,19 @@ void main() {
     } else {
         ivec2 center=min(ivec2(uv*vec2(c.depth_size)),ivec2(c.depth_size)-1);
         ivec2 best=center;
-        float z=texelFetch(depth,center+ivec2(c.depth_base),0).r;
+        float z=safe_depth(texelFetch(depth,center+ivec2(c.depth_base),0).r);
         // Preserve foreground motion at silhouettes when the guides are reduced to NR's grid.
-        for (int y=-1;y<=1;++y) for (int x=-1;x<=1;++x) {
+        for (int y=(c.guides==2u?0:-1);y<=(c.guides==2u?0:1);++y) for (int x=(c.guides==2u?0:-1);x<=(c.guides==2u?0:1);++x) {
             ivec2 q=clamp(center+ivec2(x,y),ivec2(0),ivec2(c.depth_size)-1);
-            float v=texelFetch(depth,q+ivec2(c.depth_base),0).r;
+            float v=safe_depth(texelFetch(depth,q+ivec2(c.depth_base),0).r);
             if (c.inverted!=0u ? v>z : v<z) { z=v; best=q; }
         }
         vec2 muv=(vec2(best)+0.5)/vec2(c.depth_size);
         ivec2 mp=min(ivec2(muv*vec2(c.motion_size)),ivec2(c.motion_size)-1);
         vec2 mv=texelFetch(motion,mp+ivec2(c.motion_base),0).xy*c.motion_scale;
         imageStore(low_depth,p,vec4(z));
+        if (c.guides==2u) mv+=c.jitter;
+        if (any(isnan(mv))||any(isinf(mv))) mv=vec2(2.0); // Reject history without extra inference.
         imageStore(low_motion,p,vec4(mv,0,0));
     }
 }

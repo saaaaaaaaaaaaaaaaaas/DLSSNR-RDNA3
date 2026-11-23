@@ -6,6 +6,9 @@ release with `bash linux/build/build_z1e_release.sh`. The entry point and this
 branch's CI accept RDNA3/x86_64/Turbo only; RDNA4 and Fast are not built.
 See [release instructions and checks](docs/RDNA3-Z1E-RELEASE.md).
 
+Local follow-up: [Ditto Relight 0.5.4 and guided low-resolution reconstruction](docs/DITTO-RELIGHT.md).
+This implementation is newer than the published Z1 Extreme release above.
+
 This branch runs the same neural rendering network as the main project on AMD Radeon RX 7000 cards
 (RDNA3, gfx11), which have no FP8 matrix instructions. Linux and Proton only; `windows/` is not ported.
 Everything in the [main README](README.md) that is not about the card still applies, including the

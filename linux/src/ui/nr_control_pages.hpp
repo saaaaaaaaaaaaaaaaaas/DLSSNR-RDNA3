@@ -2216,7 +2216,7 @@ struct ChainEditor {
             if (layer_values.u(key_index("NRLookUpsample")) == 4u && row.placement != "before") {
                 ImGui::PushTextWrapPos(0.f);
                 ImGui::TextColored(ImVec4(1.f, .55f, .3f, 1.f), "%s",
-                                   tr("Ditto SR requires Placement: Before the upscaler"));
+                                   tr("Ditto Relight requires Placement: Before the upscaler"));
                 ImGui::PopTextWrapPos();
             }
         }
