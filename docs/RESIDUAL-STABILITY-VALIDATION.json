@@ -1,0 +1,671 @@
+{
+  "baseline_source": "561530a",
+  "implementation_source": "Same commit as this record; exact release source is in the artifact receipt.",
+  "device": "AMD Ryzen Z1 Extreme (RADV PHOENIX)",
+  "driver": "Mesa 26.2.6-arch3.1",
+  "lighting": "off",
+  "profile": "z1-extreme-turbo",
+  "analytic": {
+    "frames_per_case": 48,
+    "before": [
+      {
+        "case": "exposure",
+        "N": 2,
+        "luma_rms_stops": 0.01529587,
+        "rgb_rmse": 0.00355649,
+        "alpha": 0,
+        "instability": 0,
+        "full": 24,
+        "reconstructed": 24
+      },
+      {
+        "case": "large_exposure",
+        "N": 2,
+        "luma_rms_stops": 0.07056297,
+        "rgb_rmse": 0.02220375,
+        "alpha": 0,
+        "instability": 0,
+        "full": 24,
+        "reconstructed": 24
+      },
+      {
+        "case": "confidence",
+        "N": 2,
+        "luma_rms_stops": 0.00016819,
+        "rgb_rmse": 0.01895745,
+        "alpha": 0,
+        "instability": 0,
+        "full": 24,
+        "reconstructed": 24
+      },
+      {
+        "case": "oscillation",
+        "N": 2,
+        "luma_rms_stops": 0.03146588,
+        "rgb_rmse": 0.00684563,
+        "alpha": 0,
+        "instability": 0,
+        "full": 24,
+        "reconstructed": 24
+      },
+      {
+        "case": "step",
+        "N": 2,
+        "luma_rms_stops": 0.0002333,
+        "rgb_rmse": 0.00011216,
+        "alpha": 0,
+        "instability": 0,
+        "full": 24,
+        "reconstructed": 24
+      },
+      {
+        "case": "cut",
+        "N": 2,
+        "luma_rms_stops": 0.00010448,
+        "rgb_rmse": 2.778e-05,
+        "alpha": 0,
+        "instability": 0,
+        "full": 24,
+        "reconstructed": 24
+      },
+      {
+        "case": "invalid",
+        "N": 2,
+        "luma_rms_stops": 0.00010448,
+        "rgb_rmse": 2.778e-05,
+        "alpha": 0,
+        "instability": 0,
+        "full": 24,
+        "reconstructed": 24
+      },
+      {
+        "case": "exposure",
+        "N": 3,
+        "luma_rms_stops": 0.01055121,
+        "rgb_rmse": 0.00241519,
+        "alpha": 0,
+        "instability": 0,
+        "full": 16,
+        "reconstructed": 32
+      },
+      {
+        "case": "large_exposure",
+        "N": 3,
+        "luma_rms_stops": 0.07120217,
+        "rgb_rmse": 0.01804006,
+        "alpha": 0,
+        "instability": 0,
+        "full": 16,
+        "reconstructed": 32
+      },
+      {
+        "case": "confidence",
+        "N": 3,
+        "luma_rms_stops": 4.513e-05,
+        "rgb_rmse": 0.03311516,
+        "alpha": 0,
+        "instability": 0,
+        "full": 16,
+        "reconstructed": 32
+      },
+      {
+        "case": "oscillation",
+        "N": 3,
+        "luma_rms_stops": 0.03140433,
+        "rgb_rmse": 0.00684563,
+        "alpha": 0,
+        "instability": 0,
+        "full": 16,
+        "reconstructed": 32
+      },
+      {
+        "case": "step",
+        "N": 3,
+        "luma_rms_stops": 0.0002333,
+        "rgb_rmse": 0.00011216,
+        "alpha": 0,
+        "instability": 0,
+        "full": 16,
+        "reconstructed": 32
+      },
+      {
+        "case": "cut",
+        "N": 3,
+        "luma_rms_stops": 0.00010448,
+        "rgb_rmse": 0.01057799,
+        "alpha": 0,
+        "instability": 0,
+        "full": 16,
+        "reconstructed": 32
+      },
+      {
+        "case": "invalid",
+        "N": 3,
+        "luma_rms_stops": 0.00010448,
+        "rgb_rmse": 2.778e-05,
+        "alpha": 0,
+        "instability": 0,
+        "full": 16,
+        "reconstructed": 32
+      },
+      {
+        "case": "exposure",
+        "N": 4,
+        "luma_rms_stops": 0.01529587,
+        "rgb_rmse": 0.00355649,
+        "alpha": 0,
+        "instability": 0,
+        "full": 12,
+        "reconstructed": 36
+      },
+      {
+        "case": "large_exposure",
+        "N": 4,
+        "luma_rms_stops": 0.13226635,
+        "rgb_rmse": 0.04141442,
+        "alpha": 0,
+        "instability": 0,
+        "full": 12,
+        "reconstructed": 36
+      },
+      {
+        "case": "confidence",
+        "N": 4,
+        "luma_rms_stops": 5.97e-05,
+        "rgb_rmse": 0.03909789,
+        "alpha": 0,
+        "instability": 0,
+        "full": 12,
+        "reconstructed": 36
+      },
+      {
+        "case": "oscillation",
+        "N": 4,
+        "luma_rms_stops": 0.03146588,
+        "rgb_rmse": 0.00682633,
+        "alpha": 0,
+        "instability": 0,
+        "full": 12,
+        "reconstructed": 36
+      },
+      {
+        "case": "step",
+        "N": 4,
+        "luma_rms_stops": 0.0002333,
+        "rgb_rmse": 0.00011216,
+        "alpha": 0,
+        "instability": 0,
+        "full": 12,
+        "reconstructed": 36
+      },
+      {
+        "case": "cut",
+        "N": 4,
+        "luma_rms_stops": 0.00010448,
+        "rgb_rmse": 0.01495951,
+        "alpha": 0,
+        "instability": 0,
+        "full": 12,
+        "reconstructed": 36
+      },
+      {
+        "case": "invalid",
+        "N": 4,
+        "luma_rms_stops": 0.00010448,
+        "rgb_rmse": 2.778e-05,
+        "alpha": 0,
+        "instability": 0,
+        "full": 12,
+        "reconstructed": 36
+      }
+    ],
+    "after": [
+      {
+        "case": "exposure",
+        "N": 2,
+        "luma_rms_stops": 8.4e-07,
+        "rgb_rmse": 1.9e-07,
+        "alpha": 0,
+        "instability": 0,
+        "full": 24,
+        "reconstructed": 24
+      },
+      {
+        "case": "large_exposure",
+        "N": 2,
+        "luma_rms_stops": 5.3e-07,
+        "rgb_rmse": 1.6e-07,
+        "alpha": 0,
+        "instability": 0,
+        "full": 24,
+        "reconstructed": 24
+      },
+      {
+        "case": "confidence",
+        "N": 2,
+        "luma_rms_stops": 1.847e-05,
+        "rgb_rmse": 6.42e-06,
+        "alpha": 0,
+        "instability": 0,
+        "full": 24,
+        "reconstructed": 24
+      },
+      {
+        "case": "oscillation",
+        "N": 2,
+        "luma_rms_stops": 0.0040212,
+        "rgb_rmse": 0.00087489,
+        "alpha": 0,
+        "instability": 1,
+        "full": 24,
+        "reconstructed": 24
+      },
+      {
+        "case": "step",
+        "N": 2,
+        "luma_rms_stops": 0.00097715,
+        "rgb_rmse": 0.00185402,
+        "alpha": 0,
+        "instability": 0,
+        "full": 24,
+        "reconstructed": 24
+      },
+      {
+        "case": "cut",
+        "N": 2,
+        "luma_rms_stops": 4e-07,
+        "rgb_rmse": 1.2e-07,
+        "alpha": 0,
+        "instability": 0,
+        "full": 24,
+        "reconstructed": 24
+      },
+      {
+        "case": "invalid",
+        "N": 2,
+        "luma_rms_stops": 3.9e-07,
+        "rgb_rmse": 1.2e-07,
+        "alpha": 0,
+        "instability": 0,
+        "full": 24,
+        "reconstructed": 24
+      },
+      {
+        "case": "exposure",
+        "N": 3,
+        "luma_rms_stops": 1.36e-06,
+        "rgb_rmse": 3.1e-07,
+        "alpha": 0,
+        "instability": 0,
+        "full": 16,
+        "reconstructed": 32
+      },
+      {
+        "case": "large_exposure",
+        "N": 3,
+        "luma_rms_stops": 5.2e-07,
+        "rgb_rmse": 1.5e-07,
+        "alpha": 0,
+        "instability": 0,
+        "full": 16,
+        "reconstructed": 32
+      },
+      {
+        "case": "confidence",
+        "N": 3,
+        "luma_rms_stops": 3.169e-05,
+        "rgb_rmse": 1.085e-05,
+        "alpha": 0,
+        "instability": 0,
+        "full": 16,
+        "reconstructed": 32
+      },
+      {
+        "case": "oscillation",
+        "N": 3,
+        "luma_rms_stops": 0.00615103,
+        "rgb_rmse": 0.00131625,
+        "alpha": 0,
+        "instability": 1,
+        "full": 16,
+        "reconstructed": 32
+      },
+      {
+        "case": "step",
+        "N": 3,
+        "luma_rms_stops": 0.00097732,
+        "rgb_rmse": 0.00185404,
+        "alpha": 0,
+        "instability": 0,
+        "full": 16,
+        "reconstructed": 32
+      },
+      {
+        "case": "cut",
+        "N": 3,
+        "luma_rms_stops": 4.8e-07,
+        "rgb_rmse": 0.01057795,
+        "alpha": 0,
+        "instability": 0,
+        "full": 16,
+        "reconstructed": 32
+      },
+      {
+        "case": "invalid",
+        "N": 3,
+        "luma_rms_stops": 4.8e-07,
+        "rgb_rmse": 1.7e-07,
+        "alpha": 0,
+        "instability": 0,
+        "full": 16,
+        "reconstructed": 32
+      },
+      {
+        "case": "exposure",
+        "N": 4,
+        "luma_rms_stops": 1.5e-06,
+        "rgb_rmse": 3.4e-07,
+        "alpha": 0,
+        "instability": 0,
+        "full": 12,
+        "reconstructed": 36
+      },
+      {
+        "case": "large_exposure",
+        "N": 4,
+        "luma_rms_stops": 8e-07,
+        "rgb_rmse": 2.4e-07,
+        "alpha": 0,
+        "instability": 0,
+        "full": 12,
+        "reconstructed": 36
+      },
+      {
+        "case": "confidence",
+        "N": 4,
+        "luma_rms_stops": 3.748e-05,
+        "rgb_rmse": 1.303e-05,
+        "alpha": 0,
+        "instability": 0,
+        "full": 12,
+        "reconstructed": 36
+      },
+      {
+        "case": "oscillation",
+        "N": 4,
+        "luma_rms_stops": 0.00822603,
+        "rgb_rmse": 0.00187166,
+        "alpha": 0,
+        "instability": 1,
+        "full": 12,
+        "reconstructed": 36
+      },
+      {
+        "case": "step",
+        "N": 4,
+        "luma_rms_stops": 0.00097745,
+        "rgb_rmse": 0.00185406,
+        "alpha": 0,
+        "instability": 0,
+        "full": 12,
+        "reconstructed": 36
+      },
+      {
+        "case": "cut",
+        "N": 4,
+        "luma_rms_stops": 5.2e-07,
+        "rgb_rmse": 0.01495949,
+        "alpha": 0,
+        "instability": 0,
+        "full": 12,
+        "reconstructed": 36
+      },
+      {
+        "case": "invalid",
+        "N": 4,
+        "luma_rms_stops": 5.2e-07,
+        "rgb_rmse": 1.9e-07,
+        "alpha": 0,
+        "instability": 0,
+        "full": 12,
+        "reconstructed": 36
+      }
+    ],
+    "synchronization_validation_errors": 0,
+    "real_step_error_limit_stops_at_third_frame": 0.02
+  },
+  "motion": {
+    "scene": "Motion (procedural Vulkan regression)",
+    "extent": [
+      640,
+      360
+    ],
+    "lighting": "off",
+    "full_nr_exact_frames": 24,
+    "reference": "Full NR Turbo, N=1",
+    "cases": {
+      "before-n2": {
+        "low_luma_rmse_stops": 0.006996649883039149,
+        "phase_mean_error_stops": {
+          "0": -0.000592445779589657,
+          "1": -0.0005889343248574765
+        },
+        "motion_blue_error_codes": 0.3828373507475388
+      },
+      "before-n3": {
+        "low_luma_rmse_stops": 0.007769215671892878,
+        "phase_mean_error_stops": {
+          "0": -0.0021328635880141344,
+          "1": -0.0020468172839541283,
+          "2": -0.0017790760387959308
+        },
+        "motion_blue_error_codes": 0.5221210723313772
+      },
+      "before-n4": {
+        "low_luma_rmse_stops": 0.009004413620151582,
+        "phase_mean_error_stops": {
+          "0": -0.000594668830269385,
+          "1": -0.0007368743806628345,
+          "2": -0.0010169080378934071,
+          "3": -0.0010022643944860876
+        },
+        "motion_blue_error_codes": 0.5445176319676744
+      },
+      "after-n2": {
+        "low_luma_rmse_stops": 0.006873836756777244,
+        "phase_mean_error_stops": {
+          "0": -0.0006090455054852964,
+          "1": -0.0005603119002148652
+        },
+        "motion_blue_error_codes": 0.4906354629319256
+      },
+      "after-n3": {
+        "low_luma_rmse_stops": 0.007673500404051454,
+        "phase_mean_error_stops": {
+          "0": -0.0020199571126630106,
+          "1": -0.001969326280038143,
+          "2": -0.0016797239473214046
+        },
+        "motion_blue_error_codes": 0.5834372254004473
+      },
+      "after-n4": {
+        "low_luma_rmse_stops": 0.008858800177186342,
+        "phase_mean_error_stops": {
+          "0": -0.00047406545186173804,
+          "1": -0.0006735443841956994,
+          "2": -0.0009306312694033446,
+          "3": -0.0009025191307749233
+        },
+        "motion_blue_error_codes": 0.5881406983280528
+      }
+    },
+    "full_nr_exact_frames_total": 72,
+    "n2_n3_n4_full_dispatches": [
+      12,
+      8,
+      6
+    ],
+    "unexpected_dispatches": 0,
+    "synchronization_validation_errors": 0,
+    "fg_notifications_per_real_frame": 3,
+    "reverse_z": "pass",
+    "runtime_recreation_at_9": "Full dispatches remain at 0,4,8,12,16,20; counters cover the current Runtime lifetime only."
+  },
+  "timing720": {
+    "rounds": 2,
+    "sample_frames": [
+      12,
+      23
+    ],
+    "method": "GPU timestamps, uploads/readbacks excluded; reversed order in second round; automatic clocks, idle gaps; no game FPS claim.",
+    "summary": {
+      "before-n1": {
+        "mean_ms": {
+          "mean": 75.35748016666668,
+          "min": 75.28117841666666,
+          "max": 75.43378191666667
+        },
+        "full_ms": {
+          "mean": 75.35748016666668,
+          "min": 75.28117841666666,
+          "max": 75.43378191666667
+        }
+      },
+      "before-n2": {
+        "mean_ms": {
+          "mean": 40.00833133333333,
+          "min": 39.883649416666664,
+          "max": 40.13301325
+        },
+        "full_ms": {
+          "mean": 77.43577225,
+          "min": 77.11377716666667,
+          "max": 77.75776733333333
+        },
+        "skip_ms": {
+          "mean": 2.5808904166666666,
+          "min": 2.5082591666666665,
+          "max": 2.653521666666667
+        }
+      },
+      "before-n3": {
+        "mean_ms": {
+          "mean": 27.365822041666668,
+          "min": 27.35841475,
+          "max": 27.373229333333335
+        },
+        "full_ms": {
+          "mean": 76.59088875,
+          "min": 76.58541325,
+          "max": 76.59636425
+        },
+        "skip_ms": {
+          "mean": 2.7532886875,
+          "min": 2.73944,
+          "max": 2.767137375
+        }
+      },
+      "before-n4": {
+        "mean_ms": {
+          "mean": 21.406247083333334,
+          "min": 21.316748666666665,
+          "max": 21.495745499999998
+        },
+        "full_ms": {
+          "mean": 76.82075383333333,
+          "min": 76.522594,
+          "max": 77.11891366666666
+        },
+        "skip_ms": {
+          "mean": 2.9347448333333332,
+          "min": 2.914800222222222,
+          "max": 2.9546894444444445
+        }
+      },
+      "after-n1": {
+        "mean_ms": {
+          "mean": 75.53458316666666,
+          "min": 75.48584725,
+          "max": 75.58331908333334
+        },
+        "full_ms": {
+          "mean": 75.53458316666666,
+          "min": 75.48584725,
+          "max": 75.58331908333334
+        }
+      },
+      "after-n2": {
+        "mean_ms": {
+          "mean": 41.20721091666667,
+          "min": 41.1608495,
+          "max": 41.25357233333333
+        },
+        "full_ms": {
+          "mean": 78.27610566666667,
+          "min": 78.1818065,
+          "max": 78.37040483333334
+        },
+        "skip_ms": {
+          "mean": 4.138316166666667,
+          "min": 4.136739833333333,
+          "max": 4.1398925
+        }
+      },
+      "after-n3": {
+        "mean_ms": {
+          "mean": 29.182259958333333,
+          "min": 29.033240083333332,
+          "max": 29.331279833333333
+        },
+        "full_ms": {
+          "mean": 78.8465295,
+          "min": 78.32068025000001,
+          "max": 79.37237875
+        },
+        "skip_ms": {
+          "mean": 4.3501251875,
+          "min": 4.310730375,
+          "max": 4.38952
+        }
+      },
+      "after-n4": {
+        "mean_ms": {
+          "mean": 23.111221666666665,
+          "min": 22.872568166666667,
+          "max": 23.349875166666667
+        },
+        "full_ms": {
+          "mean": 78.5001715,
+          "min": 77.64731766666667,
+          "max": 79.35302533333333
+        },
+        "skip_ms": {
+          "mean": 4.648238388888888,
+          "min": 4.614318333333333,
+          "max": 4.682158444444444
+        }
+      }
+    }
+  },
+  "history_bytes_per_pixel": {
+    "before": 56,
+    "after": 136
+  },
+  "shader_abi": {
+    "bindings": 19,
+    "push_bytes": 60,
+    "old_shader_rejected": true
+  },
+  "sha256": {
+    "runtime_seamless.spv": "00e54d97711140feb6ddc126fa3d094cbc22ca3c266a38eb2a55daebed45c9ec",
+    "oracle": "3dd5a998ea068a245563bca0954c4429b5414193a978a67b170f5a463d39f4f6",
+    "baseline/run_sequence": "f3b95a0008e8a9f3ad0bb141846bfe42585566bd61bc8fb401521f2f3ad2a251",
+    "baseline/runtime_seamless.spv": "358dd4ddf6abd931d385b1178f127ca3223ff3d2f545c6847a3a7010cb5facc6",
+    "run_sequence": "8ab8b989500908e9c2e0774b8e69f051798213ab11102c0bd5fe6c357e43cbcd"
+  },
+  "limitations": [
+    "Model-fixture tests do not reproduce the owner's game/FG/HDR presentation.",
+    "Motion blue-edge error slightly increases; see metrics.",
+    "Extra filtering increases processing cost and memory."
+  ]
+}

@@ -1,7 +1,8 @@
 #version 460
 // Causal Vulkan adaptation of the residual/validation ideas in optimizer-fps-dlss5
 // (Yuri Grib, MIT); see include/seamless/LICENSE.txt. No future frame or GPU->CPU
-// scheduling feedback. Coordinates and residuals stay in the model's color domain.
+// scheduling feedback. Gain/detail decomposition stays in the model input domain.
+// Lighting is dimensionless log-gain; only detail carries intensity units.
 layout(local_size_x=8, local_size_y=8) in;
 layout(binding=0) uniform sampler2D shown;
 layout(binding=1, rgba32f) uniform image2D answer;
@@ -12,11 +13,21 @@ layout(binding=5) uniform sampler2D previous_guide;
 layout(binding=6, rgba16f) uniform image2D projected;
 layout(binding=7, rgba16f) uniform image2D next_residual;
 layout(binding=8, rgba32f) uniform writeonly image2D next_guide;
+layout(binding=9) uniform sampler2D previous_tone;
+layout(binding=10) uniform sampler2D previous_target;
+layout(binding=11) uniform sampler2D previous_statistics;
+layout(binding=12, rgba16f) uniform image2D projected_tone;
+layout(binding=13, rgba16f) uniform image2D projected_target;
+layout(binding=14, rgba16f) uniform image2D projected_statistics;
+layout(binding=15, rgba16f) uniform image2D next_tone;
+layout(binding=16, rgba16f) uniform image2D next_target;
+layout(binding=17, rgba16f) uniform image2D next_statistics;
+layout(binding=18, rgba16f) uniform image2D fresh_gain;
 layout(push_constant) uniform Push {
-    uint width, height, mode, valid; // 0 reproject; 1 adopt fresh; 2 fill/compose
+    uint width, height, mode, valid; // 0 project; 1 full update; 2 skip update; 3 compose; 4 gain
     float scale_x, scale_y, depth_tolerance, color_tolerance;
     uint has_depth, reversed_z, fill, visualize;
-    uint round_u8, age;
+    uint round_u8, age, samples;
 } pc;
 
 bool finite3(vec3 x) { return !any(isnan(x)) && !any(isinf(x)); }
@@ -42,11 +53,10 @@ float depth_weight(float a,float b) {
 float color_weight(vec3 a,vec3 b) {
     if(!finite3(a)||!finite3(b)) return 0;
     float ya=luma(a),yb=luma(b);
-    vec3 ca=a/(ya+0.04), cb=b/(yb+0.04);
+    vec3 ca=a/max(ya,0.001), cb=b/max(yb,0.001);
     float chroma=max(max(abs(ca.r-cb.r),abs(ca.g-cb.g)),abs(ca.b-cb.b));
-    float lum=abs(ya-yb)/(max(ya,yb)+0.04);
     float t=max(pc.color_tolerance,0.001);
-    return (1-smoothstep(t,2*t,chroma))*(1-smoothstep(2*t,4*t,lum));
+    return 1-smoothstep(t,2*t,chroma); // surface identity independent of exposure/luminance
 }
 vec2 vector_at(ivec2 p) {
     ivec2 sz=imageSize(motion);
@@ -55,96 +65,147 @@ vec2 vector_at(ivec2 p) {
     ivec2 q=clamp(ivec2((vec2(p)+0.5)/vec2(pc.width,pc.height)*vec2(sz)),ivec2(0),sz-1);
     return imageLoad(motion,q).xy*vec2(pc.scale_x,pc.scale_y)*vec2(pc.width,pc.height);
 }
-vec4 cubic(float t) {
-    return vec4(-0.5*t+t*t-0.5*t*t*t,1-2.5*t*t+1.5*t*t*t,
-                0.5*t+2*t*t-1.5*t*t*t,-0.5*t*t+0.5*t*t*t);
+
+const float kFloor=1.0/1024.0;
+const vec3 kLuma=vec3(0.2126,0.7152,0.0722);
+vec3 lit_color(vec3 base,vec3 gain) {
+    return base+max(base,vec3(kFloor))*(exp2(clamp(gain,vec3(-16),vec3(16)))-1);
 }
-vec3 adopt_low(vec3 r,vec3 old_color,vec3 current) {
-    float ratio=clamp((luma(current)+0.04)/(luma(old_color)+0.04),0.5,2.0);
-    // Rejected detail may carry tone, never stale blue chromaticity. Preserve
-    // the current surface's chroma, with signed luminance enhancement only.
-    float y=dot(r,vec3(0.2126,0.7152,0.0722))*ratio;
-    return y*(max(current,vec3(0))+0.04)/(luma(current)+0.04);
+float exposure_ratio(vec3 current,vec3 previous) {
+    return clamp((luma(current)+kFloor)/(luma(previous)+kFloor),0.125,8.0);
+}
+float input_change(ivec2 p,vec3 c) {
+    vec2 q=vec2(p)+vector_at(p);
+    if(any(isnan(q))||any(isinf(q))||!inside(q)) return 3;
+    vec3 old=texelFetch(previous_guide,bounded(ivec2(round(q))),0).rgb;
+    return abs(log2((luma(c)+kFloor)/(luma(old)+kFloor)));
+}
+void empty_projection(ivec2 p) {
+    imageStore(projected,p,vec4(0));imageStore(projected_tone,p,vec4(0));
+    imageStore(projected_target,p,vec4(0));imageStore(projected_statistics,p,vec4(0));
 }
 void reproject(ivec2 p) {
-    if(pc.valid==0u) { imageStore(projected,p,vec4(0)); return; }
-    vec3 c=color_at(p); float d=depth_at(p); vec2 m=vector_at(p),q=vec2(p)+m;
-    if(any(isnan(q))||any(isinf(q))||!inside(q)) {imageStore(projected,p,vec4(0));return;}
-    ivec2 base=ivec2(floor(q)); vec2 f=fract(q);
-    vec3 r=vec3(0),lo=vec3(1e30),hi=vec3(-1e30); float accepted=0,geometry=0;
-    for(int y=0;y<2;++y) for(int x=0;x<2;++x) {
+    if(pc.valid==0u) {empty_projection(p);return;}
+    vec3 c=color_at(p);float d=depth_at(p);vec2 q=vec2(p)+vector_at(p);
+    if(any(isnan(q))||any(isinf(q))||!inside(q)) {empty_projection(p);return;}
+    ivec2 base=ivec2(floor(q));vec2 f=fract(q);
+    vec3 detail=vec3(0),tone=vec3(0);vec4 target=vec4(0),stats=vec4(0);
+    float dw=0,tw=0;
+    for(int y=0;y<2;y++) for(int x=0;x<2;x++) {
         ivec2 t=bounded(base+ivec2(x,y));
         vec4 g=texelFetch(previous_guide,t,0),e=texelFetch(previous_residual,t,0);
+        vec4 low=texelFetch(previous_tone,t,0),a=texelFetch(previous_target,t,0),h=texelFetch(previous_statistics,t,0);
         float bil=(x==0?1-f.x:f.x)*(y==0?1-f.y:f.y);
-        float w=depth_weight(d,g.a)*color_weight(c,g.rgb);
-        if(!finite3(e.rgb)) w=0;
-        float a=w*clamp(e.a,0,1);
-        accepted+=bil*a; geometry+=bil*w;
-        r+=bil*w*e.rgb;
-        if(w>0.5) {lo=min(lo,e.rgb);hi=max(hi,e.rgb);}
+        float surface=depth_weight(d,g.a)*color_weight(c,g.rgb);
+        float wt=bil*surface*clamp(low.a,0,1);
+        if(!finite3(low.rgb)||!finite3(a.rgb)) wt=0;
+        // A brightness change alone does not reject the lighting field. Fine
+        // detail is exposure-adjusted, then loses trust on strong shading changes.
+        float change=abs(log2((luma(c)+kFloor)/(luma(g.rgb)+kFloor)));
+        float wd=bil*surface*clamp(e.a,0,1)*(1-smoothstep(1.0,3.0,change));
+        if(!finite3(e.rgb)) wd=0;
+        detail+=wd*e.rgb*exposure_ratio(c,g.rgb);dw+=wd;
+        tone+=wt*low.rgb;target+=wt*a;stats+=wt*h;tw+=wt;
     }
-    r=geometry>0.001?r/geometry:vec3(0);
-    // Coherent carry: each link must pass, including earlier skipped frames.
-    // Bicubic detail is restricted to fully accepted surfaces and clamped to
-    // the bilinear footprint so it cannot ring across a silhouette.
-    if(accepted>0.95 && all(lessThanEqual(lo,hi))) {
-        vec4 wx=cubic(f.x),wy=cubic(f.y);vec3 cr=vec3(0);
-        for(int y=0;y<4;++y) for(int x=0;x<4;++x)
-            cr+=wx[x]*wy[y]*texelFetch(previous_residual,bounded(base+ivec2(x-1,y-1)),0).rgb;
-        if(finite3(cr)) r=clamp(cr,lo,hi);
+    imageStore(projected,p,vec4(dw>1e-5?detail/dw:vec3(0),clamp(dw,0,1)));
+    imageStore(projected_tone,p,vec4(tw>1e-5?tone/tw:vec3(0),clamp(tw,0,1)));
+    imageStore(projected_target,p,tw>1e-5?target/tw:vec4(0));
+    imageStore(projected_statistics,p,tw>1e-5?stats/tw:vec4(0));
+}
+vec4 fresh_low(ivec2 p) {
+    vec3 c=color_at(p);float d=depth_at(p),ws=0,mean=0,mean2=0;vec3 sum=vec3(0);
+    for(int y=-1;y<=1;y++) for(int x=-1;x<=1;x++) {
+        ivec2 t=bounded(p+ivec2(x,y));vec4 raw=imageLoad(fresh_gain,t);
+        float w=exp(-0.5*float(x*x+y*y))*depth_weight(d,depth_at(t))*color_weight(c,color_at(t))*raw.a;
+        float l=dot(raw.rgb,kLuma);sum+=w*raw.rgb;mean+=w*l;mean2+=w*l*l;ws+=w;
     }
-    imageStore(projected,p,vec4(finite3(r)?r:vec3(0),accepted));
+    if(ws<1e-5) return vec4(0);
+    mean/=ws;return vec4(sum/ws,max(mean2/ws-mean*mean,0));
+}
+vec3 fill_tone(ivec2 p,vec3 c,float d,out float variance) {
+    vec3 sum=vec3(0);float ws=0,vs=0;
+    const ivec2 dir[8]=ivec2[8](ivec2(1,0),ivec2(1,1),ivec2(0,1),ivec2(-1,1),ivec2(-1,0),ivec2(-1,-1),ivec2(0,-1),ivec2(1,-1));
+    for(int r=0;r<2;r++) for(int i=0;i<8;i++) {
+        ivec2 t=bounded(p+dir[i]*(r==0?4:24));vec4 g=imageLoad(projected_tone,t),a=imageLoad(projected_target,t);
+        float w=depth_weight(d,depth_at(t))*color_weight(c,color_at(t))*g.a/(1.0+float(r));
+        // A hole may borrow lighting from a compatible current surface, but not
+        // stale neural chroma/detail. Filled fields never gain detail confidence.
+        sum+=vec3(dot(a.rgb,kLuma))*w;vs+=a.a*w;ws+=w;
+    }
+    variance=ws>1e-5?vs/ws:0;return ws>1e-5?sum/ws:vec3(0);
+}
+void stabilize(ivec2 p,vec3 c,vec4 anchor,vec3 detail,float detail_conf,bool full) {
+    vec4 old=imageLoad(projected_tone,p),h=imageLoad(projected_statistics,p);
+    bool trusted=pc.valid!=0u&&old.a>0.05;
+    float change=trusted?input_change(p,c):0;
+    float motion=length(vector_at(p));
+    if(isnan(motion)||isinf(motion)) motion=10;
+    float raw_l=log2((luma(lit_color(c,anchor.rgb))+kFloor)/(luma(c)+kFloor));
+    // Three previous NR target measurements plus current: recognize repeating gain,
+    // rather than a monotonic scene change. Keep instability through skipped
+    // frames; targets advance at full NR cadence, so N=3/4 cannot alias this detector.
+    // Do not protect stale history on motion, cuts or real shading changes.
+    float pulse=0;
+    if(trusted&&pc.samples>=3u) {
+        float near_old=min(abs(raw_l-h.y),abs(raw_l-h.z));
+        pulse=smoothstep(0.003,0.03,abs(raw_l-h.x)-near_old);
+    }
+    float stable=(1-smoothstep(0.1,0.5,change))*(1-smoothstep(2,10,motion))*smoothstep(0.05,0.8,old.a);
+    float instability=trusted?max(pulse,h.a*0.92)*stable:0;
+    float response=max(smoothstep(0.08,0.5,change),smoothstep(2,10,motion));
+    response=max(response,smoothstep(0.04,0.25,sqrt(max(anchor.a,0))));
+    float alpha=mix(mix(0.45,0.12,instability),0.85,response);
+    alpha=trusted?max(alpha,1-old.a):1;
+    float margin=0.12+2*sqrt(max(anchor.a,0))+0.2*instability;
+    vec3 carried=clamp(old.rgb,anchor.rgb-margin,anchor.rgb+margin);
+    vec3 filtered=mix(carried,anchor.rgb,alpha);
+    if(!finite3(filtered)) filtered=vec3(0);
+    float tone_conf=full?detail_conf:old.a;
+    imageStore(next_tone,p,vec4(filtered,clamp(tone_conf,0,1)));
+    imageStore(next_target,p,vec4(anchor.rgb,max(anchor.a,0)));
+    imageStore(next_statistics,p,vec4(raw_l,trusted?(full?h.x:h.y):raw_l,trusted?(full?h.y:h.z):raw_l,instability));
+    imageStore(next_residual,p,vec4(finite3(detail)?clamp(detail,vec3(-65504),vec3(65504)):vec3(0),clamp(detail_conf,0,1)));
+    imageStore(next_guide,p,vec4(c,depth_at(p)));
 }
 void main() {
     ivec2 p=ivec2(gl_GlobalInvocationID.xy);
     if(any(greaterThanEqual(p,ivec2(pc.width,pc.height)))) return;
     if(pc.mode==0u) {reproject(p);return;}
-    vec4 src=texelFetch(shown,p,0); float d=depth_at(p);
+    vec4 src=texelFetch(shown,p,0);
+    if(pc.mode==4u) {
+        vec3 fresh=imageLoad(answer,p).rgb;
+        vec3 gain=log2(max(fresh,vec3(kFloor)))-log2(max(src.rgb,vec3(kFloor)));
+        imageStore(fresh_gain,p,vec4(finite3(gain)?clamp(gain,vec3(-16),vec3(16)):vec3(0),finite3(fresh)?1:0));return;
+    }
     if(pc.mode==3u) {
-        vec4 r=imageLoad(next_residual,p);vec3 outc=src.rgb+r.rgb;
+        vec4 d=imageLoad(next_residual,p),t=imageLoad(next_tone,p);
+        // Fine-detail trust does not modulate the low-frequency lighting field.
+        vec3 outc=lit_color(src.rgb,t.rgb)+d.rgb*smoothstep(0.1,0.9,d.a);
         if(pc.round_u8!=0u) outc=round(clamp(outc,0,1)*255)/255;
-        if(pc.visualize!=0u) outc=vec3(0,1,0);
+        if(pc.visualize!=0u) outc=mix(vec3(1,0,0),vec3(0,1,0),min(d.a,t.a));
         imageStore(answer,p,vec4(finite3(outc)?outc:src.rgb,src.a));return;
     }
-    vec4 old=imageLoad(projected,p); vec3 residual; float confidence;
     if(pc.mode==1u) {
-        vec4 fresh=imageLoad(answer,p);residual=fresh.rgb-src.rgb;
-        vec3 lo=residual,hi=residual;
-        for(int y=-1;y<=1;++y) for(int x=-1;x<=1;++x) {
-            ivec2 t=bounded(p+ivec2(x,y));vec3 r=imageLoad(answer,t).rgb-color_at(t);
-            lo=min(lo,r);hi=max(hi,r);
-        }
-        // New full-NR output is never read and overwritten in place here;
-        // only the private residual history is stabilized (no inter-WG race).
-        float motionFade=1-smoothstep(2,6,length(vector_at(p)));
-        float keep=pc.valid!=0u?0.6*old.a*motionFade:0;
-        residual=mix(residual,clamp(old.rgb,lo,hi),keep);
-        confidence=1;
-    } else {
-        confidence=clamp(old.a,0,1);vec3 spatial=vec3(0);float sum=0;
-        if(pc.fill!=0u && confidence<0.98 && pc.valid!=0u) {
-            // Two rings provide a smooth low-frequency field for sky and newly
-            // uncovered surfaces. Every donor belongs to a compatible *current*
-            // surface. It is never an unvalidated old rendered frame.
-            const ivec2 dir[8]=ivec2[8](ivec2(1,0),ivec2(1,1),ivec2(0,1),ivec2(-1,1),ivec2(-1,0),ivec2(-1,-1),ivec2(0,-1),ivec2(1,-1));
-            for(int ring=0;ring<2;++ring) for(int k=0;k<8;++k) {
-                ivec2 t=bounded(p+dir[k]*(ring==0?4:24));
-                vec4 e=imageLoad(projected,t);vec3 tc=color_at(t);
-                float w=depth_weight(d,depth_at(t))*color_weight(src.rgb,tc)*e.a;
-                spatial+=adopt_low(e.rgb,tc,src.rgb)*w;sum+=w;
+        vec4 a=fresh_low(p);vec3 fresh=imageLoad(answer,p).rgb;
+        vec3 detail=fresh-lit_color(src.rgb,a.rgb);
+        vec4 old=imageLoad(projected,p);
+        if(pc.valid!=0u&&old.a>0.05) {
+            vec3 lo=detail,hi=detail;
+            for(int y=-1;y<=1;y++) for(int x=-1;x<=1;x++) {
+                ivec2 t=bounded(p+ivec2(x,y));vec3 d=imageLoad(answer,t).rgb-lit_color(color_at(t),a.rgb);
+                lo=min(lo,d);hi=max(hi,d);
             }
+            float response=max(smoothstep(0.15,0.8,input_change(p,src.rgb)),smoothstep(2,8,length(vector_at(p))));
+            float alpha=mix(max(0.35,1-0.65*old.a),0.95,response);
+            detail=mix(clamp(old.rgb,lo,hi),detail,alpha);
         }
-        spatial=sum>0.001?spatial/sum:vec3(0);
-        float detailed=smoothstep(0.1,0.9,confidence);
-        residual=mix(spatial,old.rgb,detailed);
-        // Detail confidence remains zero in filled holes; the next link cannot
-        // promote an inferred low-frequency donor to original neural detail.
-        vec3 outc=src.rgb+residual;
-        if(pc.round_u8!=0u) outc=round(clamp(outc,0,1)*255)/255;
-        if(pc.visualize!=0u) outc=mix(vec3(1,0,0),vec3(0,1,0),confidence);
-        imageStore(answer,p,vec4(finite3(outc)?outc:src.rgb,src.a));
+        stabilize(p,src.rgb,a,detail,finite3(fresh)?1:0,true);
+    } else {
+        vec4 a=imageLoad(projected_target,p),low=imageLoad(projected_tone,p),d=imageLoad(projected,p);
+        if(low.a<0.05) {
+            a.rgb=pc.fill!=0u&&pc.valid!=0u?fill_tone(p,src.rgb,depth_at(p),a.a):vec3(0);
+            d=vec4(0);
+        }
+        stabilize(p,src.rgb,a,d.rgb,d.a,false);
     }
-    if(!finite3(residual)) {residual=vec3(0);confidence=0;}
-    imageStore(next_residual,p,vec4(clamp(residual,vec3(-65504),vec3(65504)),confidence));
-    imageStore(next_guide,p,vec4(src.rgb,d));
 }

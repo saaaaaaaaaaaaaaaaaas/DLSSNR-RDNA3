@@ -2088,8 +2088,10 @@ Runtime::Runtime(const HostDevice& host, const RuntimeConfig& config, const Cont
         // Compile the shared pipeline while the Runtime is built, rather than
         // on its first real frame. These descriptors are never dispatched;
         // feature histories bind actual-sized images after materialization.
+        SeamlessHistory::check_shader(adapters/"runtime_seamless.spv");
         impl_->seamless_pipeline.create(s.ctx,(adapters/"runtime_seamless.spv").string(),{},sizeof(SeamlessHistory::Push),
-            {&s.tex_in,&s.surf0,&t.flow[0],&t.depth,&t.depth,&t.depth,&s.surf0,&s.surf0,&s.surf0});
+            {&s.tex_in,&s.surf0,&t.flow[0],&t.depth,&t.depth,&t.depth,&s.surf0,&s.surf0,&s.surf0,
+             &t.depth,&t.depth,&t.depth,&s.surf0,&s.surf0,&s.surf0,&s.surf0,&s.surf0,&s.surf0,&s.surf0});
 #else
         impl_->reuse_edit = s.ctx.image(mw, mh, VK_FORMAT_R16G16B16A16_SFLOAT, false);
         s.ctx.transition(impl_->reuse_edit, VK_IMAGE_LAYOUT_GENERAL);

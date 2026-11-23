@@ -51,11 +51,14 @@ struct Test {
         VkPhysicalDeviceFeatures features{}; vkGetPhysicalDeviceFeatures(host.physical,&features);
         VkDeviceCreateInfo d{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO}; d.queueCreateInfoCount=1; d.pQueueCreateInfos=&qi; d.pEnabledFeatures=&features;
         VkPhysicalDeviceVulkan12Features f12{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES};
-        VkPhysicalDeviceFeatures2 f2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};f2.pNext=&f12;
+        VkPhysicalDeviceVulkan13Features f13{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES};
+        VkPhysicalDeviceFeatures2 f2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};f2.pNext=&f12;f12.pNext=&f13;
         vkGetPhysicalDeviceFeatures2(host.physical,&f2);
         // Slang's f32tof16 packing in Relight declares Float16; production NR already needs it.
         VkPhysicalDeviceVulkan12Features enabled12{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES};
-        enabled12.shaderFloat16=f12.shaderFloat16;d.pNext=&enabled12;
+        enabled12.shaderFloat16=f12.shaderFloat16;
+        VkPhysicalDeviceVulkan13Features enabled13{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES};
+        enabled13.subgroupSizeControl=f13.subgroupSizeControl;enabled12.pNext=&enabled13;d.pNext=&enabled12;
         ck(vkCreateDevice(host.physical,&d,nullptr,&host.device)); vkGetDeviceQueue(host.device,host.queue_family,0,&host.queue);
         vkGetPhysicalDeviceMemoryProperties(host.physical,&mem);
         VkCommandPoolCreateInfo p{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO}; p.queueFamilyIndex=host.queue_family; p.flags=VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;

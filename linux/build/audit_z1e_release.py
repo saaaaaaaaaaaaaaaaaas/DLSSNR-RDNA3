@@ -22,6 +22,22 @@ CONSUMERS = ('reshade/dlssnr_amd.addon64', 'int4/reshade/dlssnr_amd.addon64',
              'optiscaler/asi/dlssnr-amd.asi')
 
 
+def check_residual_shader(data, name):
+    words = struct.unpack('<' + 'I' * (len(data) // 4), data)
+    bindings, samples, i = set(), False, 5
+    while i < len(words):
+        n, op = words[i] >> 16, words[i] & 0xffff
+        if not n or i + n > len(words):
+            raise ValueError('malformed residual shader: ' + name)
+        if op == 71 and n == 4 and words[i + 2] == 33:
+            bindings.add(words[i + 3])
+        if op == 72 and n == 5 and words[i + 3] == 35 and words[i + 4] == 56:
+            samples = True
+        i += n
+    if bindings != set(range(19)) or not samples:
+        raise ValueError('residual lighting ABI mismatch: ' + name)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--archive', type=Path, required=True)
@@ -49,11 +65,18 @@ def main():
                 if data[offset:offset + 4] != b'PE\0\0' or struct.unpack_from('<H', data, offset + 4)[0] != 0x8664:
                     raise ValueError('release consumer is not x86_64 PE: ' + name)
                 binaries[name] = hashes[name]
+                if b'Residual shader ABI mismatch' not in data:
+                    raise ValueError('runtime lacks the residual ABI guard: ' + name)
+            if name.endswith('/runtime/runtime_seamless.spv'):
+                check_residual_shader(data, name)
     expected = {directory + '/gpu-profile.txt' for directory in NETWORKS}
     if set(markers) != expected or set(markers.values()) != {'z1-extreme-turbo'}:
         raise ValueError('all six networks must select the Turbo profile')
     if any('/runtime/runtime_reuse_' in name and name.endswith('.spv') for name in hashes):
         raise ValueError('legacy reuse shaders in RDNA3 release')
+    residual_names = {directory + '/runtime/runtime_seamless.spv' for directory in NETWORKS}
+    if not residual_names.issubset(hashes) or len({hashes[name] for name in residual_names}) != 1:
+        raise ValueError('all six networks require the same residual lighting shader')
     if len(binaries) != 3 or len(ini) != 3:
         raise ValueError('missing runtime consumers or installer INIs')
     for name, text in ini.items():
@@ -104,6 +127,9 @@ def main():
         'target': 'RDNA3 / ROG Ally Z1 Extreme / Linux-Proton x86_64',
         'profile': 'z1-extreme-turbo', 'model_free': True, 'files': len(hashes),
         'spirv_val_passed': len(shader_names), 'runtime_consumer_sha256': binaries,
+        'residual_lighting_abi': {'descriptors': 19, 'push_bytes': 60,
+                                  'shader_sha256': hashes[next(iter(residual_names))],
+                                  'matching_network_folders': len(residual_names)},
         'file_sha256': hashes, 'file_bytes': sizes,
         'qualification': 'Existing Motion and full-NR validation; real game/HDR/FG x4 presentation unverified',
     }

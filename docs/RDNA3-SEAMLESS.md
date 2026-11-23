@@ -7,13 +7,17 @@ Starting fork source: `ff5fff22ad8c45fce13ee2c0901dc7547eb9d48c`.
 Reference studied: BeliyG3/optimizer-fps-dlss5 `fe67a80cf462bad1409968bda2eb6fd4ea265342`,
 MIT, especially temporal residual, reprojection and coherent-chain validation.
 
+The current lighting/detail decomposition and its Lighting-off measurements are
+documented in [Residual lighting stability](RESIDUAL-STABILITY.md). Historical
+measurements below describe the initial causal implementation.
+
 ## Acceptance matrix before implementation
 
 | Requirement | Implementation and required evidence |
 | --- | --- |
 | Strict causal cadence | Full NR at real evaluations 0,N,2N; N=2–4, no motion/cut/history-triggered extra inference. Test counters on Motion including invalid guides, cuts and generated-frame notifications. |
 | No added presentation delay | Commands in the host's existing command buffer; no new queue, waits, fences, CPU history readbacks or future-frame dependency. Histories are past-frame textures only. |
-| Residual reconstruction | Current input plus carried NR residual; per-link depth/color/edge validation, bounded Catmull–Rom detail, surface-matched low-frequency fill, adaptive fresh-residual adoption. |
+| Residual reconstruction | Current input with relative lighting gain and separate signed detail; per-link depth/chroma validation, surface-matched lighting fill and adaptive stabilization. |
 | Colored trails | Thin moving blue sword/handle and newly uncovered background in Motion. Compare old reuse, full NR and replacement, with masks and quantitative residual errors. |
 | Integration | Existing motion scales/subrect/depth conversion and encoded model domain. Preserve alpha, FP16 and source/render/model resolution mapping. Only NR evaluate advances cadence; FG generation does not. |
 | Configuration | Replace RDNA3 [Reuse] with [Temporal], default interval 2, enable switch, depth/color thresholds, hole fill, confidence display and GPU timing/counters. Full NR remains available. |
@@ -30,7 +34,8 @@ force an unrelated residual across a silhouette to hide rejection.
 ## Implemented behavior
 
 `SeamlessHistory` in `linux/src/core/nr_seamless.hpp` owns each feature's past
-residual, exact FP32 color/depth guides and a temporary projected residual.
+detail, relative RGB lighting, latest full-NR lighting target, luminance statistics,
+FP32 color/depth guides and temporary projection fields.
 `nr_temporal_cadence.hpp` advances only on real NR evaluations. Startup runs
 full NR, then evaluations 0,N,2N do so; resets, camera movement, invalid vectors
 and rejected pixels are not scheduler inputs. Explicit generated-frame calls
@@ -46,21 +51,23 @@ The replacement Vulkan compute pipeline:
 1. Reads current backward motion at full model resolution. Full-resolution
    vectors prevent coarse bilinear mixing of the velocities of a thin object and
    its background. Existing scale/subrect conversion is retained.
-2. Reprojects only the previous enhancement, not the old rendered frame.
-   Endpoint color/chromaticity/luminance and depth tests weight each footprint
-   sample. Confidence propagates through each link, so a rejected earlier link
-   cannot spontaneously become trusted detail. Catmull–Rom detail is used only
-   on accepted surfaces and clamped to the bilinear footprint's range.
+2. Reprojects the previous enhancement with a validated bilinear footprint.
+   Depth and normalized chroma identify compatible surfaces independently of
+   brightness. Detail is exposure-scaled and has its own confidence; rejecting
+   detail does not fade the entire lighting field. Confidence propagates through
+   each link, so rejected history cannot spontaneously become trusted detail.
 3. Reconstructs rejected areas from two rings of donors on compatible current
-   surfaces. The low-frequency addition is scaled by current luminance and
-   aligned with current chroma; stale blue chroma is not transplanted into the
-   newly exposed background. Confidence blends detail into conservative tone.
+   surfaces. Only scalar lighting gain is borrowed, preserving current chroma;
+   filled pixels acquire no detail confidence.
    A cut with no compatible information can show raw current color until the
    next scheduled full pass; fabricating a new surface's neural detail is unsafe.
-4. On full passes, clamps the carried residual to the fresh residual's 3x3 range
-   and adopts it adaptively (at most 0.6, fading with motion and confidence).
-   A separate compose dispatch avoids reading/writing neighbors of the same
-   output image concurrently. Alpha is restored from the current input.
+4. Decomposes full NR into an edge-aware lighting target and signed detail.
+   The lighting field advances toward that target on every real frame through
+   the same adaptive filter, including full passes. A cadence-aware luminance
+   detector suppresses repeating gain changes. Motion, real shading changes
+   and rejected surfaces accelerate response. Detail uses a fresh neighborhood
+   clamp and adaptive adoption. A separate compose dispatch restores input alpha
+   and avoids concurrent neighborhood reads/writes of the output.
 
 This adapts the synchronous residual, validated carry, bounded sampling, hole
 fill and adaptive adoption ideas from the MIT reference. It deliberately uses a

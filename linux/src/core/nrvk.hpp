@@ -163,6 +163,8 @@ struct Context {
         features.pNext = &coop; coop.pNext = &fp8; fp8.pNext = &f11; f11.pNext = &f12; f12.pNext = &f13;
         vkGetPhysicalDeviceFeatures2(physical, &features);
         struct { bool have; const char* name; } required[] = {
+            {NR_ARCH_RDNA3 == 0 || bool(features.features.shaderInt16), "shaderInt16"},
+            {NR_ARCH_RDNA3 == 0 || bool(f12.vulkanMemoryModelDeviceScope), "vulkanMemoryModelDeviceScope"},
             {bool(coop.cooperativeMatrix),            "cooperativeMatrix"},
             {NR_ARCH_RDNA3 || bool(fp8.shaderFloat8),                  "shaderFloat8"},
             {NR_ARCH_RDNA3 || bool(fp8.shaderFloat8CooperativeMatrix), "shaderFloat8CooperativeMatrix"},
@@ -186,6 +188,12 @@ struct Context {
         f12 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES};
         f12.storageBuffer8BitAccess = VK_TRUE; f12.shaderFloat16 = VK_TRUE;
         f12.shaderInt8 = VK_TRUE; f12.vulkanMemoryModel = VK_TRUE;
+        // RDNA3's existing learned shaders declare Int16 and device-scope
+        // atomics. The standalone test/CLI device must enable them too; a game
+        // supplies its own device through adopt(), independently of this path.
+        if (NR_ARCH_RDNA3) {
+            f12.vulkanMemoryModelDeviceScope = VK_TRUE;
+        }
         f13 = {VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES};
         f13.subgroupSizeControl = VK_TRUE;
         // Core in 1.3 and still an opt-in feature: without it
@@ -245,6 +253,9 @@ struct Context {
         const char* exts3[] = {VK_KHR_COOPERATIVE_MATRIX_EXTENSION_NAME,
                                VK_KHR_WORKGROUP_MEMORY_EXPLICIT_LAYOUT_EXTENSION_NAME};
         VkDeviceCreateInfo di{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
+        VkPhysicalDeviceFeatures core{};
+        core.shaderInt16 = NR_ARCH_RDNA3 ? VK_TRUE : VK_FALSE;
+        di.pEnabledFeatures = &core;
         di.pNext = &coop; di.queueCreateInfoCount = 1; di.pQueueCreateInfos = &qi;
         // fp8 stays in the chain with both features false on RDNA3; it is a known structure.
         std::vector<const char*> ext_list = NR_ARCH_RDNA3 ? std::vector<const char*>(exts3, exts3 + (have_wml ? 2 : 1))
