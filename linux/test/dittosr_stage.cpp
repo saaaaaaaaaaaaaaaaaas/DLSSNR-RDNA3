@@ -118,11 +118,11 @@ struct Test {
         }
         vkUnmapMemory(host.device,m);vkDestroyBuffer(host.device,buf,nullptr);vkFreeMemory(host.device,m,nullptr);return out;
     }
-    void upload_checker(Image im) {
+    void upload_checker(Image im,float low=.25f,float high=.75f) {
         std::vector<_Float16> values(im.w*im.h*4);
         for(uint32_t y=0;y<im.h;++y) for(uint32_t x=0;x<im.w;++x) {
             const size_t k=(size_t(y)*im.w+x)*4;
-            const float v=(x+y)%2?.75f:.25f;
+            const float v=(x+y)%2?high:low;
             values[k]=values[k+1]=values[k+2]=_Float16(v); values[k+3]=_Float16(1.f);
         }
         const size_t bytes=values.size()*sizeof(_Float16);
@@ -137,14 +137,14 @@ struct Test {
         vkCmdCopyBufferToImage(cmd,buf,im.im,VK_IMAGE_LAYOUT_GENERAL,1,&copy);barrier();end();
         vkDestroyBuffer(host.device,buf,nullptr);vkFreeMemory(host.device,memory,nullptr);
     }
-    void composition_detail(const char* shaders) {
+    void composition_detail(const char* shaders,float low=.25f,float high=.75f) {
         const uint32_t w=96,h=64;
         nr::renodx::StageConfig c{};c.shaders=shaders;c.width=w;c.height=h;c.nr_width=w/2;c.nr_height=h/2;
         c.hdr_flag=true;c.frame_format=VK_FORMAT_R16G16B16A16_SFLOAT;
         c.settings.resolution_scale=.5f;c.settings.look_upsample=4;set_lighting(c.settings);
         begin();auto color=image(w,h,c.frame_format),out=image(w,h,c.frame_format);
         auto depth=image(w,h,VK_FORMAT_D32_SFLOAT),mv=image(w,h,VK_FORMAT_R32G32_SFLOAT);
-        clear(depth,.5f,0,0);clear(mv,0,0,0);clear(out,0,0,0);barrier();end();upload_checker(color);
+        clear(depth,.5f,0,0);clear(mv,0,0,0);clear(out,0,0,0);barrier();end();upload_checker(color,low,high);
         nr::renodx::Stage stage(host,c);nr::renodx::StageFrame fr{};
         fr.colour=frame(color);fr.output=frame(out);fr.depth=frame(depth);fr.motion=frame(mv);
         fr.after_upscale=false;fr.jitter_known=true;fr.render_width=w;fr.render_height=h;
@@ -160,7 +160,7 @@ struct Test {
         }
         const float contrast=(light-dark)/float((w-8)*(h-8)/2);
         printf("Full-reference composition: max-error=%g contrast=%g (identity network)\n",error,contrast);fflush(stdout);
-        assert(error<.02f && contrast>.4f);
+        assert(error<(high-low)*.04f && contrast>(high-low)*.8f);
     }
     void composition_controls(const char* shaders) {
         const uint32_t w=96,h=64;
@@ -262,6 +262,7 @@ int main(int argc,char** argv) try {
     t.test(argv[1],false,96,64,.33f,1,false,false,true,true);
     t.test(argv[1],true,96,64,1.f,1,false,false,false,true);
     t.composition_detail(argv[1]);
+    t.composition_detail(argv[1],.0001f,.002f);
     t.composition_controls(argv[1]);
     puts("Ditto SR integration contracts passed");
 } catch(const std::exception& e) { std::fprintf(stderr,"%s\n",e.what());return 1; }

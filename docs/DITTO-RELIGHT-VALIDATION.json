@@ -280,7 +280,7 @@
     "renodx_ditto_convert.spv": "3c8592d28c4ec7324267df0bf7507fca5df803da97bfdc8b6c2aa07a31d1b3b0",
     "renodx_ditto_motion.spv": "517b9ee649503d9eaa5bfa16fa851fd17515058a182df513b6e337d51638ba7f",
     "renodx_ditto_prepare.spv": "d0c457679aae80a5352bea63c28353621fa6a91ca673a60c4ebcc73b435d67c6",
-    "renodx_ditto_residual.spv": "c3c6f1c6ce696cd98b7e120ac4c04382bb12a831e841754afef45b5b8fd5c501",
+    "renodx_ditto_residual.spv": "789b8ea384f03ea66b4e7ff4435f683175e7ae4b7f5a2cf4316d61d5759f301a",
     "renodx_ditto_sharpen.spv": "7a11372e434bb9181245ebc64c66af0ee5da9cfadd8680cf52d65090cd78dad4",
     "renodx_ditto_upscale.spv": "59858eb02d52f94a46fd010b35a07d259262f50b1d5a140bb1116e768b48a593"
   },
@@ -292,5 +292,13 @@
     "windows/"
   ],
   "driver": "Mesa 26.2.6-arch3.1 / RADV",
-  "api_version": "1.4.354"
+  "api_version": "1.4.354",
+  "dark_identity_checker": {
+    "low": 0.0001,
+    "high": 0.002,
+    "max_error": 0,
+    "contrast": 0.00190079
+  },
+  "ratio_floor": 0.0009765625,
+  "guide_floor": 1e-08
 }

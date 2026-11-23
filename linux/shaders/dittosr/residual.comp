@@ -13,7 +13,8 @@ layout(binding=6,rgba16f) uniform writeonly image2D result;
 layout(binding=7,rgba16f) uniform writeonly image2D proxy_result;
 layout(binding=8) uniform texture2D encoded_edit;
 layout(push_constant) uniform C { uvec2 size; uvec2 low_size; vec2 jitter; uint mode; uint linear_reference; } c;
-const float floor_value=1.0/4096.0;
+// Match the codec ratio floor; the luminance guide has its own darker floor.
+const float floor_value=1.0/1024.0;
 vec3 decode(vec3 x) { return mix(x/12.92,pow(max((x+.055)/1.055,0.0),vec3(2.4)),greaterThan(x,vec3(.04045))); }
 vec3 encode(vec3 x) { return mix(12.92*x,1.055*pow(max(x,0.0),vec3(1.0/2.4))-.055,greaterThan(x,vec3(.0031308))); }
 vec3 edit_at(ivec2 p) { return log2(max(decode(texelFetch(neural,p,0).rgb),floor_value))-log2(max(decode(texelFetch(proxy,p,0).rgb),floor_value)); }
@@ -31,7 +32,7 @@ void main() {
     ivec2 base=ivec2(floor(at));
     vec3 ref=texelFetch(reference,p,0).rgb;
     vec3 original=(c.linear_reference&1u)!=0u?ref:decode(ref);
-    float guide=log2(max(dot(max(original,0.0),vec3(.2126,.7152,.0722)),floor_value));
+    float guide=log2(max(dot(max(original,0.0),vec3(.2126,.7152,.0722)),1e-8));
     float depth=texelFetch(full_depth,p,0).r;
     if((c.linear_reference&2u)==0u) depth=1.0-depth;
     vec3 sum=vec3(0),lo=vec3(1e30),hi=vec3(-1e30);

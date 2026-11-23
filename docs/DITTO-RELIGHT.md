@@ -97,7 +97,9 @@ Lighting comparisons use separate oracles: AO and GI alone change pixels by
 - Stage fixture: SDR/HDR, 25/33/50/100%, true D32/subrect guides, odd sizes,
   two passes, inactive pass, Preprocess, sRGB, resets, ring reuse and live switches.
 - Full-reference checker contrast 0.5; half-strength blend error below 0.0002;
-  zero-strength HDR bypass exact; independent-pass drift zero.
+  zero-strength HDR bypass exact; independent-pass drift zero. The dark checker
+  (0.0001 / 0.002) retains 0.00190079 contrast with zero error. Ratio and guide
+  floors match the original codec (1/1024 and 1e-8 respectively).
 - Mixed v0.4.0/v0.5.4 shaders are rejected before dispatch by cbuffer-layout checks.
 - All 15 Ditto/Relight SPIR-V files pass `spirv-val --target-env vulkan1.1`.
 - Vendor HLSL/HLSLI match the pinned tag byte for byte. Original RenoDX,
