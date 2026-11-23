@@ -195,3 +195,12 @@ RDNA4 was not built. These remain procedural tests, not game qualification.
 
 Evidence: [toggle validation](DITTO-BEFORE-NR-VALIDATION.json), local logs under
 `build/ditto-before-nr/`. This follow-up remains local with an updated ASI package.
+
+Updated local toggle package, built from `5beb3ab63b4fee89178cfa4fb7ba275e8d600751`:
+
+- `NR-Control-Ditto-Relight-0.0.9-z1e.1-6-g5beb3ab-x86_64-rdna3.tar.gz` (7,666,137 bytes).
+- SHA-256: `824f881e019f0036712fab57caacc62e5a0a097de15963a9f96fce1026129fbf`.
+- Archive, checksum and manifest: `artifacts/ditto-before-nr/update/`.
+- Audit: 27 model-free files, all 15 shaders match the previously qualified bytes;
+  x86_64 ASI export/import and Before NR key checks pass.
+- Build log: `build/ditto-before-nr/asi-build.log`. No push or publication.
