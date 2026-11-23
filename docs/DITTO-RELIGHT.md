@@ -137,3 +137,22 @@ validation for the API checks. Test tools/layers stay project-local.
 The local update is for the OptiScaler ASI route on an existing RDNA3 0.0.9
 installation. Replace the ASI and **all 15 shaders and four notices** together;
 keep private models and OptiScaler. No automatic installation or publication.
+
+## Local build receipt
+
+Fully built from `e002d1275f577b74e1e04ae5a4e009ec3fd983d0` on 2026-11-23.
+The OptiScaler ASI is x86_64 PE, exports InitializeASI, and has no static
+Vulkan-loader or dynamic pthread import. Build target: RDNA3/x86_64/Turbo.
+
+- Archive: `NR-Control-Ditto-Relight-0.0.9-z1e.1-4-ge002d12-x86_64-rdna3.tar.gz`.
+- Size: 7,666,748 bytes.
+- SHA-256: `41cf2fe8d19513ec7ccd6c4f323d780c898184130955551a6cbb8ea739ee837e`.
+- Package audit: 27 files, no models/NVIDIA DLLs; all 15 shader hashes match
+  the native API/Motion-qualified binaries, and all four notices are present.
+- Archive, adjacent checksum and `manifest.json`: `artifacts/ditto-relight/update/`.
+- Comparison plot: `build/ditto-relight/comparison.png` (procedural, not a game capture).
+- Build log: `build/ditto-relight/asi-build.log`; package log: `build/ditto-relight/package.log`.
+
+Implementation, checks and this receipt are saved as local commits on
+`feature/z1e-ditto-relight`. No push, tag, release or automatic installation
+was performed. Main and the published RDNA3 Z1 release remain unchanged.
