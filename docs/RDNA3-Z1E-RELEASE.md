@@ -31,3 +31,29 @@ bash linux/build/build_z1e_release.sh
 The release entry point forces RDNA3, x86_64 and Turbo. Its result is under
 `artifacts/z1e-release/release/`, including the archive, SHA-256 and manifest.
 Models must be extracted from the owner's own DLL during installation.
+
+## Built and audited release
+
+Built on 2026-11-23 from `73a0b9dd5934b5a13ea05f85469f6d63624f0038` (`v0.0.9-z1e.1`).
+The complete package is rebuilt from this tagged source; runtime binaries carry
+the release version rather than the previous preview stamp.
+
+- Archive: `DLSS-NR-AMD-Vulcan-Linux-0.0.9-z1e.1-Z1E-Turbo-Temporal-RDNA-3.tar.gz`
+- Bytes: 273,221,251.
+- SHA-256: `d70d47855388ce3ff933b170bdbc6f22e3a797b8ffe7c24f6bff208a7993c9a4`.
+- Audit: 1,164 files, model-free, all six Turbo markers, 422 SPIR-V validations.
+- All 517 profile files match the Motion-qualified builds byte for byte.
+- Runtime/shader/calibration source diff against `2be80e5`: empty.
+- Three x86_64 runtime consumers checked; no static `vulkan-1.dll` imports.
+- CPU checks cover descriptors, presentation, paired INT4 WMMAs, QKV routing and INI defaults.
+- Guards reject RDNA4, i686 and Fast before building.
+
+The archive, adjacent checksum and `release-manifest.json` are under
+`artifacts/z1e-release/release/`. The manifest records every file's digest and
+the exact source/tag/version. Local build log: `build/z1e-release/build.log`.
+The included older qualification documents describe the baseline Motion tests;
+the release manifest identifies this fresh build. No game/FG/HDR results are
+inferred from a successful package build.
+
+This release is published as a pre-release for the Z1 Extreme branch and does
+not replace the general RDNA3 release as latest. No RDNA4 package is built.
