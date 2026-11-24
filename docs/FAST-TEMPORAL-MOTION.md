@@ -83,3 +83,27 @@ shader at ages 2–8 using varying spatially-dependent vectors. It checks the
 composed coordinates, non-finite motion and trajectories leaving the image;
 all pass with synchronization validation on RADV PHOENIX. No new learned model
 pass, CPU readback, present queue or wait is added to the production path.
+
+## Local package and 720p timing
+
+Artifact built from commit `ee2f4a456685c64cb041a3b15c0fac4a7ecd3dd3`:
+
+```text
+artifacts/fast-temporal/release/DLSS-NR-AMD-Vulcan-Linux-0.0.9-z1e.2-1-gee2f4a4-Z1E-Turbo-Temporal-RDNA-3.tar.gz
+SHA-256 d40dbcdaa4bde60dc39bf39a332a1026d83033f2e0904ed6bca1bb0bb8b50a81
+```
+
+The model-free archive passes the package audit (1203 files, 442 validated
+SPIR-V shaders); its Interleaved motion shader is byte-identical to the GPU
+fixture shader. All 370 learned/grade shaders match the preceding release.
+The archive and adjacent checksum/manifest are local, as are the commits. No
+RDNA4 target was built. The stricter audit and a negative GPU test reject the
+old motion shader's ABI. Reverse Z and three generated-frame notifications per
+real frame pass with Vulkan synchronization validation.
+
+For a coarse cost check, two interleaved rounds of the actual `CC_SMALL_FP8`
+model used 1280x720 Motion, three Interleaved passes, preset 1 and interval 2,
+with Lighting off. GPU timestamp means over frames 12–23 were 53.76 and 54.14 ms
+before, 54.07 and 54.40 ms after. The mean difference is about +0.29 ms, close
+to the run-to-run range. Automatic clocks, the fixture's idle gaps and its cut
+limit this comparison; it is not a game FPS measurement.
