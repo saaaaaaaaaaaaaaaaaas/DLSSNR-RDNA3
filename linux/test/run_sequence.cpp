@@ -8,6 +8,7 @@
 // same paths and is the reference to score the others against. Prints what each frame cost (wall time of
 // the submit, GPU idle) and whether it was reused; writes each frame's answer as RGBA8.
 #include "nr_runtime.hpp"
+#include "nr_renodx.hpp"
 #include "nrvk.hpp"
 #include <chrono>
 #include <cmath>
@@ -52,6 +53,7 @@ int main(int argc, char** argv) try {
     auto image = ctx.image(width, height, format, true, true, true);
     auto motion_image = ctx.image(width, height, VK_FORMAT_R16G16_SFLOAT, true, true, true);
     auto depth_image = ctx.image(width,height,VK_FORMAT_R32_SFLOAT,true,true,true);
+    auto stage_output = ctx.image(width,height,format,true,true,true);
     VkQueryPool queries{};
     VkQueryPoolCreateInfo qi{VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO};
     qi.queryType=VK_QUERY_TYPE_TIMESTAMP;qi.queryCount=4;
@@ -105,7 +107,43 @@ int main(int argc, char** argv) try {
     // RUN_SEQUENCE_ESTIMATOR=1: no motion from the "engine" - the runtime's own estimator finds it from successive
     // frames (record_temporal), which is what a game with no motion vectors gets on the ReShade route.
     const bool estimator = std::getenv("RUN_SEQUENCE_ESTIMATOR") != nullptr;
+    std::unique_ptr<nr::renodx::Stage> fast_stage;
+    nr::renodx::StageFrame sf{};
+    uint32_t scoped_fast_slots=0;
+    if (const char* shaders = std::getenv("RUN_SEQUENCE_FAST_SHADERS")) {
+        nr::renodx::StageConfig sc{};
+        sc.shaders=shaders;sc.width=sc.nr_width=width;sc.height=sc.nr_height=height;sc.frame_format=format;
+        sc.settings.passes_mode=1;sc.settings.fast_method=0;
+        sc.settings.fast_interleaved_passes=std::getenv("RUN_SEQUENCE_FAST_PASSES")?atoi(std::getenv("RUN_SEQUENCE_FAST_PASSES")):3;
+        scoped_fast_slots=sc.settings.fast_interleaved_passes;
+        sc.settings.fast_interleaved_preset=std::getenv("RUN_SEQUENCE_FAST_PRESET")?atoi(std::getenv("RUN_SEQUENCE_FAST_PRESET")):1;
+        sc.settings.ditto_relight=false;sc.settings.look_upsample=1;
+        fast_stage=std::make_unique<nr::renodx::Stage>(host,sc);
+        sf.colour=frame.colour;sf.output=frame.colour;sf.output.image=stage_output.handle;sf.output.before=sf.output.after=stage_output.layout;
+        sf.motion=frame.motion;sf.depth=frame.depth;sf.depth_inverted=frame.depth_inverted;
+        sf.motion_scale_x=sf.motion_scale_y=1.f;
+        sf.temporal_reconstruction=reuse_every>=2&&!std::getenv("RUN_SEQUENCE_FAST_OLD_MOTION");
+    }
     auto record = [&](VkCommandBuffer cmd) {
+        if (fast_stage) {
+            nr::EngineResult r{};sf.reset=frame.reset;
+            fast_stage->record(cmd,sf,[&](uint32_t pass,const nr::ColourFrame& input,const nr::ColourFrame& output,bool reset) {
+                auto e=frame;e.colour=input;e.target=output;e.feature=pass+1;e.reset=reset;
+                if(sf.temporal_reconstruction && fast_stage->facts().interleaved) {
+                    e.interleaved_slot=pass;e.interleaved_slots=scoped_fast_slots;
+                }
+                auto motion=fast_stage->network_motion();
+                if (motion.use) {e.motion=motion.motion;e.motion_scale_x=e.motion_scale_y=1.f;e.motion_x=e.motion_y=0;
+                    e.motion_texture_width=e.motion.width;e.motion_texture_height=e.motion.height;}
+                if (motion.history.image) e.history=motion.history;
+                auto c=controls;if(motion.raw){c.intensity=1.f;runtime->set_style_grade(false);}
+                auto result=runtime->record_engine(cmd,e,c);
+                if(motion.raw) runtime->set_style_grade(false);
+                r.frame.network_dispatches+=result.frame.network_dispatches;
+                r.frame.reused=result.frame.reused;
+            });
+            return r;
+        }
         if (estimator) {
             nr::EngineResult r{};
             r.frame = runtime->record_temporal(cmd, frame.colour, controls, nr::TemporalFrame{frame.reset, frame.feature}).frame;
@@ -171,7 +209,7 @@ int main(int argc, char** argv) try {
         NRVK_CHECK(vkGetQueryPoolResults(ctx.device,queries,0,2,sizeof(times),times,sizeof(uint64_t),VK_QUERY_RESULT_64_BIT));
         std::printf("gpu frame %d %.6f ms\n",i,double(times[1]-times[0])*properties.limits.timestampPeriod/1e6);
         std::vector<uint16_t> out(rgba.size());
-        ctx.download(image, out.data(), out.size() * 2);
+        ctx.download(fast_stage?stage_output:image, out.data(), out.size() * 2);
         std::vector<uint8_t> bytes(rgba.size());
         for (size_t k = 0; k < out.size(); ++k)
             bytes[k] = uint8_t(std::lround(std::fmin(1.0f, std::fmax(0.0f, from_half(out[k]))) * 255.0f));

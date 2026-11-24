@@ -3777,6 +3777,9 @@ bool Session::Impl::record_renodx(VkCommandBuffer cmd, renodx::Stage& stage, con
     }
     renodx::StageFrame sf;
     sf.fast_motion_available = rf.fast_motion_available;
+#if NR_ARCH_RDNA3
+    sf.temporal_reconstruction = c.reuse_every >= 2 && runtime && runtime->reuse_allowed();
+#endif
     sf.colour = colour;
     sf.output = output;
     sf.reset = engine.reset;
@@ -3909,6 +3912,12 @@ bool Session::Impl::record_renodx(VkCommandBuffer cmd, renodx::Stage& stage, con
         e.target = neural;
         e.reset = reset;
         e.feature = pass_feature(k);
+#if NR_ARCH_RDNA3
+        if (sf.temporal_reconstruction && stage.facts().interleaved) {
+            e.interleaved_slot=k;
+            e.interleaved_slots=std::clamp(rs.fast_interleaved_passes,2u,8u);
+        }
+#endif
         // Interleaved: the history the stage made for this pass (one frame old, the frame's own vectors)
         const renodx::Stage::NetworkMotion nm = stage.network_motion();
         if (nm.use) {

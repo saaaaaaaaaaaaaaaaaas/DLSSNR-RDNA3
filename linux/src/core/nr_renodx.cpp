@@ -653,16 +653,17 @@ struct Stage::Impl {
     uint32_t il_dcur = 0;
     bool il_graded_last = false;
     Image il_tdbg;   // (research NR_IL_DEBUG=2: each test's own answer; 1 x 1 unless that view is on)
-    Image il_base, il_base2, il_trust, il_inc[2][kIlSlots], il_ring[3], il_comp, il_hist;
+    Image il_base, il_base2, il_trust, il_inc[2][kIlSlots], il_ring[kIlSlots], il_comp, il_hist;
     uint32_t il_cur = 0, il_frame = 0, il_ring_cur = 0, il_last[kIlSlots] = {}, il_slots = 0, il_bcur = 0;
     bool il_valid = false;
+    bool il_temporal = false;
     bool il_depth_const = false;   // (il_depth[il_dcur] holds the constant nearness of a frame without the game's depth)
     Stage::NetworkMotion network_motion;   // what Stage::network_motion() reports inside a Network call
     void ensure_il(VkCommandBuffer cmd, uint32_t nw, uint32_t nh, uint32_t slots, uint32_t preset) {
         if (preset == 1u) { if (!programs[kIl0].pipeline) load(programs[kIl0], "il0", 96, 0x3Bu); }
         else if (!programs[kIl].pipeline) load(programs[kIl], "il", 96, 0x7Bu);
         if (!programs[kIlPp].pipeline) load(programs[kIlPp], "il_pp", 28);
-        if (!programs[kIlMv].pipeline) load(programs[kIlMv], "il_mv", 44);
+        if (!programs[kIlMv].pipeline) load(programs[kIlMv], "il_mv", 48);
         const VkImageUsageFlags rw = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
         if (il_base.w != nw || il_base.h != nh || il_preset != preset) {
             retire_il(); il_preset = preset;
@@ -671,8 +672,7 @@ struct Stage::Impl {
             il_trust = make_image(nw, nh, VK_FORMAT_R16_SFLOAT, rw);
             static const bool dbg2 = [] { const char* e = std::getenv("NR_IL_DEBUG"); return e && e[0] == '2'; }();
             il_tdbg = dbg2 ? make_image(nw, nh, VK_FORMAT_R16G16B16A16_SFLOAT, rw) : make_image(1, 1, VK_FORMAT_R16G16B16A16_SFLOAT, rw);
-            for (Image& i : il_ring) i = make_image(nw, nh, VK_FORMAT_R32G32_SFLOAT, rw);
-            il_comp = make_image(nw, nh, VK_FORMAT_R16G16_SFLOAT, rw);
+            il_comp = make_image(nw, nh, VK_FORMAT_R16G16_SFLOAT, rw | VK_IMAGE_USAGE_TRANSFER_SRC_BIT);
             il_hist = make_image(nw, nh, VK_FORMAT_R16G16B16A16_SFLOAT, rw);
             uint32_t pw = nw, ph = nh;
             for (Image& i : il_dpyr) { pw = (pw + 1) / 2; ph = (ph + 1) / 2; i = make_image(pw, ph, VK_FORMAT_R32G32_SFLOAT, rw); }
@@ -681,6 +681,11 @@ struct Stage::Impl {
             for (Image& i : il_depth) i = make_image(nw, nh, VK_FORMAT_R32_SFLOAT, rw);
         }
         if (il_slots != slots) {
+            for (uint32_t i=0; i<kIlSlots; ++i) {
+                if (i<slots && !il_ring[i].handle) il_ring[i]=make_image(nw,nh,VK_FORMAT_R32G32_SFLOAT,rw);
+                else if (i>=slots && il_ring[i].handle) retire(il_ring[i]);
+            }
+            il_ring_cur=0;
             for (auto& a : il_inc) for (uint32_t i = 0; i < kIlSlots; ++i) {
                 if (i < slots && !a[i].handle) a[i] = make_image(nw, nh, VK_FORMAT_R16G16B16A16_SFLOAT, rw);
                 else if (i >= slots && a[i].handle) retire(a[i]);
@@ -817,6 +822,8 @@ struct Stage::Impl {
         p.name = name;
         const auto code = read_spirv(cfg.shaders + "/renodx_" + name + ".spv");
         p.bindings = reflect(code);
+        if (name == "il_mv" && !p.bindings.count(17))
+            throw std::runtime_error("Interleaved motion shader ABI mismatch: update runtime and shaders together");
         p.push_bytes = push_bytes;
         std::vector<VkDescriptorSetLayoutBinding> lb;
         for (const auto& [b, t] : p.bindings)
@@ -1409,7 +1416,8 @@ Stage::~Stage() {
     for (auto& i : m.il_pyr) m.destroy(i);
     for (auto& i : m.il_dpyr) m.destroy(i);
     for (auto& i : m.il_depth) m.destroy(i);
-    for (Image* im : {&m.il_base, &m.il_comp, &m.il_ring[0], &m.il_ring[1], &m.il_ring[2]}) m.destroy(*im);
+    for (Image* im : {&m.il_base, &m.il_comp}) m.destroy(*im);
+    for (auto& im : m.il_ring) m.destroy(im);
     for (auto& a : m.il_inc) for (Image& im : a) m.destroy(im);
     for (Image* im : {&m.ditto_depth, &m.ditto_motion, &m.ditto_result, &m.ditto_change, &m.ditto_edit, &m.ditto_full_depth, &m.ditto_full_motion, &m.relight_dummy, &m.relight_nd, &m.relight_half_nd, &m.relight_ao[0], &m.relight_ao[1], &m.relight_hist[0], &m.relight_hist[1], &m.relight_hd[0], &m.relight_hd[1], &m.relight_mip[0], &m.relight_mip[1], &m.relight_mip[2], &m.relight_mip[3], &m.relight_lut, &m.relight_curve, &m.relight_color}) m.destroy(*im);
     for (auto& pass : m.dittos)
@@ -2148,7 +2156,15 @@ uint32_t Stage::record(VkCommandBuffer cmd, const StageFrame& fr, const Network&
             const auto il_program = stable ? Impl::kIl : Impl::kIl0;
             // each slot's network reads a history one frame old, made from last frame's increments (NR_IL_HIST=0, research:
             // its own history, several frames old, moved by the composed vectors)
-            static const bool il_fresh_history = [] { const char* e = std::getenv("NR_IL_HIST"); return !(e && e[0] == '0'); }();
+            static const bool il_fresh_history_default = [] { const char* e = std::getenv("NR_IL_HIST"); return !(e && e[0] == '0'); }();
+            // Temporal residuals belong to this slot's last evaluation, not
+            // the previous displayed frame. Use the composed vectors to that
+            // evaluation for both the slot history and the residual history.
+            const bool il_fresh_history = il_fresh_history_default && !fr.temporal_reconstruction;
+            if (m.il_temporal != fr.temporal_reconstruction) {
+                m.il_valid = false;
+                m.il_temporal = fr.temporal_reconstruction;
+            }
             // The anti-ghost set (on; NR_IL_ANTIGHOST=0 turns it off, NR_IL_VTRUST / BOX / FILL / DEPTH=0 one part): moved
             // increments are not used where they belong to something else now - disocclusion by the vectors and by the
             // game's depth (FSR2/3), the picture they were made on gone from the neighbourhood (FSR2's history box) - and
@@ -2273,7 +2289,7 @@ uint32_t Stage::record(VkCommandBuffer cmd, const StageFrame& fr, const Network&
                 if (stable) { v[46] = m.il_lf[m.il_lfcur ^ 1u].view; v[47] = m.il_lf[m.il_lfcur].view; }
                 v[29] = depth_view ? depth_view : m.il_trust.view;
                 v[30] = m.il_depth[m.il_dcur].view; v[31] = m.il_depth[m.il_dcur ^ 1u].view;
-                v[36] = m.il_ring[(m.il_ring_cur + 2u) % 3u].view;
+                v[36] = m.il_ring[(m.il_ring_cur + il_n - 1u) % il_n].view;
                 for (uint32_t i = 0; i < Impl::kIlSlots; ++i) {
                     v[4 + i] = m.il_inc[o][i < il_n ? i : 0].view;
                     v[12 + i] = m.il_inc[d][i < il_n ? i : 0].view;
@@ -2286,13 +2302,17 @@ uint32_t Stage::record(VkCommandBuffer cmd, const StageFrame& fr, const Network&
                 m.mark_name.clear();
             };
             // this frame's vectors into the ring; a slot's history `age` frames old: the composed vector
-            struct { uint32_t size[2], mbase[2], mgrid[2]; float mscale[2]; uint32_t mode, cur, age; } vp{
-                {NW, NH}, {mv_base[0], mv_base[1]}, {fr.motion.width, fr.motion.height}, {mv_scale[0], mv_scale[1]}, 0u, m.il_ring_cur, 0u};
+            struct { uint32_t size[2], mbase[2], mgrid[2]; float mscale[2]; uint32_t mode, cur, age, ring; } vp{
+                {NW, NH}, {mv_base[0], mv_base[1]}, {fr.motion.width, fr.motion.height}, {mv_scale[0], mv_scale[1]}, 0u, m.il_ring_cur, 0u, il_n};
             const auto vectors = [&](uint32_t mode, uint32_t age) {
                 vp.mode = mode; vp.age = age;
-                m.dispatch(cmd, Impl::kIlMv, set_of(Impl::kIlMv, {{0, mv_view}, {1, m.il_ring[0].view}, {2, m.il_ring[1].view},
-                    {3, m.il_ring[2].view}, {4, m.il_ring[0].view}, {5, m.il_ring[1].view}, {6, m.il_ring[2].view}, {7, m.il_comp.view}}),
-                    &vp, sizeof vp, nx, ny);
+                std::map<uint32_t,VkImageView> v{{0,mv_view},{7,m.il_comp.view}};
+                for(uint32_t i=0;i<Impl::kIlSlots;++i) {
+                    const auto view=m.il_ring[i<il_n?i:0].view;
+                    v[i<3?1+i:8+i-3]=view;
+                    v[i<3?4+i:13+i-3]=view;
+                }
+                m.dispatch(cmd, Impl::kIlMv, set_of(Impl::kIlMv,v), &vp, sizeof vp, nx, ny);
             };
             if (!il_fresh_history || il_vprev) vectors(0u, 0u);
             if (depth_view) { depth_layout(true); m.il_dcur ^= 1u; il(5u, 0u, false); m.il_depth_const = false; }
@@ -2305,14 +2325,20 @@ uint32_t Stage::record(VkCommandBuffer cmd, const StageFrame& fr, const Network&
                 if (depth_view) depth_layout(false);   // (the game's depth back before the network reads it)
                 m.network_motion = Stage::NetworkMotion{false, {}, {}, il_graded};
                 for (uint32_t j = 0; j < il_n; ++j) {
-                    il(3u, j, false); il(0u, j, false); network(j, il_input(), n, true); after_network(); il(1u, j, false);
+                    if (depth_view) depth_layout(true);
+                    il(3u, j, false); il(0u, j, false);
+                    if (depth_view) depth_layout(false);
+                    network(j, il_input(), n, true); after_network();
+                    if (depth_view) depth_layout(true);
+                    il(1u, j, false);
+                    if (depth_view) depth_layout(false);
                     if (j + 1 < il_n) ++ran;
                     m.il_last[j] = 0;
                 }
                 m.network_motion = {};
                 m.il_valid = true; m.il_frame = 1;
             } else {
-                const uint32_t slot = m.il_frame % il_n, age = std::min(m.il_frame - m.il_last[slot], 3u);   // (age: NR_IL_HIST=0 only)
+                const uint32_t slot = m.il_frame % il_n, age = std::min(m.il_frame - m.il_last[slot], il_n);
                 if (!il_fresh_history) vectors(1u, age);
                 il(3u, slot, true); il_moved = true;
                 il(0u, slot, true);
@@ -2335,7 +2361,7 @@ uint32_t Stage::record(VkCommandBuffer cmd, const StageFrame& fr, const Network&
                 if (depth_view) depth_layout(false);
                 ColourFrame comp;
                 comp.image = m.il_comp.handle; comp.format = VK_FORMAT_R16G16_SFLOAT; comp.width = NW; comp.height = NH;
-                comp.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
+                comp.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
                 ColourFrame hist = comp;
                 hist.image = m.il_hist.handle; hist.format = VK_FORMAT_R16G16B16A16_SFLOAT;
                 m.network_motion = il_fresh_history ? Stage::NetworkMotion{false, {}, hist, il_graded} : Stage::NetworkMotion{true, comp, {}, il_graded};
@@ -2343,11 +2369,13 @@ uint32_t Stage::record(VkCommandBuffer cmd, const StageFrame& fr, const Network&
                 m.mark(cmd, "network-il");   // (NR_RENODX_PROF: the network apart from the slots' steps around it)
                 m.network_motion = {};
                 after_network();
+                if (depth_view) depth_layout(true);
                 if (stable) { m.il_lfcur ^= 1u; il(6u, slot, false); m.il_lf_valid = true; }
                 il(1u, slot, false);
+                if (depth_view) depth_layout(false);
                 m.il_last[slot] = m.il_frame++;
             }
-            m.il_ring_cur = (m.il_ring_cur + 1u) % 3u;
+            m.il_ring_cur = (m.il_ring_cur + 1u) % il_n;
         } else {
             network(k, p, n, reset);
         }

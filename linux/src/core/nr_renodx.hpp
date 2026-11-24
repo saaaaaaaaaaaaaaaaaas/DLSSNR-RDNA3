@@ -174,6 +174,7 @@ struct StageConfig {
 
 struct StageFrame {
     bool fast_motion_available = true;   // A bound neutral texture is not a provider for temporal fast passes.
+    bool temporal_reconstruction = false; // A slot's causal history spans multiple real frames.
     ColourFrame colour;     // read
     ColourFrame output;     // written; may be the same image as `colour`
     bool reset = false;     // DLSSNR.Reset

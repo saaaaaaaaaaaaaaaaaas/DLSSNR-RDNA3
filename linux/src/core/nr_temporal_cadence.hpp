@@ -16,5 +16,11 @@ struct TemporalCadence {
         run ? ++full : ++reconstructed;
         return run;
     }
+    void stagger_interleaved_start(uint32_t slot, uint32_t slots, int interval) {
+        if (frames == 1 && interval == 2 && slots >= 3 && (slots & 1u)) {
+            const uint32_t first_visit = slot ? slot : slots;
+            phase = first_visit & 1u;
+        }
+    }
 };
 } // namespace nr

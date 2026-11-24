@@ -399,6 +399,9 @@ struct EngineFrame {
     // Normal integrations evaluate NR on real frames before SR and FG. Hosts
     // which also forward generated frames must tag them; they record no work.
     bool generated = false;
+    // Internal: Interleaved visits one slot per real frame. Its per-slot
+    // temporal cadence can be staggered when the slot count is odd.
+    uint32_t interleaved_slot = 0, interleaved_slots = 0;
     ColourFrame colour;        // render-resolution, modified in place
     // Backward motion vectors. Any 2-channel format; `motion_scale` converts
     // the texture's units into normalized screen units, exactly as the

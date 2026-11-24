@@ -594,7 +594,9 @@ struct Runtime::Impl {
     // and a query that is still in flight must not stall the render thread that
     // is asking. `timing_ok` is false on a queue family with no timestamp bits,
     // and then every accessor answers zero rather than a wrong number.
-    static constexpr uint32_t kTimingSlots = 4;
+    // A reset may record all Interleaved slots in the same command buffer.
+    // Keep those recordings apart until the host has submitted the buffer.
+    static constexpr uint32_t kTimingSlots = NR_ARCH_RDNA3 ? 64 : 4;
     VkQueryPool timing{};
     bool timing_ok{};
     double timestamp_ns{};       // VkPhysicalDeviceLimits::timestampPeriod
@@ -2827,6 +2829,7 @@ ControlMaskResult Runtime::record_all(VkCommandBuffer cmd, const ColourFrame& fr
         seamless->settings=settings;
         auto& cadence=impl_->seamless_clock?impl_->seamless_clock->features[temporal->feature]:seamless->cadence;
         reuse_skip=!cadence.next(c.reuse_every);
+        if (engine) cadence.stagger_interleaved_start(engine->interleaved_slot,engine->interleaved_slots,c.reuse_every);
         seamless->cadence=cadence;
     } else if(temporal) {
         auto i=impl_->seamless.find(temporal->feature);

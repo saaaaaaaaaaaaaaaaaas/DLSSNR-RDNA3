@@ -38,6 +38,22 @@ def check_residual_shader(data, name):
         raise ValueError('residual lighting ABI mismatch: ' + name)
 
 
+def check_interleaved_motion_shader(data, name):
+    words = struct.unpack('<' + 'I' * (len(data) // 4), data)
+    bindings, ring, i = set(), False, 5
+    while i < len(words):
+        n, op = words[i] >> 16, words[i] & 0xffff
+        if not n or i+n > len(words):
+            raise ValueError('malformed Interleaved motion shader: ' + name)
+        if op == 71 and n == 4 and words[i+2] == 33:
+            bindings.add(words[i+3])
+        if op == 72 and n == 5 and words[i+3] == 35 and words[i+4] == 44:
+            ring = True
+        i += n
+    if bindings != set(range(18)) or not ring:
+        raise ValueError('Interleaved motion ABI mismatch: ' + name)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--archive', type=Path, required=True)
@@ -67,8 +83,12 @@ def main():
                 binaries[name] = hashes[name]
                 if b'Residual shader ABI mismatch' not in data:
                     raise ValueError('runtime lacks the residual ABI guard: ' + name)
+                if b'Interleaved motion shader ABI mismatch' not in data:
+                    raise ValueError('runtime lacks the Interleaved motion ABI guard: ' + name)
             if name.endswith('/runtime/runtime_seamless.spv'):
                 check_residual_shader(data, name)
+            if name.endswith('/renodx/renodx_il_mv.spv'):
+                check_interleaved_motion_shader(data, name)
     expected = {directory + '/gpu-profile.txt' for directory in NETWORKS}
     if set(markers) != expected or set(markers.values()) != {'z1-extreme-turbo'}:
         raise ValueError('all six networks must select the Turbo profile')

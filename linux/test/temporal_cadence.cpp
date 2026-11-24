@@ -17,5 +17,17 @@ int main() {
         auto resized=a;
         assert(resized.next(n)==a.next(n));
     }
+    for (unsigned slots : {3u,5u,7u}) {
+        nr::TemporalCadence pass[8];
+        for (unsigned k=0;k<slots;++k) {
+            assert(pass[k].next(2));
+            pass[k].stagger_interleaved_start(k,slots,2);
+        }
+        for (unsigned frame=1;frame<121;++frame) {
+            const unsigned slot=frame%slots;
+            assert(pass[slot].next(2)==(frame%2==0));
+            pass[slot].stagger_interleaved_start(slot,slots,2);
+        }
+    }
     std::puts("Temporal cadence: PASS (N=2..4, interleaved features, retained phase)");
 }

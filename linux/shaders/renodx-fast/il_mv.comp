@@ -13,14 +13,32 @@ layout(set = 0, binding = 4, rg32f) uniform writeonly image2D W0;
 layout(set = 0, binding = 5, rg32f) uniform writeonly image2D W1;
 layout(set = 0, binding = 6, rg32f) uniform writeonly image2D W2;
 layout(set = 0, binding = 7, rg16f) uniform writeonly image2D Comp;
-layout(push_constant) uniform Push { uvec2 size, mbase, mgrid; vec2 mscale; uint mode, cur, age; } pc;
+layout(set = 0, binding = 8) uniform texture2D R3;
+layout(set = 0, binding = 9) uniform texture2D R4;
+layout(set = 0, binding = 10) uniform texture2D R5;
+layout(set = 0, binding = 11) uniform texture2D R6;
+layout(set = 0, binding = 12) uniform texture2D R7;
+layout(set = 0, binding = 13, rg32f) uniform writeonly image2D W3;
+layout(set = 0, binding = 14, rg32f) uniform writeonly image2D W4;
+layout(set = 0, binding = 15, rg32f) uniform writeonly image2D W5;
+layout(set = 0, binding = 16, rg32f) uniform writeonly image2D W6;
+layout(set = 0, binding = 17, rg32f) uniform writeonly image2D W7;
+layout(push_constant) uniform Push { uvec2 size, mbase, mgrid; vec2 mscale; uint mode, cur, age, ring; } pc;
+vec2 fetch_ring(uint r, ivec2 c) {
+    switch (r) {
+        case 0u: return texelFetch(R0,c,0).xy; case 1u: return texelFetch(R1,c,0).xy;
+        case 2u: return texelFetch(R2,c,0).xy; case 3u: return texelFetch(R3,c,0).xy;
+        case 4u: return texelFetch(R4,c,0).xy; case 5u: return texelFetch(R5,c,0).xy;
+        case 6u: return texelFetch(R6,c,0).xy; default: return texelFetch(R7,c,0).xy;
+    }
+}
 vec2 bil(uint r, vec2 p) {   // bilinear at p (texel centres at +0.5), edges clamped
     const vec2 f = p - 0.5, b0 = floor(f), w = f - b0;
     const ivec2 i0 = ivec2(b0), hi = ivec2(pc.size) - 1;
     vec2 t[4];
     for (int k = 0; k < 4; ++k) {
         const ivec2 c = clamp(i0 + ivec2(k & 1, k >> 1), ivec2(0), hi);
-        t[k] = (r == 0u ? texelFetch(R0, c, 0) : r == 1u ? texelFetch(R1, c, 0) : texelFetch(R2, c, 0)).xy;
+        t[k] = fetch_ring(r,c);
     }
     return mix(mix(t[0], t[1], w.x), mix(t[2], t[3], w.x), w.y);
 }
@@ -30,12 +48,22 @@ void main() {
     if (pc.mode == 0u) {
         const uvec2 t = pc.mbase + min(uvec2((vec2(px) + 0.5) * vec2(pc.mgrid) / vec2(pc.size)), pc.mgrid - 1u);
         const vec4 d = vec4(texelFetch(Motion, ivec2(t), 0).xy * pc.mscale, 0.0, 0.0);
-        if (pc.cur == 0u) imageStore(W0, ivec2(px), d); else if (pc.cur == 1u) imageStore(W1, ivec2(px), d); else imageStore(W2, ivec2(px), d);
+        switch (pc.cur) {
+            case 0u: imageStore(W0,ivec2(px),d); break; case 1u: imageStore(W1,ivec2(px),d); break;
+            case 2u: imageStore(W2,ivec2(px),d); break; case 3u: imageStore(W3,ivec2(px),d); break;
+            case 4u: imageStore(W4,ivec2(px),d); break; case 5u: imageStore(W5,ivec2(px),d); break;
+            case 6u: imageStore(W6,ivec2(px),d); break; default: imageStore(W7,ivec2(px),d); break;
+        }
         return;
     }
     vec2 p = vec2(px) + 0.5, c = vec2(0.0);
     for (uint j = 0u; j < pc.age; ++j) {
-        const vec2 d = bil((pc.cur + 3u - j) % 3u, p);
+        if (any(isnan(p)) || any(isinf(p)) || any(lessThan(p, vec2(0.0))) ||
+            any(greaterThanEqual(p, vec2(pc.size)))) {
+            c = vec2(uintBitsToFloat(0x7fc00000u));
+            break;
+        }
+        const vec2 d = bil((pc.cur + pc.ring - j) % pc.ring, p);
         p += d; c += d;
     }
     imageStore(Comp, ivec2(px), vec4(c / vec2(pc.size), 0.0, 0.0));
