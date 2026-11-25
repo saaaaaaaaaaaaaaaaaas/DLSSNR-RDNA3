@@ -347,6 +347,12 @@ The weights are NVIDIA's and are not in this repository. The installer extracts 
 weights are byte for byte the ones this project is tested with, and the installer only accepts a DLL
 whose extracted model matches the pinned hashes. Do not commit the zip or anything made from it.
 
+Custom FP8 small-model resources can be imported with
+`python3 linux/package/model-tools/import_small_model.py INPUT --reference-small ORIGINAL --output NEW_DIRECTORY`.
+It creates `CC_SMALL_FP8.bin` and a hybrid `CC_SMALL_FP8_EXPERIMENTAL.bin` using the original model's fitted
+experimental entries. See [the importer guide](docs/MODEL-BIN-IMPORT.md) for supported inputs, the hybrid's
+limitations, and CPU checks. Keep custom weights outside Git and distributed packages too.
+
 ## Building
 
 Everything that goes into a package is cross-compiled on Linux. Needed: git, curl, tar, python3, cmake,
