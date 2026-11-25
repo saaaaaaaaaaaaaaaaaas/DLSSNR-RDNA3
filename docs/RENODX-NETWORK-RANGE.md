@@ -47,3 +47,21 @@ Auto mask the full Local structure range is already used.
 - A separate Fast Interleaved N=2 comparison at Intensity 2 versus 4 changed
   550,916 RGB channels in frame 2, confirming that Interleaved's own
   composition also uses the expanded intensity.
+
+## Local package
+
+The complete RDNA3 Z1 Extreme Turbo package is built from
+`d0746569d588f495c39b939763d45053e8f62291`:
+
+```text
+artifacts/renodx-4/release/DLSS-NR-AMD-Vulcan-Linux-0.0.9-z1e.2-4-gd074656-Z1E-Turbo-Temporal-RDNA-3.tar.gz
+SHA-256 b98849493413edfff51ceb76b9616f59678f670557b939b589fffd55942f2afe
+```
+
+The model-free audit passed (1205 files, 442 validated shaders). All 370
+learned/grade shaders match the preceding Fast-temporal package byte for byte;
+the custom-model importer from the existing branch is included. A generated
+`__pycache__` directory blocked the first package attempt; removing that cache
+allowed the verified package above to build. A subsequent packaging change
+skips directories in the model-tools source so future builds do not depend on
+that cleanup. Only local commits were made; no RDNA4 build or release upload.

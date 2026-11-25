@@ -244,7 +244,10 @@ fi
 # model-tools/: what install.sh --dll runs to rebuild the model from the DLL.
 mt="$pkg/model-tools"
 mkdir -p -- "$mt"
-cp -- linux/package/model-tools/* "$mt/"
+# Python's __pycache__ may be present after importer tests; ship only files.
+for model_tool in linux/package/model-tools/*; do
+    if [[ -f "$model_tool" ]]; then cp -- "$model_tool" "$mt/"; fi
+done
 
 # reshade/: copied into the game folder as-is (ReShade as dxgi.dll).
 rs="$pkg/reshade"
