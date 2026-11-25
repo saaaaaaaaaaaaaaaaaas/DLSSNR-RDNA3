@@ -32,11 +32,11 @@ inline constexpr uint32_t kMaxUnlockedPasses = 30;
 struct Settings {
     bool nr_enabled = true;             // NeuralUplift: NR runs (off: the frame as it came)
     // The network's controls (DLSSNR.Intensity ...), pass 1's.
-    float intensity = 1.0f;             // NRIntensity 0..2
+    float intensity = 1.0f;             // NRIntensity: extended to 4 on RDNA3
     uint32_t style = 0;                 // NRStyle 0..2
-    float local_tone = 1.0f;            // NRLocalTone 0..2
-    float local_structure = 1.0f;       // NRLocalStructure 0..2
-    float skin_structure = -1.0f;       // NRSkinStructure -1 (stock) .. 1
+    float local_tone = 1.0f;            // NRLocalTone: extended to 4 on RDNA3
+    float local_structure = 1.0f;       // NRLocalStructure: extended to 4 on RDNA3
+    float skin_structure = -1.0f;       // NRSkinStructure: -1 (stock), up to 4 on RDNA3
     bool auto_mask = false;             // NRAutoMask
     // The stack: passes 2..4 with their own controls once "Same as pass 1" is off (NRPass2FollowPass1 ...).
     uint32_t passes = 1;                // NRPasses 1..4 (1..30 with NRUnlockPasses)

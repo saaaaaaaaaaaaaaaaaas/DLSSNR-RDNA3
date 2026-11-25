@@ -7,6 +7,7 @@
 #include "nr_pe_events.hpp"
 #include "nr_ini_int4.hpp"
 #include "nr_ini_network.hpp"
+#include "nr_renodx_range.hpp"
 #include "nr_pe_log.hpp"
 
 #include <windows.h>
@@ -645,11 +646,11 @@ bool parse_renodx_key(RenoDXConfig& r, const std::string& key, const std::string
     else if (key == "nrtogglekey") r.toggle_key = value;
     else if (key == "nroutputrect") r.output_rect = renodx_enum(value, 1, 0, 2);
     else if (key == "nrhookpoint") v.hook_point = renodx_enum(value, d.hook_point, 0, 2);
-    else if (key == "nrintensity") v.intensity = renodx_float(value, d.intensity, 0.0f, 2.0f);
+    else if (key == "nrintensity") v.intensity = renodx_float(value, d.intensity, 0.0f, nr::renodx::kNetworkMax);
     else if (key == "nrstyle") v.style = renodx_enum(value, d.style, 0, 2);
-    else if (key == "nrlocaltone") v.local_tone = renodx_float(value, d.local_tone, 0.0f, 2.0f);
-    else if (key == "nrlocalstructure") v.local_structure = renodx_float(value, d.local_structure, 0.0f, 2.0f);
-    else if (key == "nrskinstructure") v.skin_structure = renodx_float(value, d.skin_structure, -1.0f, 1.0f);
+    else if (key == "nrlocaltone") v.local_tone = renodx_float(value, d.local_tone, 0.0f, nr::renodx::kNetworkMax);
+    else if (key == "nrlocalstructure") v.local_structure = renodx_float(value, d.local_structure, 0.0f, nr::renodx::kNetworkMax);
+    else if (key == "nrskinstructure") v.skin_structure = renodx_float(value, d.skin_structure, -1.0f, nr::renodx::kSkinMax);
     else if (key == "nrautomask") { if (auto b = parse_bool(value)) v.auto_mask = *b; }
     else if (key == "nrskinindependent") { if (auto b = parse_bool(value)) v.skin_independent = *b; }
     else if (key == "nrpassesmode") {
@@ -796,19 +797,19 @@ void write_renodx(FILE* f, const RenoDXConfig& r) {
         "; the network's own settings (pass 1)\n"
         "\n"
         "NRIntensity = %.2f\n"
-        "; 0 .. 2, default 1. Strength of the enhancement\n"
+        "; 0 .. 2 (0 .. 4 on RDNA3), default 1. Strength of the enhancement\n"
         "\n"
         "NRStyle = %u\n"
         "; 0 = Standard (default); 1 = Natural; 2 = Cinematic\n"
         "\n"
         "NRLocalTone = %.2f\n"
-        "; 0 .. 2, default 1. Local tone\n"
+        "; 0 .. 2 (0 .. 4 on RDNA3), default 1. Local tone\n"
         "\n"
         "NRLocalStructure = %.2f\n"
-        "; 0 .. 2, default 1. Local structure\n"
+        "; 0 .. 2 (0 .. 4 on RDNA3), default 1. Local structure\n"
         "\n"
         "NRSkinStructure = %.2f\n"
-        "; -1 .. 1, default -1 (unchanged). Structure on skin, only with NRAutoMask = 1\n"
+        "; -1 .. 1 (-1 .. 4 on RDNA3), default -1 (unchanged). Structure on skin, only with NRAutoMask = 1\n"
         "\n"
         "NRAutoMask = %d\n"
         "; 1 = automatic mask (Character mask): skin is found and treated on its own; 0 = off (default)\n"

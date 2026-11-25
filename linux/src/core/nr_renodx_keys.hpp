@@ -3,6 +3,7 @@
 // default, group, label, help and combo items. It agrees with nr_pe_config.cpp's writer and parser of [RenoDX]:
 // a key changed in one is changed in the other.
 #include "nr_fast_passes.hpp"   // (NRFastMethod's default: the route's)
+#include "nr_renodx_range.hpp"
 
 #include <cstdint>
 
@@ -23,11 +24,11 @@ inline constexpr Key kKeys[] = {
     {"NeuralUplift", kBool, 0, 0.0f, 0.0f, 1.0f, "Neural Rendering", "Neural Rendering", "NeuralUplift. Off: the frame as it came.", nullptr},
     {"NRToggleKey", kText, 0, 0.0f, 0.0f, 0.0f, "Neural Rendering", "Toggle key", "NRToggleKey. Switches NR on/off for this run; empty: none.", nullptr},
     {"NRHookPoint", kUint, 0, 0.0f, 2.0f, 2.0f, "Neural Rendering", "Hook point", "NRHookPoint (OptiScaler route). Present (default): the game's finished picture. Before the upscaler: not with Ray Reconstruction.", "After the upscaler\0Before the upscaler\0Present\0"},
-    {"NRIntensity", kFloat, 2, 0.0f, 2.0f, 1.0f, "Network", "Intensity", "NRIntensity. Enhancement strength.", nullptr},
+    {"NRIntensity", kFloat, 2, 0.0f, nr::renodx::kNetworkMax, 1.0f, "Network", "Intensity", "NRIntensity. Enhancement strength.", nullptr},
     {"NRStyle", kUint, 0, 0.0f, 2.0f, 0.0f, "Network", "Style", "NRStyle.", "Standard\0Natural\0Cinematic\0"},
-    {"NRLocalTone", kFloat, 2, 0.0f, 2.0f, 1.0f, "Network", "Local tone", "NRLocalTone. Local brightness changes.", nullptr},
-    {"NRLocalStructure", kFloat, 2, 0.0f, 2.0f, 1.0f, "Network", "Local structure", "NRLocalStructure. Fine structure and surface detail.", nullptr},
-    {"NRSkinStructure", kFloat, 2, -1.0f, 1.0f, -1.0f, "Network", "Skin structure", "NRSkinStructure. -1 = stock. With Auto mask only.", nullptr},
+    {"NRLocalTone", kFloat, 2, 0.0f, nr::renodx::kNetworkMax, 1.0f, "Network", "Local tone", "NRLocalTone. Local brightness changes.", nullptr},
+    {"NRLocalStructure", kFloat, 2, 0.0f, nr::renodx::kNetworkMax, 1.0f, "Network", "Local structure", "NRLocalStructure. Fine structure and surface detail. Independent skin limits the value sent to the model when Auto mask is on.", nullptr},
+    {"NRSkinStructure", kFloat, 2, -1.0f, nr::renodx::kSkinMax, -1.0f, "Network", "Skin structure", "NRSkinStructure. -1 = stock. With Auto mask only.", nullptr},
     {"NRAutoMask", kBool, 0, 0.0f, 0.0f, 0.0f, "Network", "Auto mask", "NRAutoMask. Finds people's skin and treats it on its own.", nullptr},
     {"NRSkinIndependent", kBool, 0, 0.0f, 0.0f, 1.0f, "Network", "Independent skin", "NRSkinIndependent. With Auto mask, skin follows Skin structure only.", nullptr},
     {"NRPasses", kUint, 0, 1.0f, 30.0f, 1.0f, "Passes", "Passes", "NRPasses. Model passes a frame, 1-4 (up to 30 with Unlock passes); each costs one more network run.", nullptr},

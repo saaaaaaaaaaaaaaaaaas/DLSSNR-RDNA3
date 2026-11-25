@@ -404,6 +404,7 @@ if [[ "$gpu" == rdna3 ]]; then
     case "$profile" in
         z1-extreme-turbo)
             cp -- docs/RDNA3-SEAMLESS.md docs/RDNA3-SEAMLESS-VALIDATION.json linux/package/Turbo-Temporal.txt "$pkg/"
+            cp -- docs/RENODX-NETWORK-RANGE.md "$pkg/"
             python3 linux/build/finalize_z1e_package.py "$pkg"
             ;;
     esac

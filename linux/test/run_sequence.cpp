@@ -92,6 +92,12 @@ int main(int argc, char** argv) try {
     frame.feature = 1;
     nr::Controls controls;
     controls.reuse_every = reuse_every;
+    if (std::getenv("RUN_SEQUENCE_RENODX_RANGE")) controls.renodx_extended_range=true;
+    if (const char* x=std::getenv("RUN_SEQUENCE_INTENSITY")) controls.intensity=std::strtof(x,nullptr);
+    if (const char* x=std::getenv("RUN_SEQUENCE_TONE")) controls.local_tone=std::strtof(x,nullptr);
+    if (const char* x=std::getenv("RUN_SEQUENCE_STRUCTURE")) controls.local_structure=std::strtof(x,nullptr);
+    if (const char* x=std::getenv("RUN_SEQUENCE_SKIN")) controls.skin_structure=std::strtof(x,nullptr);
+    if (const char* x=std::getenv("RUN_SEQUENCE_MASK")) controls.automatic_mask=std::atoi(x)!=0;
     if(std::getenv("RUN_SEQUENCE_CONFIDENCE")) controls.temporal.confidence=true;
     if(std::getenv("RUN_SEQUENCE_NOFILL")) controls.temporal.hole_fill=false;
     const bool use_depth=std::getenv("RUN_SEQUENCE_DEPTH")!=nullptr;
@@ -114,6 +120,7 @@ int main(int argc, char** argv) try {
         nr::renodx::StageConfig sc{};
         sc.shaders=shaders;sc.width=sc.nr_width=width;sc.height=sc.nr_height=height;sc.frame_format=format;
         sc.settings.passes_mode=1;sc.settings.fast_method=0;
+        sc.settings.intensity=controls.intensity;
         sc.settings.fast_interleaved_passes=std::getenv("RUN_SEQUENCE_FAST_PASSES")?atoi(std::getenv("RUN_SEQUENCE_FAST_PASSES")):3;
         scoped_fast_slots=sc.settings.fast_interleaved_passes;
         sc.settings.fast_interleaved_preset=std::getenv("RUN_SEQUENCE_FAST_PRESET")?atoi(std::getenv("RUN_SEQUENCE_FAST_PRESET")):1;
@@ -211,8 +218,11 @@ int main(int argc, char** argv) try {
         std::vector<uint16_t> out(rgba.size());
         ctx.download(fast_stage?stage_output:image, out.data(), out.size() * 2);
         std::vector<uint8_t> bytes(rgba.size());
-        for (size_t k = 0; k < out.size(); ++k)
-            bytes[k] = uint8_t(std::lround(std::fmin(1.0f, std::fmax(0.0f, from_half(out[k]))) * 255.0f));
+        for (size_t k = 0; k < out.size(); ++k) {
+            const float value=from_half(out[k]);
+            if(!std::isfinite(value)) throw std::runtime_error("network output contains NaN or infinity");
+            bytes[k] = uint8_t(std::lround(std::fmin(1.0f, std::fmax(0.0f, value)) * 255.0f));
+        }
         char path[1024]; std::snprintf(path, sizeof path, out_pattern, i);
         std::ofstream(path, std::ios::binary).write(reinterpret_cast<const char*>(bytes.data()), std::streamsize(bytes.size()));
     }

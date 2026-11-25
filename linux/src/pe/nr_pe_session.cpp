@@ -3830,6 +3830,9 @@ bool Session::Impl::record_renodx(VkCommandBuffer cmd, renodx::Stage& stage, con
     const auto pass_controls = [&](uint32_t pass) {
         const uint32_t k = std::min(pass, 3u);   // passes 5.. (NRUnlockPasses) take pass 4's controls
         Controls ck = c;
+#if NR_ARCH_RDNA3
+        ck.renodx_extended_range = true;
+#endif
         ck.per_pass.clear();
         ck.passes = 1;
         ck.history_strength = 1.f;

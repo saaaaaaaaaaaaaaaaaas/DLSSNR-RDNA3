@@ -36,9 +36,10 @@ std::mutex build_mutex;
 
 void validate(const Controls& c) {
     auto range = [](float v, float lo, float hi) { return std::isfinite(v) && v >= lo && v <= hi; };
-    if (!range(c.intensity, 0, 2) || !range(c.detail_strength, 0, 2) || !range(c.colour_strength, 0, 4) ||
-        !range(c.max_ratio, 1, 8) || !range(c.local_tone, 0, 2) ||
-        !range(c.local_structure, 0, 2) || !range(c.skin_structure, -1, 2) ||
+    const float max_control = NR_ARCH_RDNA3 && c.renodx_extended_range ? 4.f : 2.f;
+    if (!range(c.intensity, 0, max_control) || !range(c.detail_strength, 0, 2) || !range(c.colour_strength, 0, 4) ||
+        !range(c.max_ratio, 1, 8) || !range(c.local_tone, 0, max_control) ||
+        !range(c.local_structure, 0, max_control) || !range(c.skin_structure, -1, max_control) ||
         c.style < 0 || c.style > 2 || c.passes < 1)
         throw std::invalid_argument("invalid NR controls");
 }
@@ -1348,7 +1349,7 @@ struct Runtime::Impl {
             // Every route, every pass: each pass carries its own Intensity
             // into this blend, as each OptiScaler DLSS-NR pass is its own DLL
             // feature with its own Intensity.
-            p.intensity = std::clamp(r.intensity, 0.0f, 2.0f);
+            p.intensity = std::clamp(r.intensity, 0.0f, 4.0f);
             // Bits 28-29: the Style. For Natural and Cinematic the DLL grades the composed answer after the post
             // block (cg2r_post_process_kernel); the *_grade post pipelines do the same
             // (linux/shaders/rdna4/include/nr_style_grade.glsl). Non-zero bits select that pipeline at dispatch;
@@ -1360,7 +1361,7 @@ struct Runtime::Impl {
             std::memcpy(blob.data() + offset, &p, sizeof p);
         } else if (kern.rfind("imgout", 0) == 0) {
             PushImgOut p{}; std::memcpy(&p, blob.data(), sizeof p);
-            p.nr_intensity = std::clamp(r.intensity, 0.0f, 2.0f);
+            p.nr_intensity = std::clamp(r.intensity, 0.0f, 4.0f);
             std::memcpy(blob.data(), &p, sizeof p);
         }
     }
