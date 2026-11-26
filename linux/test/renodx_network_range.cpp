@@ -10,6 +10,8 @@ namespace nr::pe { void log(const char*, ...) {} }
 int main() {
     using namespace nr;
     pe::RenoDXConfig c;
+    assert(!c.values.ditto_relight);
+    for (const auto& entry : renodx_keys::kKeys) if (!std::strcmp(entry.name,"NRDittoRelight")) assert(entry.def==0.f);
     const char* names[]={"NRIntensity","NRLocalTone","NRLocalStructure","NRSkinStructure"};
     const char* keys[]={"nrintensity","nrlocaltone","nrlocalstructure","nrskinstructure"};
     for (int k=0;k<4;k++) {
@@ -37,6 +39,9 @@ int main() {
     pe::RenoDXConfig saved;assert(pe::read_renodx("renodx-range-roundtrip.ini",saved));
     assert(saved.values.intensity==4 && saved.values.local_tone==4 && saved.values.local_structure==4 && saved.values.skin_structure==4);
     assert(saved.values.reconstruction_light==1.5f && saved.values.reconstruction_detail==1.75f && saved.values.ditto_sharpness==.25f);
+    assert(!saved.values.ditto_relight);
+    assert(pe::parse_renodx_key(saved,"nrdittorelight","1"));
+    assert(saved.values.ditto_relight);
     for (int k=0;k<4;k++) assert(pe::parse_renodx_key(c,keys[k],"4.01"));
     assert(c.values.intensity==1 && c.values.local_tone==1 && c.values.local_structure==1 && c.values.skin_structure==-1);
     assert(pe::parse_renodx_key(c,"nrskinstructure","-1"));assert(c.values.skin_structure==-1);

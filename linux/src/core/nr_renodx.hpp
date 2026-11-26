@@ -97,7 +97,7 @@ struct Settings {
     uint32_t detail_stability = 1;      // NRDetailStability: 0 auto, 1 off (default), 2 always
     float resolution_scale = 1.0f;      // NRResolutionScale: the network at 0.25..1 of the frame
     bool follow_input_res = false;      // NRFollowInputRes: the network at the game's render resolution
-    bool ditto_relight = true;
+    bool ditto_relight = false;
     bool ditto_before_nr = true;       // NRDittoBeforeNR: NR receives the relit frame; off applies lighting after the stack.
     float ditto_ao = .75f, ditto_gi = 2.f;
     float reconstruction_light = 1.25f, reconstruction_detail = 1.25f;

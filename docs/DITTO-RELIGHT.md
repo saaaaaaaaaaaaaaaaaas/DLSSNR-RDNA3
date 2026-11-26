@@ -40,8 +40,8 @@ Physical game/FG/HDR quality is qualified separately from procedural fixtures.
 
 ## Implemented path
 
-Saved `NRLookUpsample=4` now selects **Ditto Relight**. With **Before NR** on
-(the default), Relight runs once on the full-size running reference before NR
+Saved `NRLookUpsample=4` now selects **Ditto Relight**. Lighting defaults off;
+when enabled with **Before NR** on (its default), Relight runs once on the full-size running reference before NR
 encoding. Turning it off runs Relight once after all NR passes and their resolve,
 before the output codec commits the result. It retains upstream's AO/GI,
 depth/color mips, occluder LUT, sparse filter, separate lighting histories,
@@ -80,6 +80,7 @@ The layer placement remains Before the upscaler in both cases.
 The per-layer key is `NRDittoBeforeNR = 1` (default on), and changing it resets
 the relevant histories. Lighting controls AO/GI and the
 upstream tone curve; disabling it retains guided neural reconstruction.
+Lighting defaults off (`NRDittoRelight = 0`); an existing explicit setting is preserved.
 Ambient occlusion, Global illumination and Samples are adjustable.
 
 With a model resolution below the layer resolution, **Neural lighting**

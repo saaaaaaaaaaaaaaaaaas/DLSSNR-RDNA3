@@ -127,6 +127,8 @@ def main():
         config.read_string(text)
         if config.has_section('Reuse') or not config.getboolean('Temporal', 'Enabled') or config.getint('Temporal', 'Interval') != 2:
             raise ValueError('incorrect temporal defaults: ' + name)
+        if config.getboolean('RenoDX', 'NRDittoRelight'):
+            raise ValueError('Ditto Lighting must default off: ' + name)
         for key, default in (('NRReconstructionLight', 1.25), ('NRReconstructionDetail', 1.25), ('NRDittoSharpness', 1.0)):
             if config.getfloat('RenoDX', key) != default:
                 raise ValueError('incorrect neural reconstruction default: ' + name + ' ' + key)
