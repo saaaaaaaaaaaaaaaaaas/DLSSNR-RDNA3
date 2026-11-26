@@ -18,7 +18,7 @@ struct DittoSettings {
     float motionGamma = 1.5f;  // the history clip width while moving (originally 0.9)
     float motionShare = 0.15f;  // the new frame's base share while moving (originally 0.3)
     float motionMinMax = 1.0f; // how far the box is held within the samples' min / max while moving
-    float sharpness = 0.6f;    // at rest 0 soft, 0.6 as reconstructed, 1 sharpened; moving, sharpened by it (sharpen.hlsl)
+    float sharpness = 1.0f;    // at rest 0 soft, 0.6 as reconstructed, 1 sharpened; moving, sharpened by it (sharpen.hlsl)
     // the sharpening's filter: 0 CAS; 1 RCAS (FSR 1's robust CAS: one weight for the 3 channels, less on noise) - the
     // sharpening pass then runs at every ratio (no fused sharpening); 2 off (no sharpening, no pass: the upscale writes
     // the output)

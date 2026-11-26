@@ -100,6 +100,8 @@ struct Settings {
     bool ditto_relight = true;
     bool ditto_before_nr = true;       // NRDittoBeforeNR: NR receives the relit frame; off applies lighting after the stack.
     float ditto_ao = .75f, ditto_gi = 2.f;
+    float reconstruction_light = 1.25f, reconstruction_detail = 1.25f;
+    float ditto_sharpness = 1.f;
     uint32_t ditto_samples = 32;
     float ditto_fov = 60.f, ditto_near = .1f, ditto_far = 100000.f;
     uint32_t look_upsample = 0;         // NRLookUpsample: 0 auto, 1 edge-aware, 2 classic, 3 area input, 4 Ditto Relight

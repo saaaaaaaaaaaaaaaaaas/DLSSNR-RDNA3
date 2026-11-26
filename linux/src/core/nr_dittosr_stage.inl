@@ -35,6 +35,17 @@ void ensure_ditto(VkCommandBuffer cmd, uint32_t passes) {
             i += len;
         }
         if (!phase_layout) throw std::runtime_error("Ditto Relight shader mismatch: replace the ASI and all Ditto/Relight shaders together");
+        const auto residual = read_spirv(cfg.shaders + "/renodx_ditto_residual.spv");
+        bool motion_binding=false, detail_strength=false;
+        for (size_t i=5; i<residual.size();) {
+            const uint32_t op=residual[i]&0xffffu, len=residual[i]>>16;
+            if(!len || i+len>residual.size()) break;
+            if(op==71 && len==4 && residual[i+2]==33 && residual[i+3]==9) motion_binding=true;
+            if(op==72 && len==5 && residual[i+3]==35 && residual[i+4]==36) detail_strength=true;
+            i+=len;
+        }
+        if(!motion_binding || !detail_strength)
+            throw std::runtime_error("Neural reconstruction shader ABI mismatch: update the runtime and Ditto shaders together");
         // The new cbuffer has 61 floats; accepting the previous 51-float shaders
         // would leave the new output/envelope unwritten instead of failing clearly.
         for (const char* name : {"convert", "motion", "upscale", "sharpen"}) {
@@ -60,7 +71,7 @@ void ensure_ditto(VkCommandBuffer cmd, uint32_t passes) {
         if (!programs[kDittoMotion].pipeline) load(programs[kDittoMotion], "ditto_motion", 0);
         if (!programs[kDittoUpscale].pipeline) load(programs[kDittoUpscale], "ditto_upscale", 0);
         if (!programs[kDittoSharpen].pipeline) load(programs[kDittoSharpen], "ditto_sharpen", 0);
-        if (!programs[kDittoResidual].pipeline) load(programs[kDittoResidual], "ditto_residual", 32);
+        if (!programs[kDittoResidual].pipeline) load(programs[kDittoResidual], "ditto_residual", 40);
         if (!ditto_constants) make_buffer(256, &ditto_constants, &ditto_constants_memory, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
     }
     const uint32_t NW = cfg.nr_width, NH = cfg.nr_height, W = cfg.width, H = cfg.height;
@@ -172,18 +183,21 @@ void run_ditto(VkCommandBuffer cmd, uint32_t pass_number, const StageFrame& fr, 
     const auto f = nr::ditto::neural_frame(cfg.nr_width, cfg.nr_height, cfg.width, cfg.height,
         fr.render_width, fr.render_height, fr.jitter_x, fr.jitter_y, fr.jittered_motion, fr.depth_inverted);
     DittoConstants c{};
-    DittoSettings ds{}; ds.sharpenMode = 2; ds.historySharpen = 0.f;
+    DittoSettings ds{}; ds.sharpness=settings.ditto_sharpness;
+    ds.sharpenMode = ds.sharpness > 0.f ? 1 : 2; ds.historySharpen = 0.f;
     ditto_fill_constants(c, ds, f, reset || !pass.valid, false, false, false, pass.previous_jitter);
     memory_barrier(cmd, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_UNIFORM_READ_BIT,
                    VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
     vkCmdUpdateBuffer(cmd, ditto_constants, 0, sizeof c, &c);
     memory_barrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT,
                    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_ACCESS_UNIFORM_READ_BIT);
-    struct ResidualPush { uint32_t size[2], low[2]; float jitter[2]; uint32_t mode, linear; };
-    ResidualPush rp{{cfg.nr_width, cfg.nr_height}, {cfg.nr_width, cfg.nr_height}, {}, 0, uint32_t(hdr != 0) | (fr.depth_inverted ? 2u : 0u)};
+    struct ResidualPush { uint32_t size[2], low[2]; float jitter[2]; uint32_t mode, linear; float light,detail; };
+    static_assert(sizeof(ResidualPush)==40);
+    ResidualPush rp{{cfg.nr_width, cfg.nr_height}, {cfg.nr_width, cfg.nr_height}, {}, 0,
+                    uint32_t(hdr != 0) | (fr.depth_inverted ? 2u : 0u),settings.reconstruction_light,settings.reconstruction_detail};
     const auto residual_views = [&] { return std::map<uint32_t, VkImageView>{{0, proxy.view}, {1, neural_view},
         {2, reference_view}, {3, ditto_result.view}, {4, ditto_depth.view}, {5, ditto_full_depth.view},
-        {6, ditto_edit.view}, {7, up_proxy.view}, {8, ph16.view}}; };
+        {6, ditto_edit.view}, {7, up_proxy.view}, {8, ph16.view}, {9,ditto_full_motion.view}}; };
     dispatch(cmd, kDittoResidual, S(kDittoResidual, residual_views()), &rp, sizeof rp,
              (cfg.nr_width + 7) / 8, (cfg.nr_height + 7) / 8);
     const uint32_t cur = pass.cur, next = cur ^ 1u;
@@ -203,6 +217,9 @@ void run_ditto(VkCommandBuffer cmd, uint32_t pass_number, const StageFrame& fr, 
                        {13, pass.aux[next].view}, {14, ditto_change.view}, {15, ditto_change.view},
                        {16, ditto_change.view}, {17, pass.stability[cur].view}, {20, pass.history[next].view},
                        {21, ditto_result.view}, {22, pass.stability[next].view}}, (cfg.width + 15) / 16, oy);
+    if (ds.sharpenMode != 2)
+        run(kDittoSharpen, {{10,pass.history[next].view},{11,pass.mda[next].view},{15,ditto_change.view},{17,pass.stability[next].view},
+                            {21,ditto_result.view}}, ox, oy);
     rp.size[0] = cfg.width; rp.size[1] = cfg.height; rp.mode = 1;
     const auto jitter = nr::ditto::output_phase(fr.jitter_x, fr.jitter_y, fr.render_width, fr.render_height,
                                                cfg.width, cfg.height);

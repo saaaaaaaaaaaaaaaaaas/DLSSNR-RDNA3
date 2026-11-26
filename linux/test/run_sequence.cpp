@@ -44,6 +44,10 @@ static std::vector<uint8_t> slurp(const char* pattern, int index) {
 int main(int argc, char** argv) try {
     if (argc < 9) { std::fprintf(stderr, "usage: run_sequence <root> <w> <h> <frames> <reuse_every> <in> <motion> <out>\n"); return 2; }
     const uint32_t width = uint32_t(atoi(argv[2])), height = uint32_t(atoi(argv[3]));
+    const float scale = std::getenv("RUN_SEQUENCE_DITTO_SCALE") ? std::strtof(std::getenv("RUN_SEQUENCE_DITTO_SCALE"),nullptr) : 1.f;
+    if (!(scale>=.25f && scale<=1.f)) throw std::runtime_error("invalid Ditto scale");
+    const uint32_t nr_width=std::max(1u,uint32_t(std::lround(width*scale)));
+    const uint32_t nr_height=std::max(1u,uint32_t(std::lround(height*scale)));
     const int frames = atoi(argv[4]), reuse_every = atoi(argv[5]);
     const char *in_pattern = argv[6], *motion_pattern = argv[7], *out_pattern = argv[8];
 
@@ -64,7 +68,7 @@ int main(int argc, char** argv) try {
     host.instance = ctx.instance; host.physical = ctx.physical; host.device = ctx.device;
     host.queue = ctx.queue; host.queue_family = ctx.family;
     nr::RuntimeConfig config;
-    config.root = argv[1]; config.width = width; config.height = height;
+    config.root = argv[1]; config.width = nr_width; config.height = nr_height;
     config.colour_format = format;
     // RUN_SEQUENCE_NOREUSE=1 builds the runtime as it was before temporal reuse (direct sampling and storing
     // on), to price what allowing reuse costs the frames that run the network.
@@ -118,17 +122,22 @@ int main(int argc, char** argv) try {
     uint32_t scoped_fast_slots=0;
     if (const char* shaders = std::getenv("RUN_SEQUENCE_FAST_SHADERS")) {
         nr::renodx::StageConfig sc{};
-        sc.shaders=shaders;sc.width=sc.nr_width=width;sc.height=sc.nr_height=height;sc.frame_format=format;
-        sc.settings.passes_mode=1;sc.settings.fast_method=0;
+        sc.shaders=shaders;sc.width=width;sc.height=height;sc.nr_width=nr_width;sc.nr_height=nr_height;sc.frame_format=format;
+        sc.settings.passes_mode=std::getenv("RUN_SEQUENCE_STAGE_SINGLE")?0:1;sc.settings.fast_method=0;
         sc.settings.intensity=controls.intensity;
         sc.settings.fast_interleaved_passes=std::getenv("RUN_SEQUENCE_FAST_PASSES")?atoi(std::getenv("RUN_SEQUENCE_FAST_PASSES")):3;
         scoped_fast_slots=sc.settings.fast_interleaved_passes;
         sc.settings.fast_interleaved_preset=std::getenv("RUN_SEQUENCE_FAST_PRESET")?atoi(std::getenv("RUN_SEQUENCE_FAST_PRESET")):1;
-        sc.settings.ditto_relight=false;sc.settings.look_upsample=1;
+        sc.settings.ditto_relight=false;sc.settings.look_upsample=std::getenv("RUN_SEQUENCE_DITTO_SCALE")?4:1;
+        sc.settings.resolution_scale=scale;
+        if (const char* x=std::getenv("RUN_SEQUENCE_DITTO_LIGHT")) sc.settings.reconstruction_light=std::strtof(x,nullptr);
+        if (const char* x=std::getenv("RUN_SEQUENCE_DITTO_DETAIL")) sc.settings.reconstruction_detail=std::strtof(x,nullptr);
+        if (const char* x=std::getenv("RUN_SEQUENCE_DITTO_SHARP")) sc.settings.ditto_sharpness=std::strtof(x,nullptr);
         fast_stage=std::make_unique<nr::renodx::Stage>(host,sc);
         sf.colour=frame.colour;sf.output=frame.colour;sf.output.image=stage_output.handle;sf.output.before=sf.output.after=stage_output.layout;
         sf.motion=frame.motion;sf.depth=frame.depth;sf.depth_inverted=frame.depth_inverted;
         sf.motion_scale_x=sf.motion_scale_y=1.f;
+        sf.after_upscale=false;sf.jitter_known=true;sf.render_width=width;sf.render_height=height;
         sf.temporal_reconstruction=reuse_every>=2&&!std::getenv("RUN_SEQUENCE_FAST_OLD_MOTION");
     }
     auto record = [&](VkCommandBuffer cmd) {

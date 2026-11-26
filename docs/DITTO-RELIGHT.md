@@ -82,6 +82,17 @@ the relevant histories. Lighting controls AO/GI and the
 upstream tone curve; disabling it retains guided neural reconstruction.
 Ambient occlusion, Global illumination and Samples are adjustable.
 
+With a model resolution below the layer resolution, **Neural lighting**
+(`NRReconstructionLight`) and **Neural detail** (`NRReconstructionDetail`)
+adjust the coarse color/lighting and fine parts of the network edit separately.
+Both range from 0 to 2, default to 1.25, and use 1 as the unamplified transport.
+The extra edit is attenuated by surface confidence, motion and disagreement
+between current and carried edits. **SR sharpness** (`NRDittoSharpness`) defaults
+to 1 and sharpens the reconstructed edit with Ditto's RCAS pass; 0 disables
+that pass. These controls work when Lighting is off and apply to the scaled
+Ditto path, not the 100% bypass. They change the picture and cannot reconstruct
+detail absent from the model input. See [adaptive edit validation](ADAPTIVE-NEURAL-EDIT.md).
+
 The NR guide interface supplies no projection metadata. The explicit Vertical
 FOV, Near plane and Far plane controls default to upstream's 60 degrees, 0.1
 and 100000 view units. Match them to the game camera when needed. Metres per

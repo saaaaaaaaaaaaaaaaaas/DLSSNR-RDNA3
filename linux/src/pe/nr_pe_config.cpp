@@ -634,6 +634,9 @@ void* renodx_field(RenoDXConfig& r, int index) {
         case 122: return &v.ditto_fov;
         case 123: return &v.ditto_near;
         case 124: return &v.ditto_far;
+        case 125: return &v.reconstruction_light;
+        case 126: return &v.reconstruction_detail;
+        case 127: return &v.ditto_sharpness;
         default: return nullptr;
     }
 }
@@ -710,6 +713,9 @@ bool parse_renodx_key(RenoDXConfig& r, const std::string& key, const std::string
     else if (key == "nrdittofov") v.ditto_fov = renodx_float(value, d.ditto_fov, 10.0f, 170.0f);
     else if (key == "nrdittonear") v.ditto_near = renodx_float(value, d.ditto_near, 0.001f, 10.0f);
     else if (key == "nrdittofar") v.ditto_far = renodx_float(value, d.ditto_far, 10.0f, 1000000.0f);
+    else if (key == "nrreconstructionlight") v.reconstruction_light = renodx_float(value, d.reconstruction_light, 0.0f, 2.0f);
+    else if (key == "nrreconstructiondetail") v.reconstruction_detail = renodx_float(value, d.reconstruction_detail, 0.0f, 2.0f);
+    else if (key == "nrdittosharpness") v.ditto_sharpness = renodx_float(value, d.ditto_sharpness, 0.0f, 1.0f);
     else if (key == "nrdittosamples") v.ditto_samples = renodx_enum(value, d.ditto_samples, 4, 32);
     else if (key == "nrlookupsample") v.look_upsample = renodx_enum(value, d.look_upsample, 0, 4);
     else if (key == "nrlookmode") { if (auto b = parse_bool(value)) v.look_mode = *b; }
@@ -1123,6 +1129,8 @@ void write_renodx(FILE* f, const RenoDXConfig& r) {
                     "NRDittoFov = %.3f\nNRDittoNear = %.4f\nNRDittoFar = %.3f\n",
                     v.ditto_relight ? 1 : 0, v.ditto_before_nr ? 1 : 0, v.ditto_ao, v.ditto_gi, v.ditto_samples,
                     v.ditto_fov, v.ditto_near, v.ditto_far);
+    std::fprintf(f, "NRReconstructionLight = %.3f\nNRReconstructionDetail = %.3f\nNRDittoSharpness = %.3f\n",
+                 v.reconstruction_light, v.reconstruction_detail, v.ditto_sharpness);
     std::fprintf(f, "\nNROutputRect = %u\n; OptiScaler route: 0 Auto (the size at creation first), 1 Declared (default, as 0.0.7: the evaluate's size first), 2 Resource (the resource's size)\n", r.output_rect);
     std::fprintf(f,
         "\nNRPresentFrames = %u\n"

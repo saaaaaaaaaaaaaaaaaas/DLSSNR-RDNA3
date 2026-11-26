@@ -54,6 +54,22 @@ def check_interleaved_motion_shader(data, name):
         raise ValueError('Interleaved motion ABI mismatch: ' + name)
 
 
+def check_neural_reconstruction_shader(data, name):
+    words = struct.unpack('<' + 'I' * (len(data) // 4), data)
+    bindings, strength, i = set(), False, 5
+    while i < len(words):
+        n, op = words[i] >> 16, words[i] & 0xffff
+        if not n or i + n > len(words):
+            raise ValueError('malformed neural reconstruction shader: ' + name)
+        if op == 71 and n == 4 and words[i + 2] == 33:
+            bindings.add(words[i + 3])
+        if op == 72 and n == 5 and words[i + 3] == 35 and words[i + 4] == 36:
+            strength = True
+        i += n
+    if bindings != set(range(10)) or not strength:
+        raise ValueError('neural reconstruction ABI mismatch: ' + name)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--archive', type=Path, required=True)
@@ -85,10 +101,14 @@ def main():
                     raise ValueError('runtime lacks the residual ABI guard: ' + name)
                 if b'Interleaved motion shader ABI mismatch' not in data:
                     raise ValueError('runtime lacks the Interleaved motion ABI guard: ' + name)
+                if b'Neural reconstruction shader ABI mismatch' not in data:
+                    raise ValueError('runtime lacks the neural reconstruction ABI guard: ' + name)
             if name.endswith('/runtime/runtime_seamless.spv'):
                 check_residual_shader(data, name)
             if name.endswith('/renodx/renodx_il_mv.spv'):
                 check_interleaved_motion_shader(data, name)
+            if name.endswith('/renodx/renodx_ditto_residual.spv'):
+                check_neural_reconstruction_shader(data, name)
     expected = {directory + '/gpu-profile.txt' for directory in NETWORKS}
     if set(markers) != expected or set(markers.values()) != {'z1-extreme-turbo'}:
         raise ValueError('all six networks must select the Turbo profile')
@@ -99,11 +119,17 @@ def main():
         raise ValueError('all six networks require the same residual lighting shader')
     if len(binaries) != 3 or len(ini) != 3:
         raise ValueError('missing runtime consumers or installer INIs')
+    neural_shader = 'dlssnr-amd/shaders/renodx/renodx_ditto_residual.spv'
+    if neural_shader not in hashes:
+        raise ValueError('missing neural reconstruction shader')
     for name, text in ini.items():
         config = configparser.ConfigParser(interpolation=None)
         config.read_string(text)
         if config.has_section('Reuse') or not config.getboolean('Temporal', 'Enabled') or config.getint('Temporal', 'Interval') != 2:
             raise ValueError('incorrect temporal defaults: ' + name)
+        for key, default in (('NRReconstructionLight', 1.25), ('NRReconstructionDetail', 1.25), ('NRDittoSharpness', 1.0)):
+            if config.getfloat('RenoDX', key) != default:
+                raise ValueError('incorrect neural reconstruction default: ' + name + ' ' + key)
     license_name = 'dlssnr-amd/shaders/runtime/Seamless-MIT-LICENSE.txt'
     license_hash = hashlib.sha256((ROOT / 'linux/shaders/passes/include/seamless/LICENSE.txt').read_bytes()).hexdigest()
     if hashes.get(license_name) != license_hash or 'Turbo-Temporal.txt' not in hashes:
@@ -113,7 +139,7 @@ def main():
         for name in hashes:
             if name.startswith(directory + '/') and name.endswith('.spv'):
                 relative = Path(name).relative_to(directory)
-                if len(relative.parts) == 1 or relative.parts[0] in ('temporal', 'runtime'):
+                if len(relative.parts) == 1 or relative.parts[0] in ('temporal', 'runtime') or name == neural_shader:
                     shader_names.append(name)
     # Only private audit files are extracted, never anything into a game folder.
     scratch = args.out / '.audit'

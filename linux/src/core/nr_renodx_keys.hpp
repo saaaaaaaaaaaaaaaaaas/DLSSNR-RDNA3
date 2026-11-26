@@ -154,6 +154,9 @@ inline constexpr Key kKeys[] = {
     {"NRDittoFov", kFloat, 1, 10.f, 170.f, 60.f, "Ditto Relight", "Vertical FOV", "Camera FOV in degrees. The NR interface provides no projection matrix; set this to the game camera.", nullptr},
     {"NRDittoNear", kFloat, 3, 0.001f, 10.f, 0.1f, "Ditto Relight", "Near plane", "Game camera near plane, in view units.", nullptr},
     {"NRDittoFar", kFloat, 1, 10.f, 1000000.f, 100000.f, "Ditto Relight", "Far plane", "Game camera far plane, in view units.", nullptr},
+    {"NRReconstructionLight", kFloat, 2, 0.f, 2.f, 1.25f, "Ditto Relight", "Neural lighting", "Adaptive strength of the network's low-frequency lighting and color edit. 1 is neutral.", nullptr},
+    {"NRReconstructionDetail", kFloat, 2, 0.f, 2.f, 1.25f, "Ditto Relight", "Neural detail", "Adaptive strength of the network's fine edit. 1 is neutral.", nullptr},
+    {"NRDittoSharpness", kFloat, 2, 0.f, 1.f, 1.f, "Ditto Relight", "SR sharpness", "Ditto SR sharpness level. 0 disables sharpening; 1 is the default.", nullptr},
 #endif
 };
 inline constexpr int kCount = int(sizeof kKeys / sizeof kKeys[0]);

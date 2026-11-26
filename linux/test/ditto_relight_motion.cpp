@@ -62,12 +62,13 @@ struct MotionTest : Test {
         const uint32_t push[3]={p.width,p.height,identity?1u:0u};vkCmdPushConstants(cmd,layout,VK_SHADER_STAGE_COMPUTE_BIT,0,12,push);
         vkCmdDispatch(cmd,(p.width+7)/8,(p.height+7)/8,1);barrier();
     }
-    std::vector<float> motion(const char* shaders,const std::filesystem::path& output,float scale,bool lighting,bool identity,bool inverted,uint32_t mode=4,float ao=.75f,float gi=2.f,bool before_nr=true) {
+    std::vector<float> motion(const char* shaders,const std::filesystem::path& output,float scale,bool lighting,bool identity,bool inverted,uint32_t mode=4,float ao=.75f,float gi=2.f,bool before_nr=true,float light=1.25f,float detail=1.25f,float sharp=1.f,bool still=false,float forced_mv=0.f) {
         const uint32_t W=321,H=181,F=20;
         nr::renodx::StageConfig c{};c.shaders=shaders;c.width=W;c.height=H;c.nr_width=std::max(1u,uint32_t(std::lround(W*scale)));c.nr_height=std::max(1u,uint32_t(std::lround(H*scale)));
         c.hdr_flag=true;c.frame_format=VK_FORMAT_R16G16B16A16_SFLOAT;c.settings.look_upsample=mode;c.settings.resolution_scale=scale;
 #ifndef NR_DITTO_BASELINE
         c.settings.ditto_relight=lighting;c.settings.ditto_before_nr=before_nr;c.settings.ditto_ao=ao;c.settings.ditto_gi=gi;
+        c.settings.reconstruction_light=light;c.settings.reconstruction_detail=detail;c.settings.ditto_sharpness=sharp;
 #endif
         begin();Image color=image(W,H,c.frame_format),out=image(W,H,c.frame_format),depth=image(W,H,VK_FORMAT_D32_SFLOAT),mv=image(W,H,VK_FORMAT_R32G32B32A32_SFLOAT);end();
         nr::renodx::Stage stage(host,c);nr::renodx::StageFrame fr{};fr.colour=frame(color);fr.output=frame(out);fr.depth=frame(depth);fr.motion=frame(mv);
@@ -76,22 +77,23 @@ struct MotionTest : Test {
         unsigned calls=0;
         std::vector<float> input(W*H*4),z(W*H),motion(W*H*4),expected(W*H*4),answer;
         for(unsigned f=0;f<F;f++) {
-            fr.reset=f==0||f==11;fr.jitter_x=f%2?.25f:-.25f;fr.jitter_y=f%3?.125f:-.25f;
-            const float angle=.035f*f,cs=std::cos(angle),sn=std::sin(angle),cx=90.f+4.f*f;
+            const unsigned scene=still?0:f;
+            fr.reset=f==0||(!still&&f==11);fr.jitter_x=f%2?.25f:-.25f;fr.jitter_y=f%3?.125f:-.25f;
+            const float angle=.035f*scene,cs=std::cos(angle),sn=std::sin(angle),cx=90.f+4.f*scene;
             for(unsigned y=0;y<H;y++) for(unsigned x=0;x<W;x++) {
                 const size_t i=size_t(y)*W+x,k=4*i;
                 const float xx=cs*(x-cx)+sn*(float(y)-H*.5f),yy=-sn*(x-cx)+cs*(float(y)-H*.5f);
                 const bool object=std::abs(xx)<4.f&&std::abs(yy)<H*.4f;
-                const float texture=.28f+.06f*std::sin((x+f*1.25f)*1.7f)*std::cos(y*1.1f);
+                const float texture=.28f+.06f*std::sin((x+scene*1.25f)*1.7f)*std::cos(y*1.1f);
                 input[k]=object?.06f:texture;input[k+1]=object?.11f:texture*.9f;input[k+2]=object?.65f:texture*.7f;input[k+3]=.375f;
-                if(f>=11&&!object) {input[k]*=.7f;input[k+1]*=1.15f;}
+                if(scene>=11&&!object) {input[k]*=.7f;input[k+1]*=1.15f;}
                 const float gain[3]={object?.85f:1.15f,1.05f,object?1.15f:.95f};
                 for(unsigned j=0;j<3;j++) expected[k+j]=input[k+j]*(identity?1.f:gain[j]);expected[k+3]=input[k+3];
                 // A sloped background and independently moving foreground, with a camera pan/rotation.
                 const float view_z=object?2.f:5.f+float(y)/H*2.f;
                 const float forward=100000.f/(100000.f-.1f)-100000.f*.1f/((100000.f-.1f)*view_z);
                 z[i]=inverted?1.f-forward:forward;
-                motion[k]=object?-4.f:1.25f;motion[k+1]=object?.035f*(float(x)-cx):0.f;motion[k+2]=motion[k+3]=0.f;
+                motion[k]=still?forced_mv:(object?-4.f:1.25f);motion[k+1]=still?0.f:(object?.035f*(float(x)-cx):0.f);motion[k+2]=motion[k+3]=0.f;
             }
             upload(color,input);upload(depth,z);upload(mv,motion);
             begin();stage.record(cmd,fr,[&](uint32_t,const nr::ColourFrame& p,const nr::ColourFrame& n,bool){calls++;network(p,n,identity);});end();
@@ -143,6 +145,22 @@ int main(int argc,char** argv) {
 #endif
     #ifndef NR_DITTO_BASELINE
     t.motion(argv[1],argv[3],.33f,true,false,true,4,.75f,2.f,false);
+    const auto neutral=t.motion(argv[1],argv[3],.33f,false,false,true,4,.75f,2.f,true,1.f,1.f,0.f,true);
+    const auto boosted=t.motion(argv[1],argv[3],.33f,false,false,true,4,.75f,2.f,true,1.8f,1.f,0.f,true);
+    const auto detail=t.motion(argv[1],argv[3],.33f,false,false,true,4,.75f,2.f,true,1.f,2.f,0.f,true);
+    const auto sharp=t.motion(argv[1],argv[3],.33f,false,false,true,4,.75f,2.f,true,1.f,1.f,1.f,true);
+    double light_delta=0,detail_delta=0,sharp_delta=0;
+    for(size_t i=0;i<neutral.size();i++) if(i%4!=3) {
+        light_delta+=std::abs(boosted[i]-neutral[i]);detail_delta+=std::abs(detail[i]-neutral[i]);sharp_delta+=std::abs(sharp[i]-neutral[i]);
+    }
+    printf("Controls, Lighting off: light delta=%g detail delta=%g sharp delta=%g\n",light_delta,detail_delta,sharp_delta);
+    assert(light_delta>1 && detail_delta>.01 && sharp_delta>.01);
+    const auto moving_neutral=t.motion(argv[1],argv[3],.33f,false,false,true,4,.75f,2.f,true,1.f,1.f,0.f,true,32.f);
+    const auto moving_boost=t.motion(argv[1],argv[3],.33f,false,false,true,4,.75f,2.f,true,1.8f,1.f,0.f,true,32.f);
+    double moving_delta=0;
+    for(size_t i=0;i<neutral.size();i++) if(i%4!=3) moving_delta+=std::abs(moving_boost[i]-moving_neutral[i]);
+    printf("Motion confidence: static delta=%g high-motion delta=%g\n",light_delta,moving_delta);
+    assert(moving_delta<.5*light_delta);
     #endif
     puts("Motion transport and Relight checks passed (analytic network, not game qualification)");
 }

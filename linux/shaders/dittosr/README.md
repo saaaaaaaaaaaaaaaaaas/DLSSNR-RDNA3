@@ -5,7 +5,8 @@ Vendor HLSL/HLSLI files are unmodified from tag `v0.5.4`, resolved to
 `prepare.comp` and `residual.comp` are this integration's shaders.
 
 The API-neutral settings and constant builders in `linux/src/core/dittosr/`
-retain the same defaults and layouts. `dittosr-legacy/` preserves the previous
+retain the upstream layouts; the RDNA3 sharpness default is 1.0.
+`dittosr-legacy/` preserves the previous
 v0.4.0 shaders/settings for the unchanged RDNA4 path; it is not built for RDNA3.
 
 The RDNA3 integration runs FP32 SR on an encoded signed log-ratio edit, not on

@@ -12,7 +12,8 @@ layout(binding=5) uniform texture2D full_depth;
 layout(binding=6,rgba16f) uniform writeonly image2D result;
 layout(binding=7,rgba16f) uniform writeonly image2D proxy_result;
 layout(binding=8) uniform texture2D encoded_edit;
-layout(push_constant) uniform C { uvec2 size; uvec2 low_size; vec2 jitter; uint mode; uint linear_reference; } c;
+layout(binding=9) uniform texture2D full_motion;
+layout(push_constant) uniform C { uvec2 size; uvec2 low_size; vec2 jitter; uint mode; uint linear_reference; float light_strength, detail_strength; } c;
 // Match the codec ratio floor; the luminance guide has its own darker floor.
 const float floor_value=1.0/1024.0;
 vec3 decode(vec3 x) { return mix(x/12.92,pow(max((x+.055)/1.055,0.0),vec3(2.4)),greaterThan(x,vec3(.04045))); }
@@ -35,8 +36,8 @@ void main() {
     float guide=log2(max(dot(max(original,0.0),vec3(.2126,.7152,.0722)),1e-8));
     float depth=texelFetch(full_depth,p,0).r;
     if((c.linear_reference&2u)==0u) depth=1.0-depth;
-    vec3 sum=vec3(0),lo=vec3(1e30),hi=vec3(-1e30);
-    float ws=0.0,total=0.0;
+    vec3 sum=vec3(0),wide_sum=vec3(0),lo=vec3(1e30),hi=vec3(-1e30);
+    float ws=0.0,wide_ws=0.0,total=0.0;
     vec3 best=vec3(0);float best_score=1e30;
     for(int y=-1;y<=2;y++) for(int x=-1;x<=2;x++) {
         ivec2 q=clamp(base+ivec2(x,y),ivec2(0),last);
@@ -47,9 +48,11 @@ void main() {
         float qdepth=texelFetch(low_depth,q,0).r;
         if((c.linear_reference&2u)==0u) qdepth=1.0-qdepth;
         float dz=abs(qdepth-depth)/max(.00001,.04*max(abs(depth),.00001));
-        float w=spatial*exp(-2.0*dg*dg)*exp(-2.0*dz*dz);
+        float surface=exp(-2.0*dg*dg)*exp(-2.0*dz*dz);
+        float w=spatial*surface;
+        float wide=exp(-0.5*dot(dist,dist))*surface;
         vec3 e=unpack_edit(texelFetch(encoded_edit,q,0).rgb);
-        sum+=w*e;ws+=w;total+=spatial;
+        sum+=w*e;ws+=w;wide_sum+=wide*e;wide_ws+=wide;total+=spatial;
         if(w>1e-5) { lo=min(lo,e);hi=max(hi,e); }
         float score=dz*dz+dg*dg+.05*dot(dist,dist);
         if(score<best_score) { best_score=score;best=e; }
@@ -64,7 +67,20 @@ void main() {
     vec3 g=texelFetch(temporal_edit,clamp(b+1,ivec2(0),m),0).rgb;
     vec3 carried=unpack_edit(mix(mix(a,d,f.x),mix(e,g,f.x),f.y));
     if(ws>1e-6) carried=clamp(carried,lo,hi);else carried=spatial;
-    vec3 gain=exp2(mix(spatial,carried,.5*clamp(ws/max(total,1e-6),0.0,1.0)));
+    float confidence=clamp(ws/max(total,1e-6),0.0,1.0);
+    vec3 edit=mix(spatial,carried,.5*confidence);
+    // Wide, surface-matched low frequencies separate lighting/color from
+    // fine structure; no full-resolution source texture is amplified.
+    vec3 coarse=wide_ws>1e-6?wide_sum/wide_ws:spatial;
+    vec3 fine=edit-coarse;
+    vec2 mv=texelFetch(full_motion,p,0).xy*vec2(c.size);
+    float motion=any(isnan(mv))||any(isinf(mv))?1e6:length(mv);
+    float trust=confidence*(1.0-0.75*smoothstep(2.0,24.0,motion));
+    float disagreement=length(carried-spatial);
+    trust*=1.0-0.75*smoothstep(0.05,0.4,disagreement);
+    // Bound only the extra edit, so unity remains the unamplified transport.
+    vec3 extra=coarse*(c.light_strength-1.0)+fine*(c.detail_strength-1.0);
+    vec3 gain=exp2(edit+trust*clamp(extra,vec3(-0.75),vec3(0.75)));
     vec2 bc=clamp(at,vec2(0),vec2(last)),bf=fract(bc);ivec2 b0=ivec2(floor(bc)),b1=min(b0+1,last);
     vec3 pu=mix(mix(decode(texelFetch(proxy,b0,0).rgb),decode(texelFetch(proxy,ivec2(b1.x,b0.y),0).rgb),bf.x),
                 mix(decode(texelFetch(proxy,ivec2(b0.x,b1.y),0).rgb),decode(texelFetch(proxy,b1,0).rgb),bf.x),bf.y);
